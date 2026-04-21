@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Daily Meetery Café — Loyalty Card</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1B4332; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 20px; }
+    .phone { width: 360px; background: #fff; border-radius: 28px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.25); }
+    .phone-header { background: #1B4332; padding: 22px 20px 16px; }
+    .cafe-name { font-size: 11px; letter-spacing: 2px; color: #6EE7A0; text-transform: uppercase; margin-bottom: 3px; }
+    .card-label { font-size: 20px; font-weight: 700; color: #fff; }
+    .card-sub { font-size: 12px; color: #6EE7A0; margin-top: 2px; }
+    .live-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 10px; border-radius: 99px; background: rgba(110,231,160,0.2); color: #6EE7A0; font-weight: 500; margin-top: 10px; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #6EE7A0; }
+    .customer-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid rgba(110,231,160,0.2); }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: rgba(110,231,160,0.2); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #6EE7A0; flex-shrink: 0; }
+    .nav-tabs { display: flex; border-bottom: 1px solid #f0f0f0; }
+    .nav-tab { flex: 1; padding: 12px 4px; font-size: 12px; font-weight: 500; color: #999; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; }
+    .nav-tab.active { color: #1B4332; border-bottom-color: #1B4332; }
+    .phone-body { padding: 18px; }
+    .stamp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .stamp { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px dashed #ddd; background: #f9f9f9; transition: all 0.2s; }
+    .stamp.filled { border: 1.5px solid #1B4332; background: #ECFDF5; }
+    .stamp svg { width: 20px; height: 20px; }
+    .bar-wrap { background: #f0f0f0; border-radius: 99px; height: 5px; margin-bottom: 12px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; background: #1B4332; transition: width 0.4s; }
+    .reward-pill { display: flex; align-items: center; gap: 8px; background: #ECFDF5; border-radius: 10px; padding: 9px 12px; margin-bottom: 12px; border: 1px solid #6EE7A0; }
+    .reward-pill.earned { background: #FEF9C3; border-color: #FBBF24; }
+    .reward-text { font-size: 12px; color: #1B4332; font-weight: 500; }
+    .reward-text.earned { color: #92400E; }
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .stat { background: #f7f7f7; border-radius: 10px; padding: 9px 6px; text-align: center; }
+    .stat-val { font-size: 18px; font-weight: 700; color: #222; }
+    .stat-lbl { font-size: 10px; color: #888; margin-top: 1px; }
+    .section-title { font-size: 11px; font-weight: 700; color: #1B4332; text-transform: uppercase; letter-spacing: 1px; margin: 14px 0 8px; }
+    .menu-item { border: 1px solid #f0f0f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; background: #fff; }
+    .item-name { font-size: 13px; font-weight: 500; color: #222; margin-bottom: 5px; }
+    .item-desc { font-size: 11px; color: #888; margin-bottom: 6px; }
+    .size-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .size-btn { padding: 5px 11px; border-radius: 99px; font-size: 11px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #555; transition: all 0.15s; }
+    .size-btn:hover { border-color: #1B4332; color: #1B4332; }
+    .size-btn.selected { border-color: #1B4332; background: #1B4332; color: #fff; }
+    .add-on-section { background: #f7f7f7; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+    .add-on-title { font-size: 11px; font-weight: 600; color: #555; margin-bottom: 7px; }
+    .add-on-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+    .add-on-btn { padding: 4px 10px; border-radius: 99px; font-size: 11px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #555; transition: all 0.15s; }
+    .add-on-btn.selected { border-color: #1B4332; background: #1B4332; color: #fff; }
+    .order-summary { background: #f7f7f7; border-radius: 10px; padding: 12px; margin: 12px 0; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+    .summary-total { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding-top: 8px; border-top: 1px solid #ddd; margin-top: 6px; }
+    .sig-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FEE2E2; color: #991B1B; font-weight: 500; margin-left: 6px; vertical-align: middle; }
+    .crowd-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FEF3C7; color: #92400E; font-weight: 500; margin-left: 6px; vertical-align: middle; }
+    .main-btn { width: 100%; padding: 13px; border-radius: 10px; background: #1B4332; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 8px; }
+    .main-btn:hover { background: #145228; }
+    .main-btn:disabled { background: #eee; color: #aaa; cursor: default; }
+    .redeem-btn { width: 100%; padding: 13px; border-radius: 10px; background: #FBBF24; color: #78350F; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 8px; }
+    .outline-btn { width: 100%; padding: 9px; border-radius: 10px; border: 1px solid #ddd; background: transparent; cursor: pointer; color: #888; font-size: 12px; margin-top: 8px; }
+    input.field { width: 100%; padding: 10px 12px; font-size: 14px; border-radius: 10px; border: 1px solid #ddd; background: #fff; color: #222; margin-bottom: 10px; outline: none; }
+    input.field:focus { border-color: #1B4332; }
+    .field-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .toast { font-size: 13px; color: #222; background: #ECFDF5; border: 1px solid #6EE7A0; border-radius: 8px; padding: 9px 12px; margin-bottom: 12px; display: none; }
+    .toast.show { display: block; }
+    .err { font-size: 12px; color: #c0392b; margin-top: 6px; }
+    .loading { text-align: center; padding: 30px 20px; font-size: 13px; color: #888; }
+    .success-box { text-align: center; padding: 24px 16px; }
+  </style>
+</head>
+<body>
+<div class="phone">
+  <div class="phone-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="cafe-name">The Daily Meetery</div>
+        <div class="card-label">Loyalty Card</div>
+        <div class="card-sub">8 stamps = 1 free coffee</div>
+      </div>
+    </div>
+    <div class="live-badge"><span class="live-dot"></span>Live</div>
+    <div id="customer-row" class="customer-row" style="display:none">
+      <div class="avatar" id="avatar">?</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#fff" id="cname">—</div>
+        <div style="font-size:11px;color:#6EE7A0" id="csince">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading-view" class="loading">Connecting to your database...</div>
+
+  <div id="login-view" style="display:none">
+    <div class="phone-body">
+      <div style="font-size:16px;font-weight:700;color:#222;margin-bottom:4px">Welcome to The Daily Meetery!</div>
+      <div style="font-size:13px;color:#888;margin-bottom:16px">Sign in to access your loyalty card.</div>
+      <div class="field-label">Your name</div>
+      <input class="field" id="inp-name" placeholder="e.g. Sarah">
+      <div class="field-label">Email address</div>
+      <input class="field" id="inp-email" placeholder="you@email.com" type="email">
+      <button class="main-btn" onclick="loginOrRegister()">Get my stamp card</button>
+      <div class="err" id="login-err"></div>
+    </div>
+  </div>
+
+  <div id="main-view" style="display:none">
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showTab('card')" id="tab-card">My Card</button>
+      <button class="nav-tab" onclick="showTab('order')" id="tab-order">Order</button>
+      <button class="nav-tab" onclick="showTab('menu')" id="tab-menu">Full Menu</button>
+    </div>
+
+    <div id="tab-card-view" class="phone-body">
+      <div class="toast" id="toast"></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:12px;color:#888">Your stamps</span>
+        <span style="font-size:13px;font-weight:600;color:#222" id="stamp-count">0 / 8</span>
+      </div>
+      <div class="stamp-grid" id="stamp-grid"></div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
+      <div class="reward-pill" id="reward-pill"><div class="reward-text" id="reward-text">Loading...</div></div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val" id="total-val">0</div><div class="stat-lbl">coffees</div></div>
+        <div class="stat"><div class="stat-val" id="rewards-val">0</div><div class="stat-lbl">free earned</div></div>
+        <div class="stat"><div class="stat-val" id="saved-val">$0</div><div class="stat-lbl">saved</div></div>
+      </div>
+      <button class="redeem-btn" id="redeem-btn" style="display:none" onclick="redeemReward()">Redeem free coffee</button>
+      <button class="outline-btn" onclick="logout()">Sign out</button>
+    </div>
+
+    <div id="tab-order-view" class="phone-body" style="display:none">
+      <div id="order-form">
+        <div class="section-title">Coffee</div>
+        <div id="s-coffee"></div>
+        <div class="section-title">Superfood Latte</div>
+        <div id="s-superfood"></div>
+        <div class="section-title">TDM Signature <span class="sig-badge">Meetery Fave</span></div>
+        <div id="s-signature"></div>
+        <div class="section-title">Over Ice / Frappe</div>
+        <div id="s-ice"></div>
+        <div class="section-title">Tea</div>
+        <div id="s-tea"></div>
+        <div class="add-on-section">
+          <div class="add-on-title">Milk alternatives (+$0.80)</div>
+          <div class="add-on-grid" id="milk-addons"></div>
+        </div>
+        <div class="add-on-section">
+          <div class="add-on-title">Syrups (+$0.60)</div>
+          <div class="add-on-grid" id="syrup-addons"></div>
+        </div>
+        <div class="order-summary" id="order-summary" style="display:none">
+          <div class="summary-row"><span style="color:#888">Item</span><span id="sum-item" style="font-weight:500">—</span></div>
+          <div class="summary-row"><span style="color:#888">Size</span><span id="sum-size" style="font-weight:500">—</span></div>
+          <div class="summary-row" id="sum-addon-row" style="display:none"><span style="color:#888">Add-ons</span><span id="sum-addons" style="font-weight:500">—</span></div>
+          <div class="summary-total"><span>Total</span><span id="sum-total">$0.00</span></div>
+        </div>
+        <button class="main-btn" id="order-btn" onclick="placeOrder()" disabled>Select a drink first</button>
+      </div>
+      <div id="order-success" style="display:none">
+        <div class="success-box">
+          <div style="font-size:44px;margin-bottom:12px">✅</div>
+          <div style="font-size:17px;font-weight:700;color:#222;margin-bottom:6px">Order received!</div>
+          <div style="font-size:13px;color:#888;margin-bottom:16px">Your barista is on it. +1 stamp added!</div>
+          <div class="reward-pill" style="justify-content:center"><div class="reward-text" id="success-desc">—</div></div>
+          <button class="main-btn" onclick="resetOrder()">Order again</button>
+          <button class="outline-btn" onclick="showTab('card')">View my card</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-menu-view" class="phone-body" style="display:none">
+      <div style="font-size:13px;color:#888;margin-bottom:14px">Full menu — go to Order tab to place an order.</div>
+      <div class="section-title">Coffee — S / M / L</div>
+      <div style="font-size:12px;color:#555;line-height:2">
+        Espresso — $4.50<br>
+        Flat White / Latte / Cappuccino — S $5.20 · M $5.50 · L $6.50<br>
+        Long Black / Americano — S $5.20 · M $5.50<br>
+        Hot Chocolate / Mocha — M $5.50 · L $6.50<br>
+        Macchiato / Piccolo / Fluffy — $5.00<br>
+        <strong>Extra large available on request</strong>
+      </div>
+      <div class="section-title">Superfood Latte — M / L</div>
+      <div style="font-size:12px;color:#555;line-height:2">
+        Spicy Chai / Sweet Chai — M $6.00 · L $6.50<br>
+        Spiced Pumpkin / Gingerbread — M $6.20 · L $6.70<br>
+        Bananabread / Turkish Delatte — M $6.20 · L $6.70<br>
+        Matcha — M $6.20 · L $6.70
+      </div>
+      <div class="section-title">TDM Signature <span class="sig-badge">Meetery Fave</span></div>
+      <div style="font-size:12px;color:#555;line-height:2.2">
+        Matcha Strawberry Cloud — $10.90<br>
+        Pistachio Coco Loco — $11.90<br>
+        Tropical Matcha — $10.90<br>
+        Viral Tiramisu Float — $12.90<br>
+        Spanish Latte — $10.50<br>
+        Turkish Delatte — $10.50
+      </div>
+      <div class="section-title">Over Ice / Frappe — R / L</div>
+      <div style="font-size:12px;color:#555;line-height:2">
+        Wild Berry Frappe — R $8.00 · L $9.50<br>
+        Spiced Pumpkin / Gingerbread — R $7.00 · L $8.30<br>
+        Bananabread <span class="crowd-badge">Crowd Fave</span> — R $7.00 · L $8.30<br>
+        Matcha — R $7.00 · L $8.30<br>
+        Iced Americano — R $5.90 · L $6.50<br>
+        Chocolate / Mocha / Latte — R $6.70 · L $8.00<br>
+        Chai Sweet or Spicy — R $6.70 · L $8.00
+      </div>
+      <div class="section-title">Tea — $5.00</div>
+      <div style="font-size:12px;color:#555;line-height:2">
+        English Breakfast · Earl Grey · Green Lime · Peppermint · Lemon Ginger Honey
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:14px;padding:10px;background:#f7f7f7;border-radius:10px;line-height:1.8">
+        <strong>Add-ons:</strong><br>
+        Soy / Oat / Coconut / Almond / Decaf +$0.80 (iced +$1.00)<br>
+        Caramel / Vanilla / Hazelnut syrup +$0.60<br>
+        Make it a Frappe +$1.50 · Blend with ice cream +$4.00
+      </div>
+      <button class="main-btn" style="margin-top:14px" onclick="showTab('order')">Go to order screen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SURL='https://jxlalnsemmghxukapvxv.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
+const TOTAL=8;
+const db=supabase.createClient(SURL,SKEY);
+let customerId=null,stamps=0,totalStamps=0,rewardsEarned=0;
+let selItem=null,selSize=null,selPrice=0,selAddons=[];
+const MENU={
+  coffee:[
+    {name:'Espresso',sizes:[{l:'Single $4.50',p:4.5}]},
+    {name:'Flat White',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Latte',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Cappuccino',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Long Black',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5}]},
+    {name:'Americano',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5}]},
+    {name:'Hot Chocolate',sizes:[{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Mocha',sizes:[{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Macchiato / Piccolo / Fluffy',sizes:[{l:'$5.00',p:5.0}]},
+  ],
+  superfood:[
+    {name:'Spicy Chai',sizes:[{l:'M $6.00',p:6.0},{l:'L $6.50',p:6.5}]},
+    {name:'Sweet Chai',sizes:[{l:'M $6.00',p:6.0},{l:'L $6.50',p:6.5}]},
+    {name:'Spiced Pumpkin',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+    {name:'Gingerbread',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+    {name:'Bananabread Latte',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+    {name:'Turkish Delatte Latte',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+    {name:'Matcha Latte',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+  ],
+  signature:[
+    {name:'Matcha Strawberry Cloud',desc:'Strawberry puree · Milk · Matcha foam · Berries',sizes:[{l:'$10.90',p:10.9}]},
+    {name:'Pistachio Coco Loco',desc:'Cocoa · Pistachio · Hot or cold',sizes:[{l:'$11.90',p:11.9}]},
+    {name:'Tropical Matcha',desc:'Mango · Coconut milk · Matcha foam',sizes:[{l:'$10.90',p:10.9}]},
+    {name:'Viral Tiramisu Float',desc:'Tiramisu slice · Espresso · Milk · Coco dust',sizes:[{l:'$12.90',p:12.9}]},
+    {name:'Spanish Latte',desc:'Atomic coffee · Condensed milk · Whipped cream',sizes:[{l:'$10.50',p:10.5}]},
+    {name:'Turkish Delatte',desc:'Iced latte · Floral · Spice · Espresso finish',sizes:[{l:'$10.50',p:10.5}]},
+  ],
+  ice:[
+    {name:'Wild Berry Frappe',sizes:[{l:'R $8.00',p:8.0},{l:'L $9.50',p:9.5}]},
+    {name:'Spiced Pumpkin Frappe',sizes:[{l:'R $7.00',p:7.0},{l:'L $8.30',p:8.3}]},
+    {name:'Gingerbread Frappe',sizes:[{l:'R $7.00',p:7.0},{l:'L $8.30',p:8.3}]},
+    {name:'Bananabread Frappe',desc:'Crowd Favourite',sizes:[{l:'R $7.00',p:7.0},{l:'L $8.30',p:8.3}]},
+    {name:'Matcha Frappe',sizes:[{l:'R $7.00',p:7.0},{l:'L $8.30',p:8.3}]},
+    {name:'Iced Americano',sizes:[{l:'R $5.90',p:5.9},{l:'L $6.50',p:6.5}]},
+    {name:'Iced Chocolate / Mocha / Latte',sizes:[{l:'R $6.70',p:6.7},{l:'L $8.00',p:8.0}]},
+    {name:'Iced Chai Sweet or Spicy',sizes:[{l:'R $6.70',p:6.7},{l:'L $8.00',p:8.0}]},
+  ],
+  tea:[
+    {name:'English Breakfast',sizes:[{l:'$5.00',p:5.0}]},
+    {name:'Earl Grey',sizes:[{l:'$5.00',p:5.0}]},
+    {name:'Green Lime',sizes:[{l:'$5.00',p:5.0}]},
+    {name:'Peppermint',sizes:[{l:'$5.00',p:5.0}]},
+    {name:'Lemon Ginger Honey',sizes:[{l:'$5.00',p:5.0}]},
+  ]
+};
+function buildSection(id,items){
+  const c=document.getElementById(id);
+  items.forEach(item=>{
+    const d=document.createElement('div');
+    d.className='menu-item';
+    const crowd=item.desc==='Crowd Favourite'?'<span class="crowd-badge">Crowd Fave</span>':'';
+    const sig=id==='s-signature'?'<span class="sig-badge">Signature</span>':'';
+    const desc=item.desc&&item.desc!=='Crowd Favourite'?`<div class="item-desc">${item.desc}</div>`:'';
+    d.innerHTML=`<div class="item-name">${item.name}${sig}${crowd}</div>${desc}<div class="size-row">${item.sizes.map(s=>`<button class="size-btn" onclick="selectSize(event,'${item.name}',${s.p},'${s.l}')">${s.l}</button>`).join('')}</div>`;
+    c.appendChild(d);
+  });
+}
+function buildAddons(id,labels){
+  const c=document.getElementById(id);
+  labels.forEach(l=>{
+    const b=document.createElement('button');
+    b.className='add-on-btn';b.textContent=l;
+    const price=l.includes('0.80')?0.8:0.6;
+    b.onclick=()=>toggleAddon(b,l,price);
+    c.appendChild(b);
+  });
+}
+function selectSize(e,name,price,sizeLabel){
+  e.stopPropagation();
+  document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));
+  e.target.classList.add('selected');
+  selItem=name;selSize=sizeLabel;selPrice=price;updateSummary();
+}
+function toggleAddon(btn,label,price){
+  btn.classList.toggle('selected');
+  if(btn.classList.contains('selected')){selAddons.push({name:label,price});}
+  else{selAddons=selAddons.filter(a=>a.name!==label);}
+  updateSummary();
+}
+function updateSummary(){
+  if(!selItem)return;
+  const addonTotal=selAddons.reduce((s,a)=>s+a.price,0);
+  const total=selPrice+addonTotal;
+  document.getElementById('order-summary').style.display='block';
+  document.getElementById('sum-item').textContent=selItem;
+  document.getElementById('sum-size').textContent=selSize;
+  if(selAddons.length>0){document.getElementById('sum-addon-row').style.display='flex';document.getElementById('sum-addons').textContent=selAddons.map(a=>a.name).join(', ');}
+  else{document.getElementById('sum-addon-row').style.display='none';}
+  document.getElementById('sum-total').textContent='$'+total.toFixed(2);
+  const btn=document.getElementById('order-btn');
+  btn.disabled=false;btn.textContent='Place order — $'+total.toFixed(2);
+}
+async function placeOrder(){
+  if(!selItem)return;
+  const desc=selItem+' ('+selSize+')'+(selAddons.length?' + '+selAddons.map(a=>a.name).join(', '):'');
+  document.getElementById('success-desc').textContent=desc;
+  await addStampSilent();
+  document.getElementById('order-form').style.display='none';
+  document.getElementById('order-success').style.display='block';
+}
+function resetOrder(){
+  selItem=null;selSize=null;selPrice=0;selAddons=[];
+  document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.add-on-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('order-summary').style.display='none';
+  document.getElementById('order-btn').disabled=true;
+  document.getElementById('order-btn').textContent='Select a drink first';
+  document.getElementById('order-form').style.display='block';
+  document.getElementById('order-success').style.display='none';
+}
+function showTab(tab){
+  ['card','order','menu'].forEach(t=>{
+    document.getElementById('tab-'+t+'-view').style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+}
+async function init(){
+  try{
+    const{error}=await db.from('customers').select('id').limit(1);
+    if(error)throw error;
+    document.getElementById('loading-view').style.display='none';
+    document.getElementById('login-view').style.display='block';
+    buildSection('s-coffee',MENU.coffee);
+    buildSection('s-superfood',MENU.superfood);
+    buildSection('s-signature',MENU.signature);
+    buildSection('s-ice',MENU.ice);
+    buildSection('s-tea',MENU.tea);
+    buildAddons('milk-addons',['Soy +$0.80','Oat +$0.80','Coconut +$0.80','Almond +$0.80','Decaf +$0.80']);
+    buildAddons('syrup-addons',['Caramel +$0.60','Vanilla +$0.60','Hazelnut +$0.60']);
+  }catch(e){document.getElementById('loading-view').textContent='Connection error: '+e.message;}
+}
+async function loginOrRegister(){
+  const name=document.getElementById('inp-name').value.trim();
+  const email=document.getElementById('inp-email').value.trim().toLowerCase();
+  const err=document.getElementById('login-err');
+  if(!name){err.textContent='Please enter your name.';return;}
+  if(!email.includes('@')){err.textContent='Please enter a valid email.';return;}
+  err.textContent='Finding your card...';
+  try{
+    const{data:ex}=await db.from('customers').select('id,name,created_at').eq('email',email).limit(1);
+    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at);}
+    else{
+      const{data:cr,error}=await db.from('customers').insert({name,email}).select();
+      if(error)throw error;
+      customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at);
+    }
+    err.textContent='';
+  }catch(e){err.textContent='Error: '+e.message;}
+}
+async function loadCard(name,createdAt){
+  const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
+  const{data:r}=await db.from('rewards').select('id').eq('customer_id',customerId);
+  totalStamps=s?s.length:0;rewardsEarned=r?r.length:0;stamps=totalStamps%TOTAL;
+  document.getElementById('login-view').style.display='none';
+  document.getElementById('main-view').style.display='block';
+  document.getElementById('customer-row').style.display='flex';
+  document.getElementById('avatar').textContent=name.charAt(0).toUpperCase();
+  document.getElementById('cname').textContent=name;
+  const joined=new Date(createdAt);
+  document.getElementById('csince').textContent='Member since '+joined.toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
+  renderCard();
+}
+async function addStampSilent(){
+  const{error}=await db.from('stamps').insert({customer_id:customerId});
+  if(!error){totalStamps++;stamps=totalStamps%TOTAL;if(stamps===0)stamps=TOTAL;renderCard();}
+}
+async function redeemReward(){
+  const{error}=await db.from('rewards').insert({customer_id:customerId});
+  if(error){showToast('Error. Try again.');return;}
+  rewardsEarned++;stamps=0;showToast('Enjoy your free coffee!');renderCard();
+}
+function logout(){
+  customerId=null;stamps=0;totalStamps=0;rewardsEarned=0;
+  document.getElementById('login-view').style.display='block';
+  document.getElementById('main-view').style.display='none';
+  document.getElementById('customer-row').style.display='none';
+  document.getElementById('inp-name').value='';document.getElementById('inp-email').value='';
+}
+function renderCard(){
+  const grid=document.getElementById('stamp-grid');
+  grid.innerHTML='';
+  for(let i=0;i<TOTAL;i++){
+    const s=document.createElement('div');
+    s.className='stamp'+(i<stamps?' filled':'');
+    if(i<stamps)s.innerHTML=`<svg viewBox="0 0 24 24" fill="none"><path d="M6 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1H6V2z" fill="#1B4332"/><path d="M5 4h14l-1.5 13A2 2 0 0 1 15.5 19h-7A2 2 0 0 1 6.5 17L5 4z" fill="#1B4332"/><path d="M19 7h1a2 2 0 0 1 0 4h-1" stroke="#1B4332" stroke-width="1.5" stroke-linecap="round"/><rect x="7" y="20" width="10" height="1.5" rx="0.75" fill="#1B4332"/></svg>`;
+    grid.appendChild(s);
+  }
+  const pct=Math.round((stamps/TOTAL)*100);
+  document.getElementById('bar-fill').style.width=pct+'%';
+  document.getElementById('stamp-count').textContent=stamps+' / '+TOTAL;
+  document.getElementById('total-val').textContent=totalStamps;
+  document.getElementById('rewards-val').textContent=rewardsEarned;
+  document.getElementById('saved-val').textContent='$'+Math.round(rewardsEarned*5.5);
+  const remaining=TOTAL-stamps;
+  const pill=document.getElementById('reward-pill');
+  const rtext=document.getElementById('reward-text');
+  if(stamps>=TOTAL){
+    pill.classList.add('earned');rtext.classList.add('earned');
+    rtext.textContent='Free coffee ready to redeem!';
+    document.getElementById('redeem-btn').style.display='block';
+  }else{
+    pill.classList.remove('earned');rtext.classList.remove('earned');
+    rtext.textContent=remaining+' more stamp'+(remaining!==1?'s':'')+' for a free coffee';
+    document.getElementById('redeem-btn').style.display='none';
+  }
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+init();
+</script>
+</body>
+</html>
