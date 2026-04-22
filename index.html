@@ -1,4 +1,4 @@
-#<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -52,18 +52,19 @@
     .add-on-btn.selected { border-color: #1B4332; background: #1B4332; color: #fff; }
     .sig-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FEE2E2; color: #991B1B; font-weight: 500; margin-left: 6px; vertical-align: middle; }
     .crowd-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FEF3C7; color: #92400E; font-weight: 500; margin-left: 6px; vertical-align: middle; }
-    /* Cart */
+    .free-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FEF9C3; color: #92400E; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+    .free-coffee-banner { background: #FEF9C3; border: 1px solid #FBBF24; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #92400E; font-weight: 500; text-align: center; }
     .cart-section { background: #f7f7f7; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
     .cart-title { font-size: 12px; font-weight: 600; color: #222; margin-bottom: 10px; display: flex; justify-content: space-between; }
     .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #eee; font-size: 13px; }
     .cart-item:last-child { border-bottom: none; }
     .cart-item-name { color: #222; flex: 1; }
     .cart-item-price { color: #555; font-weight: 500; margin: 0 10px; }
+    .cart-item-price.free { color: #1B4332; font-weight: 700; }
     .cart-item-remove { color: #c0392b; cursor: pointer; font-size: 16px; font-weight: 700; padding: 0 4px; }
     .cart-total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding-top: 10px; border-top: 1px solid #ddd; margin-top: 6px; }
     .cart-stamps { font-size: 11px; color: #1B4332; font-weight: 500; margin-top: 6px; text-align: center; }
     .empty-cart { text-align: center; padding: 16px; color: #888; font-size: 13px; }
-    /* Payment */
     .payment-box { background: #f7f7f7; border-radius: 10px; padding: 14px; margin: 12px 0; }
     .payment-title { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 12px; }
     #card-element { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
@@ -74,6 +75,7 @@
     .main-btn { width: 100%; padding: 13px; border-radius: 10px; background: #1B4332; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
     .main-btn:hover { background: #145228; }
     .main-btn:disabled { background: #eee; color: #aaa; cursor: default; }
+    .free-btn { width: 100%; padding: 13px; border-radius: 10px; background: #FBBF24; color: #78350F; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 8px; }
     .redeem-btn { width: 100%; padding: 13px; border-radius: 10px; background: #FBBF24; color: #78350F; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 8px; }
     .outline-btn { width: 100%; padding: 9px; border-radius: 10px; border: 1px solid #ddd; background: transparent; cursor: pointer; color: #888; font-size: 12px; margin-top: 8px; }
     input.field { width: 100%; padding: 10px 12px; font-size: 14px; border-radius: 10px; border: 1px solid #ddd; background: #fff; color: #222; margin-bottom: 10px; outline: none; }
@@ -146,13 +148,17 @@
         <div class="stat"><div class="stat-val" id="rewards-val">0</div><div class="stat-lbl">free earned</div></div>
         <div class="stat"><div class="stat-val" id="saved-val">$0</div><div class="stat-lbl">saved</div></div>
       </div>
-      <button class="redeem-btn" id="redeem-btn" style="display:none" onclick="redeemReward()">Redeem free coffee</button>
+      <button class="redeem-btn" id="redeem-btn" style="display:none" onclick="showTab('order')">Claim my free coffee</button>
       <button class="outline-btn" onclick="logout()">Sign out</button>
     </div>
 
     <!-- ORDER TAB -->
     <div id="tab-order-view" class="phone-body" style="display:none">
       <div id="order-form">
+        <!-- Free coffee banner -->
+        <div id="free-banner" class="free-coffee-banner" style="display:none">
+          🎉 You have a FREE coffee! Your next drink is on us — add it to your cart below!
+        </div>
 
         <!-- Cart -->
         <div class="cart-section">
@@ -169,15 +175,15 @@
 
         <!-- Add-ons -->
         <div class="add-on-section">
-          <div class="add-on-title">Default milk alternatives for order (+$0.80)</div>
+          <div class="add-on-title">Milk alternatives (+$0.80)</div>
           <div class="add-on-grid" id="milk-addons"></div>
         </div>
         <div class="add-on-section">
-          <div class="add-on-title">Default syrups for order (+$0.60)</div>
+          <div class="add-on-title">Syrups (+$0.60)</div>
           <div class="add-on-grid" id="syrup-addons"></div>
         </div>
 
-        <!-- Menu to add items -->
+        <!-- Menu -->
         <div class="section-title">Coffee</div>
         <div id="s-coffee"></div>
         <div class="section-title">Superfood Latte</div>
@@ -191,19 +197,26 @@
 
         <!-- Payment -->
         <div id="payment-section" style="display:none">
-          <div class="pay-methods">
-            <div class="pay-method active" id="pm-card" onclick="setPayMethod('card')">Pay by card</div>
-            <div class="pay-method" id="pm-counter" onclick="setPayMethod('counter')">Pay at counter</div>
-          </div>
-          <div id="card-payment">
-            <div class="payment-box">
-              <div class="payment-title">Card details</div>
-              <div id="card-element"></div>
-              <div class="err" id="card-err"></div>
+          <div id="paid-payment">
+            <div class="pay-methods">
+              <div class="pay-method active" id="pm-card" onclick="setPayMethod('card')">Pay by card</div>
+              <div class="pay-method" id="pm-counter" onclick="setPayMethod('counter')">Pay at counter</div>
+            </div>
+            <div id="card-payment">
+              <div class="payment-box">
+                <div class="payment-title">Card details</div>
+                <div id="card-element"></div>
+                <div class="err" id="card-err"></div>
+              </div>
+            </div>
+            <div id="counter-payment" style="display:none">
+              <div class="counter-note">Your order will be sent to the counter. Pay with cash or card when you pick up!</div>
             </div>
           </div>
-          <div id="counter-payment" style="display:none">
-            <div class="counter-note">Your order will be sent to the counter. Pay with cash or card when you pick up!</div>
+          <div id="free-payment" style="display:none">
+            <div class="counter-note" style="background:#ECFDF5;border-color:#6EE7A0;color:#1B4332;font-size:13px;padding:12px">
+              🎉 Your free coffee is ready! Just show this to your barista — no payment needed!
+            </div>
           </div>
         </div>
 
@@ -212,7 +225,7 @@
 
       <div id="order-success" style="display:none">
         <div class="success-box">
-          <div style="font-size:44px;margin-bottom:12px">✅</div>
+          <div style="font-size:44px;margin-bottom:12px" id="success-emoji">✅</div>
           <div style="font-size:17px;font-weight:700;color:#222;margin-bottom:6px">Order received!</div>
           <div style="font-size:13px;color:#888;margin-bottom:4px" id="success-msg">Payment successful!</div>
           <div style="font-size:13px;font-weight:600;color:#1B4332;margin-bottom:12px" id="success-stamps">+0 stamps added!</div>
@@ -228,37 +241,26 @@
       <div style="font-size:13px;color:#888;margin-bottom:14px">Full menu — go to Order tab to place an order.</div>
       <div class="section-title">Coffee — S / M / L</div>
       <div style="font-size:12px;color:#555;line-height:2">
-        Espresso — $4.50<br>
-        Flat White / Latte / Cappuccino — S $5.20 · M $5.50 · L $6.50<br>
-        Long Black / Americano — S $5.20 · M $5.50<br>
-        Hot Chocolate / Mocha — M $5.50 · L $6.50<br>
-        Macchiato / Piccolo / Fluffy — $5.00<br>
-        <strong>Extra large available on request</strong>
+        Espresso — $4.50<br>Flat White / Latte / Cappuccino — S $5.20 · M $5.50 · L $6.50<br>
+        Long Black / Americano — S $5.20 · M $5.50<br>Hot Chocolate / Mocha — M $5.50 · L $6.50<br>
+        Macchiato / Piccolo / Fluffy — $5.00<br><strong>Extra large available on request</strong>
       </div>
       <div class="section-title">Superfood Latte — M / L</div>
       <div style="font-size:12px;color:#555;line-height:2">
-        Spicy Chai / Sweet Chai — M $6.00 · L $6.50<br>
-        Spiced Pumpkin / Gingerbread — M $6.20 · L $6.70<br>
-        Bananabread / Turkish Delatte — M $6.20 · L $6.70<br>
-        Matcha — M $6.20 · L $6.70
+        Spicy Chai / Sweet Chai — M $6.00 · L $6.50<br>Spiced Pumpkin / Gingerbread — M $6.20 · L $6.70<br>
+        Bananabread / Turkish Delatte — M $6.20 · L $6.70<br>Matcha — M $6.20 · L $6.70
       </div>
       <div class="section-title">TDM Signature <span class="sig-badge">Meetery Fave</span></div>
       <div style="font-size:12px;color:#555;line-height:2.2">
-        Matcha Strawberry Cloud — $10.90<br>
-        Pistachio Coco Loco — $11.90<br>
-        Tropical Matcha — $10.90<br>
-        Viral Tiramisu Float — $12.90<br>
-        Spanish Latte — $10.50<br>
-        Turkish Delatte — $10.50
+        Matcha Strawberry Cloud — $10.90<br>Pistachio Coco Loco — $11.90<br>
+        Tropical Matcha — $10.90<br>Viral Tiramisu Float — $12.90<br>
+        Spanish Latte — $10.50<br>Turkish Delatte — $10.50
       </div>
       <div class="section-title">Over Ice / Frappe — R / L</div>
       <div style="font-size:12px;color:#555;line-height:2">
-        Wild Berry Frappe — R $8.00 · L $9.50<br>
-        Spiced Pumpkin / Gingerbread — R $7.00 · L $8.30<br>
-        Bananabread — R $7.00 · L $8.30<br>
-        Matcha — R $7.00 · L $8.30<br>
-        Iced Americano — R $5.90 · L $6.50<br>
-        Chocolate / Mocha / Latte — R $6.70 · L $8.00<br>
+        Wild Berry Frappe — R $8.00 · L $9.50<br>Spiced Pumpkin / Gingerbread — R $7.00 · L $8.30<br>
+        Bananabread — R $7.00 · L $8.30<br>Matcha — R $7.00 · L $8.30<br>
+        Iced Americano — R $5.90 · L $6.50<br>Chocolate / Mocha / Latte — R $6.70 · L $8.00<br>
         Chai Sweet or Spicy — R $6.70 · L $8.00
       </div>
       <div class="section-title">Tea — $5.00</div>
@@ -266,10 +268,8 @@
         English Breakfast · Earl Grey · Green Lime · Peppermint · Lemon Ginger Honey
       </div>
       <div style="font-size:11px;color:#888;margin-top:14px;padding:10px;background:#f7f7f7;border-radius:10px;line-height:1.8">
-        <strong>Add-ons:</strong><br>
-        Soy / Oat / Coconut / Almond / Decaf +$0.80 (iced +$1.00)<br>
-        Caramel / Vanilla / Hazelnut syrup +$0.60<br>
-        Make it a Frappe +$1.50 · Blend with ice cream +$4.00
+        <strong>Add-ons:</strong><br>Soy / Oat / Coconut / Almond / Decaf +$0.80 (iced +$1.00)<br>
+        Caramel / Vanilla / Hazelnut syrup +$0.60<br>Make it a Frappe +$1.50 · Blend with ice cream +$4.00
       </div>
       <button class="main-btn" style="margin-top:14px" onclick="showTab('order')">Go to order screen</button>
     </div>
@@ -289,6 +289,7 @@ let customerId=null,stamps=0,totalStamps=0,rewardsEarned=0;
 let cart=[];
 let payMethod='card';
 let selAddons=[];
+let freeRewardUsed=false;
 
 const MENU={
   coffee:[
@@ -338,6 +339,8 @@ const MENU={
   ]
 };
 
+function hasFreeReward(){return stamps>=TOTAL&&!freeRewardUsed;}
+
 function buildSection(id,items){
   const c=document.getElementById(id);
   items.forEach(item=>{
@@ -371,9 +374,11 @@ function toggleAddon(btn,label,price){
 function addToCart(name,price,size){
   const addonTotal=selAddons.reduce((s,a)=>s+a.price,0);
   const addonNames=selAddons.map(a=>a.name).join(', ');
-  cart.push({name,price:price+addonTotal,basePrice:price,size,addons:addonNames,id:Date.now()});
+  // First item is free if reward is available and no free item in cart yet
+  const isFree=hasFreeReward()&&!cart.some(i=>i.free);
+  cart.push({name,price:isFree?0:price+addonTotal,basePrice:price,size,addons:addonNames,id:Date.now(),free:isFree});
   renderCart();
-  showToast(name+' added to cart!');
+  showToast(isFree?name+' added FREE! 🎉':name+' added to cart!');
 }
 
 function removeFromCart(id){
@@ -386,6 +391,10 @@ function renderCart(){
   const footer=document.getElementById('cart-footer');
   const badge=document.getElementById('cart-badge');
   const countEl=document.getElementById('cart-count');
+  const freeBanner=document.getElementById('free-banner');
+
+  // Show free banner if reward available
+  freeBanner.style.display=hasFreeReward()&&!cart.some(i=>i.free)?'block':'none';
 
   if(cart.length===0){
     container.innerHTML='<div class="empty-cart">No items yet — add drinks below!</div>';
@@ -400,16 +409,20 @@ function renderCart(){
 
   container.innerHTML=cart.map(i=>`
     <div class="cart-item">
-      <span class="cart-item-name">${i.name} (${i.size})${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}</span>
-      <span class="cart-item-price">$${i.price.toFixed(2)}</span>
+      <span class="cart-item-name">${i.name} (${i.size})${i.free?'<span class="free-badge">FREE</span>':''}${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}</span>
+      <span class="cart-item-price ${i.free?'free':''}">${i.free?'FREE':'$'+i.price.toFixed(2)}</span>
       <span class="cart-item-remove" onclick="removeFromCart(${i.id})">×</span>
     </div>
   `).join('');
 
   const total=cart.reduce((s,i)=>s+i.price,0);
-  const stampCount=cart.length;
+  const stampCount=cart.filter(i=>!i.free).length;
+  const freeCount=cart.filter(i=>i.free).length;
   document.getElementById('cart-total').textContent='$'+total.toFixed(2);
-  document.getElementById('cart-stamps').textContent='+'+stampCount+' stamp'+(stampCount!==1?'s':'')+' with this order';
+
+  let stampsText='+'+stampCount+' stamp'+(stampCount!==1?'s':'');
+  if(freeCount>0)stampsText+=' · 1 free reward used';
+  document.getElementById('cart-stamps').textContent=stampsText;
   footer.style.display='block';
   badge.style.display='flex';
   badge.textContent=cart.length;
@@ -418,9 +431,20 @@ function renderCart(){
   document.getElementById('payment-section').style.display='block';
   const btn=document.getElementById('order-btn');
   btn.disabled=false;
-  btn.textContent=payMethod==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
 
-  if(!cardElement){
+  const isWholeOrderFree=total===0;
+  document.getElementById('paid-payment').style.display=isWholeOrderFree?'none':'block';
+  document.getElementById('free-payment').style.display=isWholeOrderFree?'block':'none';
+
+  if(isWholeOrderFree){
+    btn.textContent='Claim my free coffee — $0.00';
+    btn.className='free-btn';
+  } else {
+    btn.className='main-btn';
+    btn.textContent=payMethod==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
+  }
+
+  if(!isWholeOrderFree&&!cardElement){
     cardElement=elements.create('card',{style:{base:{fontSize:'14px',color:'#222'}}});
     cardElement.mount('#card-element');
   }
@@ -434,23 +458,38 @@ function setPayMethod(method){
   document.getElementById('counter-payment').style.display=method==='counter'?'block':'none';
   if(cart.length>0){
     const total=cart.reduce((s,i)=>s+i.price,0);
-    const btn=document.getElementById('order-btn');
-    btn.textContent=method==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
+    if(total>0){
+      document.getElementById('order-btn').textContent=method==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
+    }
   }
 }
 
 async function handleOrder(){
   if(cart.length===0)return;
   const total=cart.reduce((s,i)=>s+i.price,0);
-  const stampCount=cart.length;
-  const desc=cart.map(i=>i.name+' ('+i.size+')').join(', ');
+  const paidItems=cart.filter(i=>!i.free);
+  const freeItems=cart.filter(i=>i.free);
+  const stampCount=paidItems.length;
 
   document.getElementById('order-btn').disabled=true;
   document.getElementById('order-btn').textContent='Processing...';
 
+  // Free only order — no payment needed
+  if(total===0){
+    if(freeItems.length>0){
+      await db.from('rewards').insert({customer_id:customerId});
+      rewardsEarned++;freeRewardUsed=true;
+    }
+    if(stampCount>0)await addMultipleStamps(stampCount);
+    stamps=0;renderCard();
+    showSuccess(stampCount,freeItems.length>0,'Order placed — enjoy your free coffee!');
+    return;
+  }
+
   if(payMethod==='counter'){
-    await addMultipleStamps(stampCount);
-    showSuccess(desc,stampCount,'Order sent to counter. Pay when you pick up!');
+    if(freeItems.length>0){await db.from('rewards').insert({customer_id:customerId});rewardsEarned++;freeRewardUsed=true;}
+    if(stampCount>0)await addMultipleStamps(stampCount);
+    showSuccess(stampCount,freeItems.length>0,'Order sent to counter. Pay when you pick up!');
     return;
   }
 
@@ -458,14 +497,11 @@ async function handleOrder(){
     const res=await fetch('/api/checkout',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({amount:total,description:desc})
+      body:JSON.stringify({amount:total,description:cart.map(i=>i.name+' ('+i.size+')').join(', ')})
     });
     const{clientSecret,error:apiErr}=await res.json();
     if(apiErr)throw new Error(apiErr);
-
-    const{error:stripeErr,paymentIntent}=await stripeObj.confirmCardPayment(clientSecret,{
-      payment_method:{card:cardElement}
-    });
+    const{error:stripeErr,paymentIntent}=await stripeObj.confirmCardPayment(clientSecret,{payment_method:{card:cardElement}});
     if(stripeErr){
       document.getElementById('card-err').textContent=stripeErr.message;
       document.getElementById('order-btn').disabled=false;
@@ -473,22 +509,26 @@ async function handleOrder(){
       return;
     }
     if(paymentIntent.status==='succeeded'){
-      await addMultipleStamps(stampCount);
-      showSuccess(desc,stampCount,'Payment successful!');
+      if(freeItems.length>0){await db.from('rewards').insert({customer_id:customerId});rewardsEarned++;freeRewardUsed=true;}
+      if(stampCount>0)await addMultipleStamps(stampCount);
+      showSuccess(stampCount,freeItems.length>0,'Payment successful!');
     }
   }catch(e){
     document.getElementById('card-err').textContent='Payment error: '+e.message;
     document.getElementById('order-btn').disabled=false;
-    const total2=cart.reduce((s,i)=>s+i.price,0);
-    document.getElementById('order-btn').textContent='Pay $'+total2.toFixed(2)+' by card';
+    document.getElementById('order-btn').textContent='Pay $'+total.toFixed(2)+' by card';
   }
 }
 
-function showSuccess(desc,stampCount,msg){
+function showSuccess(stampCount,usedFree,msg){
+  document.getElementById('success-emoji').textContent=usedFree?'🎉':'✅';
   document.getElementById('success-msg').textContent=msg;
-  document.getElementById('success-stamps').textContent='+'+stampCount+' stamp'+(stampCount!==1?'s':'')+' added to your card!';
+  let stampsText='';
+  if(stampCount>0)stampsText='+'+stampCount+' stamp'+(stampCount!==1?'s':'')+' added!';
+  if(usedFree)stampsText+=(stampsText?' · ':'')+'Free coffee redeemed!';
+  document.getElementById('success-stamps').textContent=stampsText;
   const itemsEl=document.getElementById('success-items');
-  itemsEl.innerHTML=cart.map(i=>`<div class="success-item-row"><span>${i.name} (${i.size})</span><span>$${i.price.toFixed(2)}</span></div>`).join('');
+  itemsEl.innerHTML=cart.map(i=>`<div class="success-item-row"><span>${i.name} (${i.size})${i.free?' 🎉 FREE':''}</span><span>${i.free?'FREE':'$'+i.price.toFixed(2)}</span></div>`).join('');
   document.getElementById('order-form').style.display='none';
   document.getElementById('order-success').style.display='block';
 }
@@ -496,20 +536,16 @@ function showSuccess(desc,stampCount,msg){
 async function addMultipleStamps(count){
   const inserts=Array.from({length:count},()=>({customer_id:customerId}));
   const{error}=await db.from('stamps').insert(inserts);
-  if(!error){
-    totalStamps+=count;
-    stamps=totalStamps%TOTAL;
-    if(stamps===0&&totalStamps>0)stamps=TOTAL;
-    renderCard();
-  }
+  if(!error){totalStamps+=count;stamps=totalStamps%TOTAL;renderCard();}
 }
 
 function resetOrder(){
-  cart=[];cardElement=null;payMethod='card';selAddons=[];
+  cart=[];cardElement=null;payMethod='card';selAddons=[];freeRewardUsed=false;
   document.querySelectorAll('.add-on-btn').forEach(b=>b.classList.remove('selected'));
   document.getElementById('payment-section').style.display='none';
   document.getElementById('order-btn').disabled=true;
   document.getElementById('order-btn').textContent='Add drinks to your cart first';
+  document.getElementById('order-btn').className='main-btn';
   document.getElementById('order-form').style.display='block';
   document.getElementById('order-success').style.display='none';
   document.getElementById('card-err').textContent='';
@@ -522,6 +558,7 @@ function showTab(tab){
     document.getElementById('tab-'+t+'-view').style.display=t===tab?'block':'none';
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
+  if(tab==='order')renderCart();
 }
 
 async function init(){
@@ -562,7 +599,9 @@ async function loginOrRegister(){
 async function loadCard(name,createdAt){
   const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
   const{data:r}=await db.from('rewards').select('id').eq('customer_id',customerId);
-  totalStamps=s?s.length:0;rewardsEarned=r?r.length:0;stamps=totalStamps%TOTAL;
+  totalStamps=s?s.length:0;rewardsEarned=r?r.length:0;
+  stamps=totalStamps%TOTAL;
+  if(stamps===0&&totalStamps>0&&rewardsEarned*TOTAL<totalStamps)stamps=TOTAL;
   document.getElementById('login-view').style.display='none';
   document.getElementById('main-view').style.display='block';
   document.getElementById('customer-row').style.display='flex';
@@ -574,13 +613,11 @@ async function loadCard(name,createdAt){
 }
 
 async function redeemReward(){
-  const{error}=await db.from('rewards').insert({customer_id:customerId});
-  if(error){showToast('Error. Try again.');return;}
-  rewardsEarned++;stamps=0;showToast('Enjoy your free coffee!');renderCard();
+  showTab('order');
 }
 
 function logout(){
-  customerId=null;stamps=0;totalStamps=0;rewardsEarned=0;
+  customerId=null;stamps=0;totalStamps=0;rewardsEarned=0;freeRewardUsed=false;
   document.getElementById('login-view').style.display='block';
   document.getElementById('main-view').style.display='none';
   document.getElementById('customer-row').style.display='none';
@@ -607,7 +644,7 @@ function renderCard(){
   const rtext=document.getElementById('reward-text');
   if(stamps>=TOTAL){
     pill.classList.add('earned');rtext.classList.add('earned');
-    rtext.textContent='Free coffee ready to redeem!';
+    rtext.textContent='🎉 You have a FREE coffee waiting!';
     document.getElementById('redeem-btn').style.display='block';
   }else{
     pill.classList.remove('earned');rtext.classList.remove('earned');
