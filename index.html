@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Daily Meetery Café — Loyalty Card</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1B4332; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 20px; }
@@ -66,6 +67,15 @@
     .err { font-size: 12px; color: #c0392b; margin-top: 6px; }
     .loading { text-align: center; padding: 30px 20px; font-size: 13px; color: #888; }
     .success-box { text-align: center; padding: 24px 16px; }
+    /* Payment */
+    .payment-box { background: #f7f7f7; border-radius: 10px; padding: 14px; margin: 12px 0; }
+    .payment-title { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 12px; }
+    #card-element { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+    #card-element.StripeElement--focus { border-color: #1B4332; }
+    .pay-methods { display: flex; gap: 8px; margin-bottom: 12px; }
+    .pay-method { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-size: 12px; text-align: center; color: #555; }
+    .pay-method.active { border-color: #1B4332; color: #1B4332; font-weight: 600; }
+    .counter-note { background: #FEF9C3; border: 1px solid #FBBF24; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #92400E; text-align: center; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -110,6 +120,7 @@
       <button class="nav-tab" onclick="showTab('menu')" id="tab-menu">Full Menu</button>
     </div>
 
+    <!-- CARD TAB -->
     <div id="tab-card-view" class="phone-body">
       <div class="toast" id="toast"></div>
       <div style="display:flex;justify-content:space-between;margin-bottom:10px">
@@ -128,6 +139,7 @@
       <button class="outline-btn" onclick="logout()">Sign out</button>
     </div>
 
+    <!-- ORDER TAB -->
     <div id="tab-order-view" class="phone-body" style="display:none">
       <div id="order-form">
         <div class="section-title">Coffee</div>
@@ -154,13 +166,33 @@
           <div class="summary-row" id="sum-addon-row" style="display:none"><span style="color:#888">Add-ons</span><span id="sum-addons" style="font-weight:500">—</span></div>
           <div class="summary-total"><span>Total</span><span id="sum-total">$0.00</span></div>
         </div>
-        <button class="main-btn" id="order-btn" onclick="placeOrder()" disabled>Select a drink first</button>
+
+        <!-- Payment method selector -->
+        <div id="payment-section" style="display:none">
+          <div class="pay-methods">
+            <div class="pay-method active" id="pm-card" onclick="setPayMethod('card')">Pay by card</div>
+            <div class="pay-method" id="pm-counter" onclick="setPayMethod('counter')">Pay at counter</div>
+          </div>
+          <div id="card-payment">
+            <div class="payment-box">
+              <div class="payment-title">Card details</div>
+              <div id="card-element"></div>
+              <div class="err" id="card-err"></div>
+            </div>
+          </div>
+          <div id="counter-payment" style="display:none">
+            <div class="counter-note">Your order will be sent to the counter. Pay with cash or card when you pick up!</div>
+          </div>
+        </div>
+
+        <button class="main-btn" id="order-btn" onclick="handleOrder()" disabled>Select a drink first</button>
       </div>
+
       <div id="order-success" style="display:none">
         <div class="success-box">
           <div style="font-size:44px;margin-bottom:12px">✅</div>
           <div style="font-size:17px;font-weight:700;color:#222;margin-bottom:6px">Order received!</div>
-          <div style="font-size:13px;color:#888;margin-bottom:16px">Your barista is on it. +1 stamp added!</div>
+          <div style="font-size:13px;color:#888;margin-bottom:16px" id="success-msg">Your barista is on it. +1 stamp added!</div>
           <div class="reward-pill" style="justify-content:center"><div class="reward-text" id="success-desc">—</div></div>
           <button class="main-btn" onclick="resetOrder()">Order again</button>
           <button class="outline-btn" onclick="showTab('card')">View my card</button>
@@ -168,6 +200,7 @@
       </div>
     </div>
 
+    <!-- FULL MENU TAB -->
     <div id="tab-menu-view" class="phone-body" style="display:none">
       <div style="font-size:13px;color:#888;margin-bottom:14px">Full menu — go to Order tab to place an order.</div>
       <div class="section-title">Coffee — S / M / L</div>
@@ -199,7 +232,7 @@
       <div style="font-size:12px;color:#555;line-height:2">
         Wild Berry Frappe — R $8.00 · L $9.50<br>
         Spiced Pumpkin / Gingerbread — R $7.00 · L $8.30<br>
-        Bananabread <span class="crowd-badge">Crowd Fave</span> — R $7.00 · L $8.30<br>
+        Bananabread — R $7.00 · L $8.30<br>
         Matcha — R $7.00 · L $8.30<br>
         Iced Americano — R $5.90 · L $6.50<br>
         Chocolate / Mocha / Latte — R $6.70 · L $8.00<br>
@@ -223,10 +256,16 @@
 <script>
 const SURL='https://jxlalnsemmghxukapvxv.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
+const STRIPE_PK='pk_test_51TGz94Pik0Ketj6i4Vtm2XFC3p6woiSfTfzrPhTwwDEgEYGpbXhznj3LRwH3OalhjBUfZVv3XeV8GRJ9XCIHbV7400MkQ0jJOL';
 const TOTAL=8;
 const db=supabase.createClient(SURL,SKEY);
+const stripeObj=Stripe(STRIPE_PK);
+const elements=stripeObj.elements();
+let cardElement=null;
 let customerId=null,stamps=0,totalStamps=0,rewardsEarned=0;
 let selItem=null,selSize=null,selPrice=0,selAddons=[];
+let payMethod='card';
+
 const MENU={
   coffee:[
     {name:'Espresso',sizes:[{l:'Single $4.50',p:4.5}]},
@@ -274,6 +313,7 @@ const MENU={
     {name:'Lemon Ginger Honey',sizes:[{l:'$5.00',p:5.0}]},
   ]
 };
+
 function buildSection(id,items){
   const c=document.getElementById(id);
   items.forEach(item=>{
@@ -286,6 +326,7 @@ function buildSection(id,items){
     c.appendChild(d);
   });
 }
+
 function buildAddons(id,labels){
   const c=document.getElementById(id);
   labels.forEach(l=>{
@@ -296,55 +337,121 @@ function buildAddons(id,labels){
     c.appendChild(b);
   });
 }
+
 function selectSize(e,name,price,sizeLabel){
   e.stopPropagation();
   document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));
   e.target.classList.add('selected');
   selItem=name;selSize=sizeLabel;selPrice=price;updateSummary();
 }
+
 function toggleAddon(btn,label,price){
   btn.classList.toggle('selected');
   if(btn.classList.contains('selected')){selAddons.push({name:label,price});}
   else{selAddons=selAddons.filter(a=>a.name!==label);}
   updateSummary();
 }
+
+function setPayMethod(method){
+  payMethod=method;
+  document.getElementById('pm-card').classList.toggle('active',method==='card');
+  document.getElementById('pm-counter').classList.toggle('active',method==='counter');
+  document.getElementById('card-payment').style.display=method==='card'?'block':'none';
+  document.getElementById('counter-payment').style.display=method==='counter'?'block':'none';
+  const total=selPrice+selAddons.reduce((s,a)=>s+a.price,0);
+  const btn=document.getElementById('order-btn');
+  btn.textContent=method==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
+}
+
 function updateSummary(){
   if(!selItem)return;
   const addonTotal=selAddons.reduce((s,a)=>s+a.price,0);
   const total=selPrice+addonTotal;
   document.getElementById('order-summary').style.display='block';
+  document.getElementById('payment-section').style.display='block';
   document.getElementById('sum-item').textContent=selItem;
   document.getElementById('sum-size').textContent=selSize;
   if(selAddons.length>0){document.getElementById('sum-addon-row').style.display='flex';document.getElementById('sum-addons').textContent=selAddons.map(a=>a.name).join(', ');}
   else{document.getElementById('sum-addon-row').style.display='none';}
   document.getElementById('sum-total').textContent='$'+total.toFixed(2);
   const btn=document.getElementById('order-btn');
-  btn.disabled=false;btn.textContent='Place order — $'+total.toFixed(2);
+  btn.disabled=false;
+  btn.textContent=payMethod==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
+  if(!cardElement){
+    cardElement=elements.create('card',{style:{base:{fontSize:'14px',color:'#222'}}});
+    cardElement.mount('#card-element');
+  }
 }
-async function placeOrder(){
+
+async function handleOrder(){
   if(!selItem)return;
   const desc=selItem+' ('+selSize+')'+(selAddons.length?' + '+selAddons.map(a=>a.name).join(', '):'');
-  document.getElementById('success-desc').textContent=desc;
-  await addStampSilent();
-  document.getElementById('order-form').style.display='none';
-  document.getElementById('order-success').style.display='block';
+  const total=selPrice+selAddons.reduce((s,a)=>s+a.price,0);
+  document.getElementById('order-btn').disabled=true;
+  document.getElementById('order-btn').textContent='Processing...';
+
+  if(payMethod==='counter'){
+    await addStampSilent();
+    document.getElementById('success-desc').textContent=desc;
+    document.getElementById('success-msg').textContent='Order sent to counter. +1 stamp added!';
+    document.getElementById('order-form').style.display='none';
+    document.getElementById('order-success').style.display='block';
+    return;
+  }
+
+  try{
+    const res=await fetch('/api/checkout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({amount:total,description:desc})
+    });
+    const{clientSecret,error:apiErr}=await res.json();
+    if(apiErr)throw new Error(apiErr);
+
+    const{error:stripeErr,paymentIntent}=await stripeObj.confirmCardPayment(clientSecret,{
+      payment_method:{card:cardElement}
+    });
+    if(stripeErr){
+      document.getElementById('card-err').textContent=stripeErr.message;
+      document.getElementById('order-btn').disabled=false;
+      document.getElementById('order-btn').textContent='Pay $'+total.toFixed(2)+' by card';
+      return;
+    }
+    if(paymentIntent.status==='succeeded'){
+      await addStampSilent();
+      document.getElementById('success-desc').textContent=desc;
+      document.getElementById('success-msg').textContent='Payment successful! +1 stamp added to your card.';
+      document.getElementById('order-form').style.display='none';
+      document.getElementById('order-success').style.display='block';
+    }
+  }catch(e){
+    document.getElementById('card-err').textContent='Payment error: '+e.message;
+    document.getElementById('order-btn').disabled=false;
+    document.getElementById('order-btn').textContent='Pay $'+total.toFixed(2)+' by card';
+  }
 }
+
 function resetOrder(){
-  selItem=null;selSize=null;selPrice=0;selAddons=[];
+  selItem=null;selSize=null;selPrice=0;selAddons=[];cardElement=null;payMethod='card';
   document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));
   document.querySelectorAll('.add-on-btn').forEach(b=>b.classList.remove('selected'));
   document.getElementById('order-summary').style.display='none';
+  document.getElementById('payment-section').style.display='none';
   document.getElementById('order-btn').disabled=true;
   document.getElementById('order-btn').textContent='Select a drink first';
   document.getElementById('order-form').style.display='block';
   document.getElementById('order-success').style.display='none';
+  document.getElementById('card-err').textContent='';
+  document.getElementById('card-element').innerHTML='';
 }
+
 function showTab(tab){
   ['card','order','menu'].forEach(t=>{
     document.getElementById('tab-'+t+'-view').style.display=t===tab?'block':'none';
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
 }
+
 async function init(){
   try{
     const{error}=await db.from('customers').select('id').limit(1);
@@ -360,6 +467,7 @@ async function init(){
     buildAddons('syrup-addons',['Caramel +$0.60','Vanilla +$0.60','Hazelnut +$0.60']);
   }catch(e){document.getElementById('loading-view').textContent='Connection error: '+e.message;}
 }
+
 async function loginOrRegister(){
   const name=document.getElementById('inp-name').value.trim();
   const email=document.getElementById('inp-email').value.trim().toLowerCase();
@@ -378,6 +486,7 @@ async function loginOrRegister(){
     err.textContent='';
   }catch(e){err.textContent='Error: '+e.message;}
 }
+
 async function loadCard(name,createdAt){
   const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
   const{data:r}=await db.from('rewards').select('id').eq('customer_id',customerId);
@@ -391,15 +500,18 @@ async function loadCard(name,createdAt){
   document.getElementById('csince').textContent='Member since '+joined.toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
   renderCard();
 }
+
 async function addStampSilent(){
   const{error}=await db.from('stamps').insert({customer_id:customerId});
   if(!error){totalStamps++;stamps=totalStamps%TOTAL;if(stamps===0)stamps=TOTAL;renderCard();}
 }
+
 async function redeemReward(){
   const{error}=await db.from('rewards').insert({customer_id:customerId});
   if(error){showToast('Error. Try again.');return;}
   rewardsEarned++;stamps=0;showToast('Enjoy your free coffee!');renderCard();
 }
+
 function logout(){
   customerId=null;stamps=0;totalStamps=0;rewardsEarned=0;
   document.getElementById('login-view').style.display='block';
@@ -407,6 +519,7 @@ function logout(){
   document.getElementById('customer-row').style.display='none';
   document.getElementById('inp-name').value='';document.getElementById('inp-email').value='';
 }
+
 function renderCard(){
   const grid=document.getElementById('stamp-grid');
   grid.innerHTML='';
@@ -435,11 +548,13 @@ function renderCard(){
     document.getElementById('redeem-btn').style.display='none';
   }
 }
+
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3000);
 }
+
 init();
 </script>
 </body>
