@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+#<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -19,8 +19,9 @@
     .customer-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid rgba(110,231,160,0.2); }
     .avatar { width: 34px; height: 34px; border-radius: 50%; background: rgba(110,231,160,0.2); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #6EE7A0; flex-shrink: 0; }
     .nav-tabs { display: flex; border-bottom: 1px solid #f0f0f0; }
-    .nav-tab { flex: 1; padding: 12px 4px; font-size: 12px; font-weight: 500; color: #999; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; }
+    .nav-tab { flex: 1; padding: 12px 4px; font-size: 12px; font-weight: 500; color: #999; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; position: relative; }
     .nav-tab.active { color: #1B4332; border-bottom-color: #1B4332; }
+    .cart-badge { position: absolute; top: 6px; right: 8px; background: #1B4332; color: #fff; font-size: 10px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     .phone-body { padding: 18px; }
     .stamp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
     .stamp { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px dashed #ddd; background: #f9f9f9; transition: all 0.2s; }
@@ -41,20 +42,36 @@
     .item-name { font-size: 13px; font-weight: 500; color: #222; margin-bottom: 5px; }
     .item-desc { font-size: 11px; color: #888; margin-bottom: 6px; }
     .size-row { display: flex; flex-wrap: wrap; gap: 5px; }
-    .size-btn { padding: 5px 11px; border-radius: 99px; font-size: 11px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #555; transition: all 0.15s; }
+    .size-btn { padding: 5px 11px; border-radius: 99px; font-size: 11px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #555; transition: all 0.15s; display: flex; align-items: center; gap: 4px; }
     .size-btn:hover { border-color: #1B4332; color: #1B4332; }
-    .size-btn.selected { border-color: #1B4332; background: #1B4332; color: #fff; }
+    .add-icon { font-size: 14px; font-weight: 700; color: #1B4332; }
     .add-on-section { background: #f7f7f7; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
     .add-on-title { font-size: 11px; font-weight: 600; color: #555; margin-bottom: 7px; }
     .add-on-grid { display: flex; flex-wrap: wrap; gap: 5px; }
     .add-on-btn { padding: 4px 10px; border-radius: 99px; font-size: 11px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #555; transition: all 0.15s; }
     .add-on-btn.selected { border-color: #1B4332; background: #1B4332; color: #fff; }
-    .order-summary { background: #f7f7f7; border-radius: 10px; padding: 12px; margin: 12px 0; }
-    .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
-    .summary-total { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding-top: 8px; border-top: 1px solid #ddd; margin-top: 6px; }
     .sig-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FEE2E2; color: #991B1B; font-weight: 500; margin-left: 6px; vertical-align: middle; }
     .crowd-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FEF3C7; color: #92400E; font-weight: 500; margin-left: 6px; vertical-align: middle; }
-    .main-btn { width: 100%; padding: 13px; border-radius: 10px; background: #1B4332; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 8px; }
+    /* Cart */
+    .cart-section { background: #f7f7f7; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .cart-title { font-size: 12px; font-weight: 600; color: #222; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-name { color: #222; flex: 1; }
+    .cart-item-price { color: #555; font-weight: 500; margin: 0 10px; }
+    .cart-item-remove { color: #c0392b; cursor: pointer; font-size: 16px; font-weight: 700; padding: 0 4px; }
+    .cart-total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding-top: 10px; border-top: 1px solid #ddd; margin-top: 6px; }
+    .cart-stamps { font-size: 11px; color: #1B4332; font-weight: 500; margin-top: 6px; text-align: center; }
+    .empty-cart { text-align: center; padding: 16px; color: #888; font-size: 13px; }
+    /* Payment */
+    .payment-box { background: #f7f7f7; border-radius: 10px; padding: 14px; margin: 12px 0; }
+    .payment-title { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 12px; }
+    #card-element { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+    .pay-methods { display: flex; gap: 8px; margin-bottom: 12px; }
+    .pay-method { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-size: 12px; text-align: center; color: #555; transition: all 0.15s; }
+    .pay-method.active { border-color: #1B4332; color: #1B4332; font-weight: 600; background: #ECFDF5; }
+    .counter-note { background: #FEF9C3; border: 1px solid #FBBF24; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #92400E; text-align: center; margin-bottom: 8px; }
+    .main-btn { width: 100%; padding: 13px; border-radius: 10px; background: #1B4332; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
     .main-btn:hover { background: #145228; }
     .main-btn:disabled { background: #eee; color: #aaa; cursor: default; }
     .redeem-btn { width: 100%; padding: 13px; border-radius: 10px; background: #FBBF24; color: #78350F; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 8px; }
@@ -67,15 +84,9 @@
     .err { font-size: 12px; color: #c0392b; margin-top: 6px; }
     .loading { text-align: center; padding: 30px 20px; font-size: 13px; color: #888; }
     .success-box { text-align: center; padding: 24px 16px; }
-    /* Payment */
-    .payment-box { background: #f7f7f7; border-radius: 10px; padding: 14px; margin: 12px 0; }
-    .payment-title { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 12px; }
-    #card-element { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
-    #card-element.StripeElement--focus { border-color: #1B4332; }
-    .pay-methods { display: flex; gap: 8px; margin-bottom: 12px; }
-    .pay-method { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-size: 12px; text-align: center; color: #555; }
-    .pay-method.active { border-color: #1B4332; color: #1B4332; font-weight: 600; }
-    .counter-note { background: #FEF9C3; border: 1px solid #FBBF24; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #92400E; text-align: center; margin-bottom: 8px; }
+    .success-items { text-align: left; background: #f7f7f7; border-radius: 10px; padding: 12px; margin: 12px 0; }
+    .success-item-row { font-size: 13px; padding: 4px 0; color: #555; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+    .success-item-row:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
@@ -116,7 +127,7 @@
   <div id="main-view" style="display:none">
     <div class="nav-tabs">
       <button class="nav-tab active" onclick="showTab('card')" id="tab-card">My Card</button>
-      <button class="nav-tab" onclick="showTab('order')" id="tab-order">Order</button>
+      <button class="nav-tab" onclick="showTab('order')" id="tab-order">Order<span class="cart-badge" id="cart-badge" style="display:none">0</span></button>
       <button class="nav-tab" onclick="showTab('menu')" id="tab-menu">Full Menu</button>
     </div>
 
@@ -142,6 +153,31 @@
     <!-- ORDER TAB -->
     <div id="tab-order-view" class="phone-body" style="display:none">
       <div id="order-form">
+
+        <!-- Cart -->
+        <div class="cart-section">
+          <div class="cart-title">
+            <span>Your cart</span>
+            <span id="cart-count" style="color:#888;font-weight:400">0 items</span>
+          </div>
+          <div id="cart-items"><div class="empty-cart">No items yet — add drinks below!</div></div>
+          <div id="cart-footer" style="display:none">
+            <div class="cart-total-row"><span>Total</span><span id="cart-total">$0.00</span></div>
+            <div class="cart-stamps" id="cart-stamps">+0 stamps with this order</div>
+          </div>
+        </div>
+
+        <!-- Add-ons -->
+        <div class="add-on-section">
+          <div class="add-on-title">Default milk alternatives for order (+$0.80)</div>
+          <div class="add-on-grid" id="milk-addons"></div>
+        </div>
+        <div class="add-on-section">
+          <div class="add-on-title">Default syrups for order (+$0.60)</div>
+          <div class="add-on-grid" id="syrup-addons"></div>
+        </div>
+
+        <!-- Menu to add items -->
         <div class="section-title">Coffee</div>
         <div id="s-coffee"></div>
         <div class="section-title">Superfood Latte</div>
@@ -152,22 +188,8 @@
         <div id="s-ice"></div>
         <div class="section-title">Tea</div>
         <div id="s-tea"></div>
-        <div class="add-on-section">
-          <div class="add-on-title">Milk alternatives (+$0.80)</div>
-          <div class="add-on-grid" id="milk-addons"></div>
-        </div>
-        <div class="add-on-section">
-          <div class="add-on-title">Syrups (+$0.60)</div>
-          <div class="add-on-grid" id="syrup-addons"></div>
-        </div>
-        <div class="order-summary" id="order-summary" style="display:none">
-          <div class="summary-row"><span style="color:#888">Item</span><span id="sum-item" style="font-weight:500">—</span></div>
-          <div class="summary-row"><span style="color:#888">Size</span><span id="sum-size" style="font-weight:500">—</span></div>
-          <div class="summary-row" id="sum-addon-row" style="display:none"><span style="color:#888">Add-ons</span><span id="sum-addons" style="font-weight:500">—</span></div>
-          <div class="summary-total"><span>Total</span><span id="sum-total">$0.00</span></div>
-        </div>
 
-        <!-- Payment method selector -->
+        <!-- Payment -->
         <div id="payment-section" style="display:none">
           <div class="pay-methods">
             <div class="pay-method active" id="pm-card" onclick="setPayMethod('card')">Pay by card</div>
@@ -185,15 +207,16 @@
           </div>
         </div>
 
-        <button class="main-btn" id="order-btn" onclick="handleOrder()" disabled>Select a drink first</button>
+        <button class="main-btn" id="order-btn" onclick="handleOrder()" disabled>Add drinks to your cart first</button>
       </div>
 
       <div id="order-success" style="display:none">
         <div class="success-box">
           <div style="font-size:44px;margin-bottom:12px">✅</div>
           <div style="font-size:17px;font-weight:700;color:#222;margin-bottom:6px">Order received!</div>
-          <div style="font-size:13px;color:#888;margin-bottom:16px" id="success-msg">Your barista is on it. +1 stamp added!</div>
-          <div class="reward-pill" style="justify-content:center"><div class="reward-text" id="success-desc">—</div></div>
+          <div style="font-size:13px;color:#888;margin-bottom:4px" id="success-msg">Payment successful!</div>
+          <div style="font-size:13px;font-weight:600;color:#1B4332;margin-bottom:12px" id="success-stamps">+0 stamps added!</div>
+          <div class="success-items" id="success-items"></div>
           <button class="main-btn" onclick="resetOrder()">Order again</button>
           <button class="outline-btn" onclick="showTab('card')">View my card</button>
         </div>
@@ -263,8 +286,9 @@ const stripeObj=Stripe(STRIPE_PK);
 const elements=stripeObj.elements();
 let cardElement=null;
 let customerId=null,stamps=0,totalStamps=0,rewardsEarned=0;
-let selItem=null,selSize=null,selPrice=0,selAddons=[];
+let cart=[];
 let payMethod='card';
+let selAddons=[];
 
 const MENU={
   coffee:[
@@ -322,7 +346,7 @@ function buildSection(id,items){
     const crowd=item.desc==='Crowd Favourite'?'<span class="crowd-badge">Crowd Fave</span>':'';
     const sig=id==='s-signature'?'<span class="sig-badge">Signature</span>':'';
     const desc=item.desc&&item.desc!=='Crowd Favourite'?`<div class="item-desc">${item.desc}</div>`:'';
-    d.innerHTML=`<div class="item-name">${item.name}${sig}${crowd}</div>${desc}<div class="size-row">${item.sizes.map(s=>`<button class="size-btn" onclick="selectSize(event,'${item.name}',${s.p},'${s.l}')">${s.l}</button>`).join('')}</div>`;
+    d.innerHTML=`<div class="item-name">${item.name}${sig}${crowd}</div>${desc}<div class="size-row">${item.sizes.map(s=>`<button class="size-btn" onclick="addToCart('${item.name}',${s.p},'${s.l}')"><span class="add-icon">+</span>${s.l}</button>`).join('')}</div>`;
     c.appendChild(d);
   });
 }
@@ -338,18 +362,68 @@ function buildAddons(id,labels){
   });
 }
 
-function selectSize(e,name,price,sizeLabel){
-  e.stopPropagation();
-  document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));
-  e.target.classList.add('selected');
-  selItem=name;selSize=sizeLabel;selPrice=price;updateSummary();
-}
-
 function toggleAddon(btn,label,price){
   btn.classList.toggle('selected');
   if(btn.classList.contains('selected')){selAddons.push({name:label,price});}
   else{selAddons=selAddons.filter(a=>a.name!==label);}
-  updateSummary();
+}
+
+function addToCart(name,price,size){
+  const addonTotal=selAddons.reduce((s,a)=>s+a.price,0);
+  const addonNames=selAddons.map(a=>a.name).join(', ');
+  cart.push({name,price:price+addonTotal,basePrice:price,size,addons:addonNames,id:Date.now()});
+  renderCart();
+  showToast(name+' added to cart!');
+}
+
+function removeFromCart(id){
+  cart=cart.filter(i=>i.id!==id);
+  renderCart();
+}
+
+function renderCart(){
+  const container=document.getElementById('cart-items');
+  const footer=document.getElementById('cart-footer');
+  const badge=document.getElementById('cart-badge');
+  const countEl=document.getElementById('cart-count');
+
+  if(cart.length===0){
+    container.innerHTML='<div class="empty-cart">No items yet — add drinks below!</div>';
+    footer.style.display='none';
+    badge.style.display='none';
+    document.getElementById('payment-section').style.display='none';
+    document.getElementById('order-btn').disabled=true;
+    document.getElementById('order-btn').textContent='Add drinks to your cart first';
+    countEl.textContent='0 items';
+    return;
+  }
+
+  container.innerHTML=cart.map(i=>`
+    <div class="cart-item">
+      <span class="cart-item-name">${i.name} (${i.size})${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}</span>
+      <span class="cart-item-price">$${i.price.toFixed(2)}</span>
+      <span class="cart-item-remove" onclick="removeFromCart(${i.id})">×</span>
+    </div>
+  `).join('');
+
+  const total=cart.reduce((s,i)=>s+i.price,0);
+  const stampCount=cart.length;
+  document.getElementById('cart-total').textContent='$'+total.toFixed(2);
+  document.getElementById('cart-stamps').textContent='+'+stampCount+' stamp'+(stampCount!==1?'s':'')+' with this order';
+  footer.style.display='block';
+  badge.style.display='flex';
+  badge.textContent=cart.length;
+  countEl.textContent=cart.length+' item'+(cart.length!==1?'s':'');
+
+  document.getElementById('payment-section').style.display='block';
+  const btn=document.getElementById('order-btn');
+  btn.disabled=false;
+  btn.textContent=payMethod==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
+
+  if(!cardElement){
+    cardElement=elements.create('card',{style:{base:{fontSize:'14px',color:'#222'}}});
+    cardElement.mount('#card-element');
+  }
 }
 
 function setPayMethod(method){
@@ -358,44 +432,25 @@ function setPayMethod(method){
   document.getElementById('pm-counter').classList.toggle('active',method==='counter');
   document.getElementById('card-payment').style.display=method==='card'?'block':'none';
   document.getElementById('counter-payment').style.display=method==='counter'?'block':'none';
-  const total=selPrice+selAddons.reduce((s,a)=>s+a.price,0);
-  const btn=document.getElementById('order-btn');
-  btn.textContent=method==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
-}
-
-function updateSummary(){
-  if(!selItem)return;
-  const addonTotal=selAddons.reduce((s,a)=>s+a.price,0);
-  const total=selPrice+addonTotal;
-  document.getElementById('order-summary').style.display='block';
-  document.getElementById('payment-section').style.display='block';
-  document.getElementById('sum-item').textContent=selItem;
-  document.getElementById('sum-size').textContent=selSize;
-  if(selAddons.length>0){document.getElementById('sum-addon-row').style.display='flex';document.getElementById('sum-addons').textContent=selAddons.map(a=>a.name).join(', ');}
-  else{document.getElementById('sum-addon-row').style.display='none';}
-  document.getElementById('sum-total').textContent='$'+total.toFixed(2);
-  const btn=document.getElementById('order-btn');
-  btn.disabled=false;
-  btn.textContent=payMethod==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
-  if(!cardElement){
-    cardElement=elements.create('card',{style:{base:{fontSize:'14px',color:'#222'}}});
-    cardElement.mount('#card-element');
+  if(cart.length>0){
+    const total=cart.reduce((s,i)=>s+i.price,0);
+    const btn=document.getElementById('order-btn');
+    btn.textContent=method==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';
   }
 }
 
 async function handleOrder(){
-  if(!selItem)return;
-  const desc=selItem+' ('+selSize+')'+(selAddons.length?' + '+selAddons.map(a=>a.name).join(', '):'');
-  const total=selPrice+selAddons.reduce((s,a)=>s+a.price,0);
+  if(cart.length===0)return;
+  const total=cart.reduce((s,i)=>s+i.price,0);
+  const stampCount=cart.length;
+  const desc=cart.map(i=>i.name+' ('+i.size+')').join(', ');
+
   document.getElementById('order-btn').disabled=true;
   document.getElementById('order-btn').textContent='Processing...';
 
   if(payMethod==='counter'){
-    await addStampSilent();
-    document.getElementById('success-desc').textContent=desc;
-    document.getElementById('success-msg').textContent='Order sent to counter. +1 stamp added!';
-    document.getElementById('order-form').style.display='none';
-    document.getElementById('order-success').style.display='block';
+    await addMultipleStamps(stampCount);
+    showSuccess(desc,stampCount,'Order sent to counter. Pay when you pick up!');
     return;
   }
 
@@ -418,31 +473,48 @@ async function handleOrder(){
       return;
     }
     if(paymentIntent.status==='succeeded'){
-      await addStampSilent();
-      document.getElementById('success-desc').textContent=desc;
-      document.getElementById('success-msg').textContent='Payment successful! +1 stamp added to your card.';
-      document.getElementById('order-form').style.display='none';
-      document.getElementById('order-success').style.display='block';
+      await addMultipleStamps(stampCount);
+      showSuccess(desc,stampCount,'Payment successful!');
     }
   }catch(e){
     document.getElementById('card-err').textContent='Payment error: '+e.message;
     document.getElementById('order-btn').disabled=false;
-    document.getElementById('order-btn').textContent='Pay $'+total.toFixed(2)+' by card';
+    const total2=cart.reduce((s,i)=>s+i.price,0);
+    document.getElementById('order-btn').textContent='Pay $'+total2.toFixed(2)+' by card';
+  }
+}
+
+function showSuccess(desc,stampCount,msg){
+  document.getElementById('success-msg').textContent=msg;
+  document.getElementById('success-stamps').textContent='+'+stampCount+' stamp'+(stampCount!==1?'s':'')+' added to your card!';
+  const itemsEl=document.getElementById('success-items');
+  itemsEl.innerHTML=cart.map(i=>`<div class="success-item-row"><span>${i.name} (${i.size})</span><span>$${i.price.toFixed(2)}</span></div>`).join('');
+  document.getElementById('order-form').style.display='none';
+  document.getElementById('order-success').style.display='block';
+}
+
+async function addMultipleStamps(count){
+  const inserts=Array.from({length:count},()=>({customer_id:customerId}));
+  const{error}=await db.from('stamps').insert(inserts);
+  if(!error){
+    totalStamps+=count;
+    stamps=totalStamps%TOTAL;
+    if(stamps===0&&totalStamps>0)stamps=TOTAL;
+    renderCard();
   }
 }
 
 function resetOrder(){
-  selItem=null;selSize=null;selPrice=0;selAddons=[];cardElement=null;payMethod='card';
-  document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));
+  cart=[];cardElement=null;payMethod='card';selAddons=[];
   document.querySelectorAll('.add-on-btn').forEach(b=>b.classList.remove('selected'));
-  document.getElementById('order-summary').style.display='none';
   document.getElementById('payment-section').style.display='none';
   document.getElementById('order-btn').disabled=true;
-  document.getElementById('order-btn').textContent='Select a drink first';
+  document.getElementById('order-btn').textContent='Add drinks to your cart first';
   document.getElementById('order-form').style.display='block';
   document.getElementById('order-success').style.display='none';
   document.getElementById('card-err').textContent='';
   document.getElementById('card-element').innerHTML='';
+  renderCart();
 }
 
 function showTab(tab){
@@ -499,11 +571,6 @@ async function loadCard(name,createdAt){
   const joined=new Date(createdAt);
   document.getElementById('csince').textContent='Member since '+joined.toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
   renderCard();
-}
-
-async function addStampSilent(){
-  const{error}=await db.from('stamps').insert({customer_id:customerId});
-  if(!error){totalStamps++;stamps=totalStamps%TOTAL;if(stamps===0)stamps=TOTAL;renderCard();}
 }
 
 async function redeemReward(){
