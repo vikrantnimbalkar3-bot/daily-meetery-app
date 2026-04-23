@@ -23,9 +23,11 @@
     .nav-tab.active { color: #354C3A; border-bottom-color: #D48631; }
     .cart-badge { position: absolute; top: 6px; right: 4px; background: #354C3A; color: #fff; font-size: 10px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     .phone-body { padding: 18px; }
-    .stamp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .stamp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
     .stamp { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px dashed #A9B29E; background: #FDF8EE; transition: all 0.2s; }
     .stamp.filled { border: 2.5px solid #354C3A; background: #FDF8EE; }
+    .stamp.discount { border: 2.5px solid #D48631; background: #FFF3DC; }
+    .stamp-label { font-size: 8px; font-weight: 700; color: #D48631; text-align: center; line-height: 1.2; }
     .stamp svg { width: 20px; height: 20px; }
     .bar-wrap { background: #f0f0f0; border-radius: 99px; height: 5px; margin-bottom: 12px; overflow: hidden; }
     .bar-fill { height: 100%; border-radius: 99px; background: #354C3A; transition: width 0.4s; }
@@ -37,7 +39,7 @@
     .stat { background: #f7f7f7; border-radius: 10px; padding: 9px 6px; text-align: center; }
     .stat-val { font-size: 18px; font-weight: 700; color: #292927; }
     .stat-lbl { font-size: 10px; color: #888; margin-top: 1px; }
-    .section-title { font-size: 11px; font-weight: 700; color: #354C3A; text-transform: uppercase; letter-spacing: 1px; margin: 14px 0 8px; }
+    .section-title { font-size: 11px; font-weight: 700; color: #354C3A; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 1.5px solid #FDF8EE; }
     .menu-item { border: 1.5px solid #A9B29E; border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; background: #fff; }
     .item-name { font-size: 13px; font-weight: 500; color: #292927; margin-bottom: 5px; }
     .item-desc { font-size: 11px; color: #888; margin-bottom: 6px; }
@@ -65,6 +67,25 @@
     .cart-total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding-top: 10px; border-top: 1px solid #ddd; margin-top: 6px; }
     .cart-stamps { font-size: 11px; color: #354C3A; font-weight: 500; margin-top: 6px; text-align: center; }
     .empty-cart { text-align: center; padding: 16px; color: #888; font-size: 13px; }
+    .item-addons { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e0d9ce; display: none; }
+    .item-addons.open { display: block; }
+    .inline-addon-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .inline-addon-btn { padding: 4px 9px; border-radius: 99px; font-size: 11px; border: 1.5px solid #A9B29E; background: #fff; cursor: pointer; color: #354C3A; transition: all 0.15s; }
+    .inline-addon-btn.selected { border-color: #354C3A; background: #354C3A; color: #fff; }
+    .inline-addon-title { font-size: 10px; font-weight: 600; color: #A9B29E; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .item-note { width: 100%; padding: 7px 10px; font-size: 12px; border-radius: 8px; border: 1.5px solid #A9B29E; background: #fff; color: #354C3A; outline: none; resize: none; margin-top: 4px; font-family: inherit; }
+    .item-note:focus { border-color: #354C3A; }
+    .item-note::placeholder { color: #A9B29E; }
+    .toggle-addons-btn { font-size: 11px; color: #A9B29E; cursor: pointer; background: none; border: none; padding: 4px 0; text-decoration: underline; margin-top: 4px; }
+    .pickup-section { background: #FDF8EE; border: 1.5px solid #A9B29E; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .pickup-title { font-size: 12px; font-weight: 600; color: #354C3A; margin-bottom: 10px; }
+    .pickup-options { display: flex; gap: 8px; margin-bottom: 10px; }
+    .pickup-opt { flex: 1; padding: 8px; border: 1.5px solid #A9B29E; border-radius: 8px; background: #fff; cursor: pointer; font-size: 12px; text-align: center; color: #354C3A; transition: all 0.15s; }
+    .pickup-opt.active { border-color: #354C3A; background: #354C3A; color: #fff; font-weight: 600; }
+    .pickup-time-row { display: flex; gap: 8px; align-items: center; }
+    .pickup-time-row select { flex: 1; padding: 8px 10px; font-size: 13px; border-radius: 8px; border: 1.5px solid #A9B29E; background: #fff; color: #354C3A; outline: none; }
+    .pickup-time-row select:focus { border-color: #354C3A; }
+    .pickup-note { font-size: 11px; color: #A9B29E; margin-top: 6px; }
     .payment-box { background: #f7f7f7; border-radius: 10px; padding: 14px; margin: 12px 0; }
     .payment-title { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 12px; }
     #card-element { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
@@ -85,6 +106,11 @@
     .toast.show { display: block; }
     .err { font-size: 12px; color: #c0392b; margin-top: 6px; }
     .loading { text-align: center; padding: 30px 20px; font-size: 13px; color: #888; }
+    .hero-img { width: 100%; height: 180px; object-fit: cover; object-position: center 40%; display: block; }
+    .hero-img-small { width: 100%; height: 120px; object-fit: cover; object-position: center 30%; display: block; border-radius: 10px; margin-bottom: 12px; }
+    .photo-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .photo-strip img { width: 100%; height: 90px; object-fit: cover; border-radius: 10px; }
+    .photo-caption { font-size: 10px; color: #A9B29E; text-align: center; margin-top: 4px; }
     .success-box { text-align: center; padding: 24px 16px; }
     .success-items { text-align: left; background: #f7f7f7; border-radius: 10px; padding: 12px; margin: 12px 0; }
     .success-item-row { font-size: 13px; padding: 4px 0; color: #555; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
@@ -121,7 +147,7 @@
       <div>
         <div class="cafe-name">The Daily Meetery</div>
         <div class="card-label">Loyalty Card</div>
-        <div class="card-sub">8 stamps = 1 free coffee</div>
+        <div class="card-sub">5 stamps = 10% off · 10 stamps = free coffee</div>
       </div>
     </div>
     <div class="live-badge"><span class="live-dot"></span>Live</div>
@@ -137,15 +163,26 @@
   <div id="loading-view" class="loading">Connecting to your database...</div>
 
   <div id="login-view" style="display:none">
-    <div class="phone-body">
-      <div style="font-size:16px;font-weight:700;color:#222;margin-bottom:4px">Welcome to The Daily Meetery!</div>
-      <div style="font-size:13px;color:#888;margin-bottom:16px">Sign in to access your loyalty card.</div>
+    <div style="position:relative">
+      <img src="coffee1.jpg" alt="The Daily Meetery coffee" class="hero-img">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(53,76,58,0.95));padding:20px 20px 16px;text-align:center">
+        <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:3px">Welcome back!</div>
+        <div style="font-size:12px;color:#A9B29E">One Daily Stop. Endless Connections.</div>
+      </div>
+    </div>
+    <div class="phone-body" style="padding-top:20px">
+      <div style="background:#FDF8EE;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#354C3A;text-align:center;border:1px solid #A9B29E">
+        🎟 Earn stamps · Get 10% off at 5 · Free coffee at 10
+      </div>
       <div class="field-label">Your name</div>
       <input class="field" id="inp-name" placeholder="e.g. Sarah">
       <div class="field-label">Email address</div>
       <input class="field" id="inp-email" placeholder="you@email.com" type="email">
+      <div class="field-label">Phone number <span style="color:#A9B29E">(optional)</span></div>
+      <input class="field" id="inp-phone" placeholder="e.g. 021 123 4567" type="tel">
       <button class="main-btn" onclick="loginOrRegister()">Get my stamp card</button>
       <div class="err" id="login-err"></div>
+      <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">By signing up you agree to receive offers from The Daily Meetery</div>
     </div>
   </div>
 
@@ -158,26 +195,43 @@
     </div>
 
     <!-- CARD TAB -->
-    <div id="tab-card-view" class="phone-body">
+    <div id="tab-card-view">
+      <img src="coffee2.jpg" alt="The Daily Meetery" style="width:100%;height:130px;object-fit:cover;object-position:center 20%;display:block;">
+      <div class="phone-body">
       <div class="toast" id="toast"></div>
       <div style="display:flex;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:12px;color:#888">Your stamps</span>
-        <span style="font-size:13px;font-weight:600;color:#222" id="stamp-count">0 / 8</span>
+        <span style="font-size:13px;font-weight:600;color:#292927" id="stamp-count">0 / 10</span>
       </div>
       <div class="stamp-grid" id="stamp-grid"></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:10px;color:#D48631;font-weight:600">⭐ 5th = 10% off</span>
+        <span style="font-size:10px;color:#354C3A;font-weight:600">🎁 10th = free coffee</span>
+      </div>
       <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
       <div class="reward-pill" id="reward-pill"><div class="reward-text" id="reward-text">Loading...</div></div>
       <div class="stats-row">
-        <div class="stat"><div class="stat-val" id="total-val">0</div><div class="stat-lbl">coffees</div></div>
-        <div class="stat"><div class="stat-val" id="rewards-val">0</div><div class="stat-lbl">free earned</div></div>
-        <div class="stat"><div class="stat-val" id="saved-val">$0</div><div class="stat-lbl">saved</div></div>
+        <div class="stat"><div style="font-size:16px;margin-bottom:2px">☕</div><div class="stat-val" id="total-val">0</div><div class="stat-lbl">coffees</div></div>
+        <div class="stat"><div style="font-size:16px;margin-bottom:2px">🎁</div><div class="stat-val" id="rewards-val">0</div><div class="stat-lbl">free earned</div></div>
+        <div class="stat"><div style="font-size:16px;margin-bottom:2px">💰</div><div class="stat-val" id="saved-val">$0</div><div class="stat-lbl">saved</div></div>
       </div>
       <button class="redeem-btn" id="redeem-btn" style="display:none" onclick="showTab('order')">Claim my free coffee</button>
       <button class="outline-btn" onclick="logout()">Sign out</button>
+      </div>
     </div>
 
     <!-- ORDER TAB -->
-    <div id="tab-order-view" class="phone-body" style="display:none">
+    <div id="tab-order-view" style="display:none">
+      <div style="position:relative;overflow:hidden">
+        <img src="coffee1.jpg" alt="Order" style="width:100%;height:100px;object-fit:cover;object-position:center 60%;display:block;">
+        <div style="position:absolute;inset:0;background:rgba(53,76,58,0.6);display:flex;align-items:center;justify-content:center">
+          <div style="text-align:center">
+            <div style="font-size:15px;font-weight:700;color:#fff">What can we make for you?</div>
+            <div style="font-size:11px;color:#A9B29E;margin-top:2px">Fresh made with love ☕</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-body">
       <div id="order-form">
         <div id="free-banner" class="free-coffee-banner" style="display:none"></div>
         <div class="cart-section">
@@ -191,14 +245,22 @@
             <div class="cart-stamps" id="cart-stamps"></div>
           </div>
         </div>
-        <div class="add-on-section">
-          <div class="add-on-title">Milk alternatives (+$0.80)</div>
-          <div class="add-on-grid" id="milk-addons"></div>
+        <!-- Pickup time -->
+        <div class="pickup-section">
+          <div class="pickup-title">When do you need it ready?</div>
+          <div class="pickup-options">
+            <div class="pickup-opt active" id="pickup-asap" onclick="setPickup('asap')">ASAP</div>
+            <div class="pickup-opt" id="pickup-later" onclick="setPickup('later')">Choose time</div>
+          </div>
+          <div id="pickup-time-row" class="pickup-time-row" style="display:none">
+            <select id="pickup-time">
+              <option value="">Select pickup time...</option>
+            </select>
+          </div>
+          <div class="pickup-note" id="pickup-note">Your order will be prepared as soon as it is received.</div>
         </div>
-        <div class="add-on-section">
-          <div class="add-on-title">Syrups (+$0.60)</div>
-          <div class="add-on-grid" id="syrup-addons"></div>
-        </div>
+
+
         <div class="section-title">Coffee</div>
         <div id="s-coffee"></div>
         <div class="section-title">Superfood Latte</div>
@@ -234,11 +296,12 @@
         </div>
         <button class="main-btn" id="order-btn" onclick="handleOrder()" disabled>Add drinks to your cart first</button>
       </div>
-      <div id="order-success" style="display:none">
+      </div><!-- end phone-body -->
+      <div id="order-success" style="display:none;padding:0 18px 18px;">
         <div class="success-box">
           <div style="font-size:44px;margin-bottom:12px" id="success-emoji">✅</div>
           <div style="font-size:17px;font-weight:700;color:#222;margin-bottom:6px">Order received!</div>
-          <div style="font-size:13px;color:#888;margin-bottom:4px" id="success-msg"></div>
+          <div style="font-size:14px;font-weight:600;color:#354C3A;margin-bottom:4px" id="success-pickup"></div><div style="font-size:13px;color:#888;margin-bottom:4px" id="success-msg"></div>
           <div style="font-size:13px;font-weight:600;color:#354C3A;margin-bottom:12px" id="success-stamps"></div>
           <div class="success-items" id="success-items"></div>
           <button class="main-btn" onclick="resetOrder()">Order again</button>
@@ -258,7 +321,9 @@
     </div>
 
     <!-- MENU TAB -->
-    <div id="tab-menu-view" class="phone-body" style="display:none">
+    <div id="tab-menu-view" style="display:none">
+      <img src="coffee2.jpg" alt="Menu" style="width:100%;height:110px;object-fit:cover;object-position:center 20%;display:block;">
+      <div class="phone-body">
       <div style="font-size:13px;color:#888;margin-bottom:14px">Full menu — go to Order tab to place an order.</div>
       <div class="section-title">Coffee — S / M / L</div>
       <div style="font-size:12px;color:#555;line-height:2">Espresso — $4.50<br>Flat White / Latte / Cappuccino — S $5.20 · M $5.50 · L $6.50<br>Long Black / Americano — S $5.20 · M $5.50<br>Hot Chocolate / Mocha — M $5.50 · L $6.50<br>Macchiato / Piccolo / Fluffy — $5.00<br><strong>Extra large available on request</strong></div>
@@ -272,6 +337,7 @@
       <div style="font-size:12px;color:#555;line-height:2">English Breakfast · Earl Grey · Green Lime · Peppermint · Lemon Ginger Honey</div>
       <div style="font-size:11px;color:#888;margin-top:14px;padding:10px;background:#f7f7f7;border-radius:10px;line-height:1.8"><strong>Add-ons:</strong><br>Soy / Oat / Coconut / Almond / Decaf +$0.80 (iced +$1.00)<br>Caramel / Vanilla / Hazelnut syrup +$0.60<br>Make it a Frappe +$1.50 · Blend with ice cream +$4.00</div>
       <button class="main-btn" style="margin-top:14px" onclick="showTab('order')">Go to order screen</button>
+      </div>
     </div>
   </div>
 </div>
@@ -280,13 +346,13 @@
 const SURL='https://jxlalnsemmghxukapvxv.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
 const STRIPE_PK='pk_test_51TGz94Pik0Ketj6i4Vtm2XFC3p6woiSfTfzrPhTwwDEgEYGpbXhznj3LRwH3OalhjBUfZVv3XeV8GRJ9XCIHbV7400MkQ0jJOL';
-const TOTAL=8;
+const TOTAL=10;
 const db=supabase.createClient(SURL,SKEY);
 const stripeObj=Stripe(STRIPE_PK);
 const elements=stripeObj.elements();
 let cardElement=null;
 let customerId=null,stamps=0,totalStamps=0,rewardsEarned=0;
-let cart=[],payMethod='card',selAddons=[],actualSaved=0;
+let cart=[],payMethod='card',actualSaved=0;
 
 const MENU={
   coffee:[
@@ -336,63 +402,140 @@ const MENU={
   ]
 };
 
+const MILK_OPTS=['Soy +$0.80','Oat +$0.80','Coconut +$0.80','Almond +$0.80','Decaf +$0.80'];
+const SYRUP_OPTS=['Caramel +$0.60','Vanilla +$0.60','Hazelnut +$0.60'];
+
 function buildSection(id,items){
   const c=document.getElementById(id);
-  items.forEach(item=>{
+  items.forEach((item,idx)=>{
     const d=document.createElement('div');
     d.className='menu-item';
     const crowd=item.desc==='Crowd Favourite'?'<span class="crowd-badge">Crowd Fave</span>':'';
     const sig=id==='s-signature'?'<span class="sig-badge">Signature</span>':'';
     const desc=item.desc&&item.desc!=='Crowd Favourite'?`<div class="item-desc">${item.desc}</div>`:'';
-    d.innerHTML=`<div class="item-name">${item.name}${sig}${crowd}</div>${desc}<div class="size-row">${item.sizes.map(s=>`<button class="size-btn" onclick="addToCart('${item.name}',${s.p},'${s.l}')"><span class="add-icon">+</span>${s.l}</button>`).join('')}</div>`;
+    const itemId=id+'-'+idx;
+
+    // Size buttons — each calls addToCartWithOptions passing the itemId
+    const sizeBtns=item.sizes.map(s=>`<button class="size-btn" onclick="addToCartWithOptions('${item.name}',${s.p},'${s.l}','${itemId}')"><span class="add-icon">+</span>${s.l}</button>`).join('');
+
+    // Inline milk addons
+    const milkBtns=MILK_OPTS.map(m=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','milk')">${m}</button>`).join('');
+    // Inline syrup addons
+    const syrupBtns=SYRUP_OPTS.map(s=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','syrup')">${s}</button>`).join('');
+
+    d.innerHTML=`
+      <div class="item-name">${item.name}${sig}${crowd}</div>
+      ${desc}
+      <div class="size-row">${sizeBtns}</div>
+      <button class="toggle-addons-btn" onclick="toggleItemAddons('${itemId}')">+ Customise (milk, syrup, notes)</button>
+      <div class="item-addons" id="addons-${itemId}">
+        <div class="inline-addon-title">Milk alternative</div>
+        <div class="inline-addon-grid" id="milk-${itemId}">${milkBtns}</div>
+        <div class="inline-addon-title">Syrups</div>
+        <div class="inline-addon-grid" id="syrup-${itemId}">${syrupBtns}</div>
+        <div class="inline-addon-title">Special instructions</div>
+        <textarea class="item-note" id="note-${itemId}" rows="2" placeholder="e.g. extra hot, no sugar, half strength..."></textarea>
+      </div>`;
     c.appendChild(d);
   });
 }
 
-function buildAddons(id,labels){
-  const c=document.getElementById(id);
-  labels.forEach(l=>{
-    const b=document.createElement('button');b.className='add-on-btn';b.textContent=l;
-    const price=l.includes('0.80')?0.8:0.6;
-    b.onclick=()=>toggleAddon(b,l,price);
-    c.appendChild(b);
-  });
+function toggleItemAddons(itemId){
+  const panel=document.getElementById('addons-'+itemId);
+  panel.classList.toggle('open');
+  const btn=panel.previousElementSibling;
+  btn.textContent=panel.classList.contains('open')?'- Hide options':'+ Customise (milk, syrup, notes)';
 }
 
-function toggleAddon(btn,label,price){
+function toggleInlineAddon(btn,itemId,type){
+  // For milk — only one can be selected at a time
+  if(type==='milk'){
+    const grid=document.getElementById('milk-'+itemId);
+    grid.querySelectorAll('.inline-addon-btn').forEach(b=>{if(b!==btn)b.classList.remove('selected');});
+  }
   btn.classList.toggle('selected');
-  if(btn.classList.contains('selected')){selAddons.push({name:label,price});}
-  else{selAddons=selAddons.filter(a=>a.name!==label);}
 }
 
-function addToCart(name,price,size){
-  const addonTotal=selAddons.reduce((s,a)=>s+a.price,0);
-  const addonNames=selAddons.map(a=>a.name).join(', ');
-  cart.push({name,basePrice:price+addonTotal,size,addons:addonNames,id:Date.now()});
+function getItemAddons(itemId){
+  const addons=[];
+  // Milk
+  const milkGrid=document.getElementById('milk-'+itemId);
+  if(milkGrid){
+    milkGrid.querySelectorAll('.inline-addon-btn.selected').forEach(b=>{
+      const price=parseFloat(b.textContent.match(/\\$([0-9.]+)/)[1]);
+      addons.push({name:b.textContent.split(' +')[0],price});
+    });
+  }
+  // Syrups
+  const syrupGrid=document.getElementById('syrup-'+itemId);
+  if(syrupGrid){
+    syrupGrid.querySelectorAll('.inline-addon-btn.selected').forEach(b=>{
+      const price=parseFloat(b.textContent.match(/\\$([0-9.]+)/)[1]);
+      addons.push({name:b.textContent.split(' +')[0],price});
+    });
+  }
+  return addons;
+}
+
+function getItemNote(itemId){
+  const el=document.getElementById('note-'+itemId);
+  return el?el.value.trim():'';
+}
+
+function addToCartWithOptions(name,price,size,itemId){
+  const addons=getItemAddons(itemId);
+  const note=getItemNote(itemId);
+  const addonTotal=addons.reduce((s,a)=>s+a.price,0);
+  const addonNames=addons.map(a=>a.name).join(', ');
+  cart.push({name,basePrice:price+addonTotal,size,addons:addonNames,note,id:Date.now()});
   recalcCart();
   showToast(name+' added to cart!');
+  // Reset this item's addons after adding
+  const milkGrid=document.getElementById('milk-'+itemId);
+  const syrupGrid=document.getElementById('syrup-'+itemId);
+  if(milkGrid)milkGrid.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
+  if(syrupGrid)syrupGrid.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
+  const noteEl=document.getElementById('note-'+itemId);
+  if(noteEl)noteEl.value='';
 }
+
+
+
+
+
+
 
 function removeFromCart(id){
   cart=cart.filter(i=>i.id!==id);
   recalcCart();
 }
 
-// Only these items qualify for the free coffee reward
+// Only these items qualify for the free coffee reward (10th stamp)
 const FREE_ELIGIBLE=['Espresso','Flat White','Latte','Cappuccino','Long Black','Americano','Hot Chocolate','Mocha','Macchiato / Piccolo / Fluffy'];
 
 function recalcCart(){
   let simStamps=stamps;
   cart.forEach(item=>{
+    const prevSim=simStamps;
     simStamps++;
     const hitsReward=simStamps>=TOTAL;
+    // Discount triggers when crossing the 5 stamp boundary
+    const hitsDiscount=prevSim<5&&simStamps>=5&&!hitsReward;
     const eligible=FREE_ELIGIBLE.includes(item.name);
     item.free=hitsReward&&eligible;
-    item.price=item.free?0:item.basePrice;
-    // Only reset stamp counter if item is actually free (eligible)
-    // If not eligible, stamp still counts but no free drink
+    item.discount=hitsDiscount&&!item.free;
+    if(item.free){
+      item.price=0;
+      item.discountAmt=0;
+    } else if(item.discount){
+      item.discountAmt=parseFloat((item.basePrice*0.1).toFixed(2));
+      item.price=parseFloat((item.basePrice*0.9).toFixed(2));
+    } else {
+      item.price=item.basePrice;
+      item.discountAmt=0;
+    }
     if(hitsReward&&eligible)simStamps=0;
-    else if(hitsReward&&!eligible)simStamps=0; // counter resets regardless, just no free drink
+    else if(hitsReward&&!eligible)simStamps=0;
   });
   renderCart();
 }
@@ -407,7 +550,7 @@ function renderCart(){
 
   if(stamps>=TOTAL&&cart.length===0){
     freeBanner.style.display='block';
-    freeBanner.textContent='🎉 Free coffee ready! Add a standard coffee below (S/M/L only). Not valid on signature drinks, frappes or teas.';
+    freeBanner.textContent='🎉 Your 10th coffee is FREE! Add any standard coffee below (S/M/L only) to claim it.';
   } else if(freeCount>0){
     freeBanner.style.display='block';
     freeBanner.textContent='🎉 '+freeCount+' FREE drink'+(freeCount>1?'s':'')+' in your cart!';
@@ -425,12 +568,14 @@ function renderCart(){
     countEl.textContent='0 items';return;
   }
 
-  container.innerHTML=cart.map(i=>`<div class="cart-item"><span class="cart-item-name">${i.name} (${i.size})${i.free?'<span class="free-badge">FREE</span>':''}${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}</span><span class="cart-item-price ${i.free?'free':''}">${i.free?'FREE':'$'+i.price.toFixed(2)}</span><span class="cart-item-remove" onclick="removeFromCart(${i.id})">×</span></div>`).join('');
+  container.innerHTML=cart.map(i=>`<div class="cart-item"><span class="cart-item-name">${i.name} (${i.size})${i.free?'<span class="free-badge">FREE</span>':i.discount?'<span class="free-badge" style="background:#FFF3DC;color:#D48631">10% OFF</span>':''}${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}${i.note?'<br><span style="font-size:10px;color:#D48631">📝 '+i.note+'</span>':''}</span><span class="cart-item-price ${i.free?'free':i.discount?'free':''}">${i.free?'FREE':i.discount?'$'+i.price.toFixed(2)+' <small style="text-decoration:line-through;color:#aaa;font-size:10px">$'+i.basePrice.toFixed(2)+'</small>':'$'+i.price.toFixed(2)}</span><span class="cart-item-remove" onclick="removeFromCart(${i.id})">×</span></div>`).join('');
 
   const total=cart.reduce((s,i)=>s+i.price,0);
   const paidCount=cart.filter(i=>!i.free).length;
   document.getElementById('cart-total').textContent='$'+total.toFixed(2);
+  const discountCount=cart.filter(i=>i.discount).length;
   let stampsText='+'+paidCount+' stamp'+(paidCount!==1?'s':'');
+  if(discountCount>0)stampsText+=' · 10% discount applied!';
   if(freeCount>0)stampsText+=' · '+freeCount+' free reward'+(freeCount>1?'s':'')+' used';
   document.getElementById('cart-stamps').textContent=stampsText;
   footer.style.display='block';badge.style.display='flex';badge.textContent=cart.length;
@@ -468,7 +613,7 @@ async function handleOrder(){
   if(total===0){await processOrder(freeItems,paidItems,'Show this to your barista — enjoy your free coffee!');return;}
   if(payMethod==='counter'){await processOrder(freeItems,paidItems,'Order sent to counter. Pay when you pick up!');return;}
   try{
-    const res=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:total,description:cart.map(i=>i.name+' ('+i.size+')').join(', ')})});
+    const pickupLabel=pickupType==='asap'?'ASAP':pickupTime||'ASAP';const res=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:total,description:cart.map(i=>i.name+' ('+i.size+')').join(', '),pickup:pickupLabel})});
     const{clientSecret,error:apiErr}=await res.json();
     if(apiErr)throw new Error(apiErr);
     const{error:stripeErr,paymentIntent}=await stripeObj.confirmCardPayment(clientSecret,{payment_method:{card:cardElement}});
@@ -499,15 +644,19 @@ async function processOrder(freeItems,paidItems,msg){
   const prevStamps=stamps;
   stamps=totalStamps%TOTAL;
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
-  if(stamps>=TOTAL&&prevStamps<TOTAL){setTimeout(()=>showPopup(),800);}
+  if(stamps>=TOTAL&&prevStamps<TOTAL){
+    setTimeout(()=>showPopup('🎉 Free coffee unlocked!','Your 10th coffee is on us! Valid on standard coffees only. Not valid on signature drinks, frappes or teas.',true),800);
+  } else if(stamps>=5&&stamps<TOTAL&&prevStamps<5){
+    setTimeout(()=>showPopup('🎉 10% discount unlocked!','You have reached 5 stamps! Your next coffee order automatically gets 10% off. Keep going — 5 more stamps for a FREE coffee!',false),800);
+  }
   renderCard();
   document.getElementById('success-emoji').textContent=freeItems.length>0?'🎉':'✅';
-  document.getElementById('success-msg').textContent=msg;
+  const pickupLabel=pickupType==='asap'?'ASAP — being made now!':pickupTime?'Ready at '+pickupTime:'ASAP — being made now!';document.getElementById('success-pickup').textContent='Pickup: '+pickupLabel;document.getElementById('success-msg').textContent=msg;
   let stampsText='';
   if(paidItems.length>0)stampsText='+'+paidItems.length+' stamp'+(paidItems.length!==1?'s':'')+' added!';
   if(freeItems.length>0)stampsText+=(stampsText?' · ':'')+'🎉 '+freeItems.length+' free coffee'+(freeItems.length>1?'s':'')+' redeemed!';
   document.getElementById('success-stamps').textContent=stampsText;
-  document.getElementById('success-items').innerHTML=cart.map(i=>`<div class="success-item-row"><span>${i.name} (${i.size})${i.free?' 🎉':''}</span><span>${i.free?'FREE':'$'+i.price.toFixed(2)}</span></div>`).join('');
+  document.getElementById('success-items').innerHTML=cart.map(i=>`<div class="success-item-row"><span>${i.name} (${i.size})${i.free?' 🎉':''}${i.addons?'<br><small style="color:#A9B29E">'+i.addons+'</small>':''}${i.note?'<br><small style="color:#D48631">📝 '+i.note+'</small>':''}</span><span>${i.free?'FREE':'$'+i.price.toFixed(2)}</span></div>`).join('');
   document.getElementById('order-form').style.display='none';
   document.getElementById('order-success').style.display='block';
 }
@@ -559,8 +708,16 @@ async function loadHistory(){
 }
 
 function resetOrder(){
-  cart=[];cardElement=null;payMethod='card';selAddons=[];
-  document.querySelectorAll('.add-on-btn').forEach(b=>b.classList.remove('selected'));
+  pickupType='asap';pickupTime='';
+  document.getElementById('pickup-asap').classList.add('active');
+  document.getElementById('pickup-later').classList.remove('active');
+  document.getElementById('pickup-time-row').style.display='none';
+  document.getElementById('pickup-note').textContent='Your order will be prepared as soon as it is received.';
+  populatePickupTimes();
+  cart=[];cardElement=null;payMethod='card';
+  document.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.item-addons.open').forEach(p=>{p.classList.remove('open');const btn=p.previousElementSibling;if(btn&&btn.classList.contains('toggle-addons-btn'))btn.textContent='+ Customise (milk, syrup, notes)';});
+  document.querySelectorAll('.item-note').forEach(n=>n.value='');
   document.getElementById('payment-section').style.display='none';
   document.getElementById('order-btn').disabled=true;
   document.getElementById('order-btn').textContent='Add drinks to your cart first';
@@ -590,27 +747,27 @@ async function init(){
     buildSection('s-coffee',MENU.coffee);buildSection('s-superfood',MENU.superfood);
     buildSection('s-signature',MENU.signature);buildSection('s-ice',MENU.ice);
     buildSection('s-tea',MENU.tea);
-    buildAddons('milk-addons',['Soy +$0.80','Oat +$0.80','Coconut +$0.80','Almond +$0.80','Decaf +$0.80']);
-    buildAddons('syrup-addons',['Caramel +$0.60','Vanilla +$0.60','Hazelnut +$0.60']);
+    populatePickupTimes();
   }catch(e){document.getElementById('loading-view').textContent='Connection error: '+e.message;}
 }
 
 async function loginOrRegister(){
   const name=document.getElementById('inp-name').value.trim();
   const email=document.getElementById('inp-email').value.trim().toLowerCase();
+  const phone=document.getElementById('inp-phone')?document.getElementById('inp-phone').value.trim():'';
   const err=document.getElementById('login-err');
   if(!name){err.textContent='Please enter your name.';return;}
   if(!email.includes('@')){err.textContent='Please enter a valid email.';return;}
   err.textContent='Finding your card...';
   try{
-    const{data:ex}=await db.from('customers').select('id,name,created_at').eq('email',email).limit(1);
-    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at);}
-    else{const{data:cr,error}=await db.from('customers').insert({name,email}).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at);}
+    const{data:ex}=await db.from('customers').select('id,name,created_at,phone').eq('email',email).limit(1);
+    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at,ex[0].phone);}
+    else{const insertData={name,email};if(phone)insertData.phone=phone;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone);}
     err.textContent='';
   }catch(e){err.textContent='Error: '+e.message;}
 }
 
-async function loadCard(name,createdAt){
+async function loadCard(name,createdAt,phone){
   const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
   const{data:r}=await db.from('rewards').select('id').eq('customer_id',customerId);
   const{data:freeOrders}=await db.from('orders').select('price').eq('customer_id',customerId).eq('is_free',true);
@@ -636,7 +793,7 @@ function logout(){
   document.getElementById('login-view').style.display='block';
   document.getElementById('main-view').style.display='none';
   document.getElementById('customer-row').style.display='none';
-  document.getElementById('inp-name').value='';document.getElementById('inp-email').value='';
+  document.getElementById('inp-name').value='';document.getElementById('inp-email').value='';document.getElementById('inp-phone').value='';
 }
 
 function renderCard(){
@@ -645,8 +802,19 @@ function renderCard(){
   const displayStamps=stamps>TOTAL?TOTAL:stamps;
   for(let i=0;i<TOTAL;i++){
     const s=document.createElement('div');
-    s.className='stamp'+(i<displayStamps?' filled':'');
-    if(i<displayStamps)s.innerHTML=`<svg viewBox="0 0 24 24" fill="none"><path d="M6 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1H6V2z" fill="#354C3A"/><path d="M5 4h14l-1.5 13A2 2 0 0 1 15.5 19h-7A2 2 0 0 1 6.5 17L5 4z" fill="#354C3A"/><path d="M19 7h1a2 2 0 0 1 0 4h-1" stroke="#354C3A" stroke-width="1.5" stroke-linecap="round"/><rect x="7" y="20" width="10" height="1.5" rx="0.75" fill="#354C3A"/></svg>`;
+    const isDiscount=i===4; // 5th stamp (index 4)
+    const isFilled=i<displayStamps;
+    if(isDiscount){
+      s.className='stamp'+(isFilled?' discount':'');
+      if(isFilled){
+        s.innerHTML=`<div style="text-align:center"><svg viewBox="0 0 24 24" fill="none" style="width:14px;height:14px;display:block;margin:0 auto"><path d="M6 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1H6V2z" fill="#D48631"/><path d="M5 4h14l-1.5 13A2 2 0 0 1 15.5 19h-7A2 2 0 0 1 6.5 17L5 4z" fill="#D48631"/><path d="M19 7h1a2 2 0 0 1 0 4h-1" stroke="#D48631" stroke-width="1.5" stroke-linecap="round"/><rect x="7" y="20" width="10" height="1.5" rx="0.75" fill="#D48631"/></svg><span class="stamp-label">10% OFF</span></div>`;
+      } else {
+        s.innerHTML=`<span class="stamp-label" style="color:#A9B29E">10%</span>`;
+      }
+    } else {
+      s.className='stamp'+(isFilled?' filled':'');
+      if(isFilled)s.innerHTML=`<svg viewBox="0 0 24 24" fill="none"><path d="M6 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1H6V2z" fill="#354C3A"/><path d="M5 4h14l-1.5 13A2 2 0 0 1 15.5 19h-7A2 2 0 0 1 6.5 17L5 4z" fill="#354C3A"/><path d="M19 7h1a2 2 0 0 1 0 4h-1" stroke="#354C3A" stroke-width="1.5" stroke-linecap="round"/><rect x="7" y="20" width="10" height="1.5" rx="0.75" fill="#354C3A"/></svg>`;
+    }
     grid.appendChild(s);
   }
   const pct=Math.round((displayStamps/TOTAL)*100);
@@ -660,11 +828,21 @@ function renderCard(){
   const rtext=document.getElementById('reward-text');
   if(displayStamps>=TOTAL){
     pill.classList.add('earned');rtext.classList.add('earned');
-    rtext.textContent='🎉 Free coffee ready! Valid on standard coffees only (S/M/L). Not valid on signature drinks, frappes or teas.';
+    rtext.textContent='🎉 Free coffee ready! Valid on standard coffees only (S/M/L).';
     document.getElementById('redeem-btn').style.display='block';
-  }else{
+  } else if(displayStamps===5){
+    pill.classList.add('earned');rtext.classList.add('earned');
+    rtext.textContent='🎉 10% discount unlocked! Applied automatically on your next order.';
+    document.getElementById('redeem-btn').style.display='none';
+  } else if(displayStamps>5){
     pill.classList.remove('earned');rtext.classList.remove('earned');
-    rtext.textContent=remaining+' more stamp'+(remaining!==1?'s':'')+' for a free coffee';
+    rtext.textContent=(TOTAL-displayStamps)+' more stamp'+(TOTAL-displayStamps!==1?'s':'')+' for a free coffee';
+    document.getElementById('redeem-btn').style.display='none';
+  } else {
+    pill.classList.remove('earned');rtext.classList.remove('earned');
+    const toDiscount=5-displayStamps;
+    const toFree=TOTAL-displayStamps;
+    rtext.textContent=toDiscount+' stamp'+(toDiscount!==1?'s':'')+' to 10% off · '+toFree+' stamps to free coffee';
     document.getElementById('redeem-btn').style.display='none';
   }
 }
@@ -675,7 +853,44 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-function showPopup(){
+let pickupType='asap';
+let pickupTime='';
+
+function setPickup(type){
+  pickupType=type;
+  document.getElementById('pickup-asap').classList.toggle('active',type==='asap');
+  document.getElementById('pickup-later').classList.toggle('active',type==='later');
+  document.getElementById('pickup-time-row').style.display=type==='later'?'flex':'none';
+  document.getElementById('pickup-note').textContent=type==='asap'?'Your order will be prepared as soon as it is received.':'Select your preferred pickup time above.';
+  pickupTime=type==='asap'?'ASAP':'';
+}
+
+function populatePickupTimes(){
+  const sel=document.getElementById('pickup-time');
+  sel.innerHTML='<option value="">Select pickup time...</option>';
+  const now=new Date();
+  // Round up to next 15 min slot + 10 min prep time
+  const start=new Date(now.getTime()+10*60000);
+  start.setMinutes(Math.ceil(start.getMinutes()/15)*15,0,0);
+  // Generate slots for next 3 hours
+  for(let i=0;i<12;i++){
+    const t=new Date(start.getTime()+i*15*60000);
+    const h=t.getHours();
+    const m=t.getMinutes().toString().padStart(2,'0');
+    const ampm=h>=12?'pm':'am';
+    const h12=h>12?h-12:h===0?12:h;
+    const label=h12+':'+m+ampm;
+    const opt=document.createElement('option');
+    opt.value=label;opt.textContent=label;
+    sel.appendChild(opt);
+  }
+  sel.onchange=()=>{pickupTime=sel.value;};
+}
+
+function showPopup(title,msg,showRule){
+  if(title)document.getElementById('popup-title').textContent=title;
+  if(msg)document.getElementById('popup-msg').textContent=msg;
+  document.getElementById('popup-rule').style.display=showRule===false?'none':'block';
   document.getElementById('popup-overlay').style.display='flex';
 }
 function closePopup(){
@@ -688,8 +903,8 @@ init();
   <div id="popup-overlay" class="popup-overlay" style="display:none" onclick="closePopup()">
     <div class="popup-box" onclick="event.stopPropagation()">
       <div class="popup-emoji">🎉</div>
-      <div class="popup-title">You earned a free coffee!</div>
-      <div class="popup-msg">Congratulations! Your next coffee is on us. Here is what it is valid on:</div>
+      <div class="popup-title" id="popup-title">Milestone reached!</div>
+      <div class="popup-msg" id="popup-msg">Congratulations! Your next coffee is on us.</div>
       <div class="popup-rule">
         <strong>Valid on:</strong><br>
         Espresso, Flat White, Latte, Cappuccino, Long Black, Americano, Hot Chocolate, Mocha, Macchiato / Piccolo / Fluffy (S/M/L)<br><br>
