@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/kitchen", "destination": "/kitchen.html" },
+    { "source": "/kitchen.html", "destination": "/kitchen.html" }
+  ]
+}
