@@ -160,7 +160,7 @@
     </div>
   </div>
 
-  <div id="loading-view" class="loading">Connecting to your database...</div>
+  <div id="loading-view" style="text-align:center;padding:30px 20px;font-size:13px;color:#888;">Connecting to your database...</div>
 
   <div id="login-view" style="display:none">
     <div style="position:relative">
@@ -613,7 +613,7 @@ async function handleOrder(){
   if(total===0){await processOrder(freeItems,paidItems,'Show this to your barista — enjoy your free coffee!');return;}
   if(payMethod==='counter'){await processOrder(freeItems,paidItems,'Order sent to counter. Pay when you pick up!');return;}
   try{
-    const pickupLabel=pickupType==='asap'?'ASAP':pickupTime||'ASAP';const res=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:total,description:cart.map(i=>i.name+' ('+i.size+')').join(', '),pickup:pickupLabel})});
+    const pickupLabelForCheckout=pickupType==='asap'?'ASAP':pickupTime||'ASAP';const res=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:total,description:cart.map(i=>i.name+' ('+i.size+')').join(', '),pickup:pickupLabelForCheckout})});
     const{clientSecret,error:apiErr}=await res.json();
     if(apiErr)throw new Error(apiErr);
     const{error:stripeErr,paymentIntent}=await stripeObj.confirmCardPayment(clientSecret,{payment_method:{card:cardElement}});
@@ -626,14 +626,14 @@ async function processOrder(freeItems,paidItems,msg){
   const now=new Date().toISOString();
   const allItems=[...paidItems,...freeItems];
   const total=allItems.reduce((s,i)=>s+i.price,0);
-  const pickupLabel=pickupType==='asap'?'ASAP':pickupTime||'ASAP';
+  const orderPickupLabel=pickupType==='asap'?'ASAP':pickupTime||'ASAP';
 
   // Create order group for kitchen display
   const{data:groupData}=await db.from('order_groups').insert({
     customer_id:customerId,
     customer_name:document.getElementById('cname').textContent,
     customer_phone:document.getElementById('csince').dataset.phone||'',
-    pickup_time:pickupLabel,
+    pickup_time:orderPickupLabel,
     total:total,
     payment_method:payMethod,
     printed:false
@@ -645,7 +645,7 @@ async function processOrder(freeItems,paidItems,msg){
     const stampInserts=paidItems.map(()=>({customer_id:customerId}));
     await db.from('stamps').insert(stampInserts);
     totalStamps+=paidItems.length;
-    const orderInserts=paidItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.price,is_free:false,stamps_earned:1,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:pickupLabel}));
+    const orderInserts=paidItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.price,is_free:false,stamps_earned:1,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:orderPickupLabel}));
     await db.from('orders').insert(orderInserts);
   }
   // Save free items to orders table
@@ -653,7 +653,7 @@ async function processOrder(freeItems,paidItems,msg){
     const rewardInserts=freeItems.map(()=>({customer_id:customerId}));
     await db.from('rewards').insert(rewardInserts);
     rewardsEarned+=freeItems.length;
-    const orderInserts=freeItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.basePrice,is_free:true,stamps_earned:0,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:pickupLabel}));
+    const orderInserts=freeItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.basePrice,is_free:true,stamps_earned:0,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:orderPickupLabel}));
     await db.from('orders').insert(orderInserts);
     actualSaved+=freeItems.reduce((sum,i)=>sum+i.basePrice,0);
   }
@@ -667,7 +667,7 @@ async function processOrder(freeItems,paidItems,msg){
   }
   renderCard();
   document.getElementById('success-emoji').textContent=freeItems.length>0?'🎉':'✅';
-  const pickupLabel=pickupType==='asap'?'ASAP — being made now!':pickupTime?'Ready at '+pickupTime:'ASAP — being made now!';document.getElementById('success-pickup').textContent='Pickup: '+pickupLabel;document.getElementById('success-msg').textContent=msg;
+  const successPickup=orderPickupLabel==='ASAP'?'ASAP — being made now!':'Ready at '+orderPickupLabel;document.getElementById('success-pickup').textContent='Pickup: '+successPickup;document.getElementById('success-msg').textContent=msg;
   let stampsText='';
   if(paidItems.length>0)stampsText='+'+paidItems.length+' stamp'+(paidItems.length!==1?'s':'')+' added!';
   if(freeItems.length>0)stampsText+=(stampsText?' · ':'')+'🎉 '+freeItems.length+' free coffee'+(freeItems.length>1?'s':'')+' redeemed!';
