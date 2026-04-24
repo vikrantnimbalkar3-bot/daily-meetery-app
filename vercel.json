@@ -1,6 +1,7 @@
 {
-  "rewrites": [
-    { "source": "/kitchen", "destination": "/kitchen.html" },
-    { "source": "/kitchen.html", "destination": "/kitchen.html" }
+  "routes": [
+    { "src": "/kitchen.html", "dest": "/kitchen.html" },
+    { "src": "/kitchen", "dest": "/kitchen.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
