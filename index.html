@@ -214,6 +214,14 @@
     .popup-msg { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 12px; }
     .popup-rule { background: #FFF3DC; border: 1px solid #D48631; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #D48631; margin-bottom: 16px; text-align: left; line-height: 1.7; }
     .popup-btn { width: 100%; padding: 11px; border-radius: 10px; background: #354C3A; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; }
+    .leaderboard-item { display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0; }
+    .leaderboard-item:last-child { border-bottom:none; }
+    .leaderboard-rank { font-size:20px;width:30px;text-align:center; }
+    .leaderboard-name { flex:1;font-size:13px;font-weight:500;color:#292927; }
+    .leaderboard-count { font-size:13px;font-weight:600;color:#354C3A; }
+    .add-to-cart-btn { width:100%;margin-top:10px;padding:11px;border-radius:10px;background:#354C3A;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:background 0.15s; }
+    .add-to-cart-btn:hover { background:#292927; }
+    .cancel-btn { width:100%;margin-top:6px;padding:8px;border-radius:10px;background:transparent;color:#888;font-size:12px;border:1px solid #ddd;cursor:pointer; }
   </style>
 </head>
 <body>
@@ -465,12 +473,7 @@
       </div>
     </div>
 
-    <!-- LEADERBOARD TAB -->
-    <div id="tab-leaderboard-view" class="phone-body" style="display:none">
-      <div style="font-size:16px;font-weight:700;color:#292927;margin-bottom:4px">🏆 Top Coffee Lovers</div>
-      <div style="font-size:12px;color:#888;margin-bottom:16px">This month's most loyal customers</div>
-      <div id="leaderboard-list"><div style="color:#888;font-size:13px">Loading...</div></div>
-    </div>
+
 
     <!-- HISTORY TAB -->
     <div id="tab-history-view" class="phone-body" style="display:none">
@@ -578,7 +581,7 @@ function buildSection(id,items){
     const itemId=id+'-'+idx;
 
     // Size buttons — each calls addToCartWithOptions passing the itemId
-    const sizeBtns=item.sizes.map(s=>`<button class="size-btn" onclick="addToCartWithOptions('${item.name}',${s.p},'${s.l}','${itemId}',this)"><span class="add-icon">+</span>${s.l}</button>`).join('');
+    const sizeBtns=item.sizes.map(s=>`<button class="size-btn" onclick="selectSize(this,'${item.name}',${s.p},'${s.l}','${itemId}')" data-price="${s.p}" data-size="${s.l}" data-name="${item.name}"><span class="add-icon">+</span>${s.l}</button>`).join('');
 
     // Inline milk addons
     const milkBtns=MILK_OPTS.map(m=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','milk')">${m}</button>`).join('');
@@ -589,24 +592,25 @@ function buildSection(id,items){
       <div class="item-name">${item.name}${sig}${crowd}</div>
       ${desc}
       <div class="size-row">${sizeBtns}</div>
-      <button class="toggle-addons-btn" onclick="toggleItemAddons('${itemId}')">+ Customise (milk, syrup, notes)</button>
       <div class="item-addons" id="addons-${itemId}">
-        <div class="inline-addon-title">Milk alternative</div>
+        <div style="font-size:11px;color:#354C3A;font-weight:600;margin-bottom:8px" id="selected-size-label-${itemId}"></div>
+        <div class="inline-addon-title">Milk alternative <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
         <div class="inline-addon-grid" id="milk-${itemId}">${milkBtns}</div>
-        <div class="inline-addon-title">Syrups</div>
+        <div class="inline-addon-title">Syrups <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
         <div class="inline-addon-grid" id="syrup-${itemId}">${syrupBtns}</div>
-        <div class="inline-addon-title">Special instructions</div>
+        <div class="inline-addon-title">Special instructions <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
         <textarea class="item-note" id="note-${itemId}" rows="2" placeholder="e.g. extra hot, no sugar, half strength..."></textarea>
+        <button class="add-to-cart-btn" id="add-btn-${itemId}" onclick="addToCartFromPanel('${itemId}')">Add to cart ☕</button>
+        <button class="cancel-btn" onclick="closeItemPanel('${itemId}')">Cancel</button>
       </div>`;
     c.appendChild(d);
   });
 }
 
 function toggleItemAddons(itemId){
+  // Legacy — kept for compatibility
   const panel=document.getElementById('addons-'+itemId);
-  panel.classList.toggle('open');
-  const btn=panel.previousElementSibling;
-  btn.textContent=panel.classList.contains('open')?'- Hide options':'+ Customise (milk, syrup, notes)';
+  if(panel)panel.classList.toggle('open');
 }
 
 function toggleInlineAddon(btn,itemId,type){
@@ -624,7 +628,7 @@ function getItemAddons(itemId){
   const milkGrid=document.getElementById('milk-'+itemId);
   if(milkGrid){
     milkGrid.querySelectorAll('.inline-addon-btn.selected').forEach(b=>{
-      const price=parseFloat(b.textContent.match(/\$([0-9.]+)/)[1]);
+      const price=parseFloat(b.textContent.split('$')[1]||0);
       addons.push({name:b.textContent.split(' +')[0],price});
     });
   }
@@ -632,7 +636,7 @@ function getItemAddons(itemId){
   const syrupGrid=document.getElementById('syrup-'+itemId);
   if(syrupGrid){
     syrupGrid.querySelectorAll('.inline-addon-btn.selected').forEach(b=>{
-      const price=parseFloat(b.textContent.match(/\$([0-9.]+)/)[1]);
+      const price=parseFloat(b.textContent.split('$')[1]||0);
       addons.push({name:b.textContent.split(' +')[0],price});
     });
   }
@@ -645,44 +649,9 @@ function getItemNote(itemId){
 }
 
 function addToCartWithOptions(name,price,size,itemId,btn){
-  // Flash button to show added
-  if(btn){
-    const orig=btn.innerHTML;
-    btn.innerHTML='✓ Added!';
-    btn.style.background='#354C3A';
-    btn.style.color='#fff';
-    btn.style.borderColor='#354C3A';
-    setTimeout(()=>{btn.innerHTML=orig;btn.style.background='';btn.style.color='';btn.style.borderColor='';},1000);
-  }
-  const addons=getItemAddons(itemId);
-  const note=getItemNote(itemId);
-  const addonTotal=addons.reduce((s,a)=>s+a.price,0);
-  const addonNames=addons.map(a=>a.name).join(', ');
-  cart.push({name,basePrice:price+addonTotal,size,addons:addonNames,note,id:Date.now()});
-  recalcCart();
-  // Flash the cart section green to show item was added
-  const cartSection=document.querySelector('.cart-section');
-  if(cartSection){
-    cartSection.style.transition='background 0.3s';
-    cartSection.style.background='#ECFDF5';
-    setTimeout(()=>{cartSection.style.background='#f7f7f7';},600);
-    cartSection.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }
-  showToast('✅ '+name+' added to cart!');
-  // Reset this item's addons after adding
-  const milkGrid=document.getElementById('milk-'+itemId);
-  const syrupGrid=document.getElementById('syrup-'+itemId);
-  if(milkGrid)milkGrid.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
-  if(syrupGrid)syrupGrid.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
-  const noteEl=document.getElementById('note-'+itemId);
-  if(noteEl)noteEl.value='';
-  // Close the customise panel after adding
-  const panel=document.getElementById('addons-'+itemId);
-  if(panel&&panel.classList.contains('open')){
-    panel.classList.remove('open');
-    const toggleBtn=panel.previousElementSibling;
-    if(toggleBtn)toggleBtn.textContent='+ Customise (milk, syrup, notes)';
-  }
+  // Routes to new panel flow
+  selectedItemData[itemId]={name,price,size};
+  addToCartFromPanel(itemId);
 }
 
 
@@ -848,6 +817,7 @@ async function processOrder(freeItems,paidItems,msg){
   stamps=totalStamps%TOTAL;
   playStampSound();
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
+  checkMilestones(totalStamps,document.getElementById('cname').textContent);
   // Check new drink bonus for each unique item
   const orderItems=allItems.map(i=>i.name);
   const uniqueItems=[...new Set(orderItems)];
@@ -925,7 +895,8 @@ function resetOrder(){
   populatePickupTimes();
   cart=[];cardElement=null;payMethod='card';
   document.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
-  document.querySelectorAll('.item-addons.open').forEach(p=>{p.classList.remove('open');const btn=p.previousElementSibling;if(btn&&btn.classList.contains('toggle-addons-btn'))btn.textContent='+ Customise (milk, syrup, notes)';});
+  document.querySelectorAll('.item-addons.open').forEach(p=>{p.classList.remove('open');});
+  selectedItemData={};
   document.querySelectorAll('.item-note').forEach(n=>n.value='');
   document.getElementById('payment-section').style.display='none';
   document.getElementById('order-btn').disabled=true;
@@ -1045,6 +1016,89 @@ async function submitRating(){
 }
 
 
+
+// ---- NEW FLOW: Select size → open panel → add to cart ----
+let selectedItemData={}; // stores {name, price, size} per itemId
+
+function selectSize(btn,name,price,size,itemId){
+  // Highlight selected size button
+  const sizeRow=btn.closest('.size-row');
+  sizeRow.querySelectorAll('.size-btn').forEach(b=>{
+    b.style.background='';b.style.color='';b.style.borderColor='';
+  });
+  btn.style.background='#354C3A';
+  btn.style.color='#fff';
+  btn.style.borderColor='#354C3A';
+
+  // Store selection
+  selectedItemData[itemId]={name,price,size};
+
+  // Update label inside panel
+  const label=document.getElementById('selected-size-label-'+itemId);
+  if(label)label.textContent='Selected: '+name+' ('+size+')';
+
+  // Open the customise panel
+  const panel=document.getElementById('addons-'+itemId);
+  if(panel){
+    panel.classList.add('open');
+    // Smooth scroll to panel
+    setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+  }
+}
+
+function addToCartFromPanel(itemId){
+  const data=selectedItemData[itemId];
+  if(!data){showToast('Please select a size first!');return;}
+
+  const addons=getItemAddons(itemId);
+  const note=getItemNote(itemId);
+  const addonTotal=addons.reduce((s,a)=>s+a.price,0);
+  const addonNames=addons.map(a=>a.name).join(', ');
+
+  cart.push({
+    name:data.name,
+    basePrice:data.price+addonTotal,
+    size:data.size,
+    addons:addonNames,
+    note,
+    id:Date.now()
+  });
+
+  recalcCart();
+
+  // Flash cart green
+  const cartSection=document.querySelector('.cart-section');
+  if(cartSection){
+    cartSection.style.background='#ECFDF5';
+    setTimeout(()=>{cartSection.style.background='#f7f7f7';},600);
+  }
+
+  showToast('✅ '+data.name+' added to cart!');
+
+  // Close and reset panel
+  closeItemPanel(itemId);
+  delete selectedItemData[itemId];
+}
+
+function closeItemPanel(itemId){
+  // Reset size button styles
+  const panel=document.getElementById('addons-'+itemId);
+  if(panel){
+    panel.classList.remove('open');
+    // Reset size buttons
+    const sizeRow=panel.closest('.menu-item').querySelector('.size-row');
+    if(sizeRow)sizeRow.querySelectorAll('.size-btn').forEach(b=>{
+      b.style.background='';b.style.color='';b.style.borderColor='';
+    });
+    // Reset addons
+    panel.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
+    const note=panel.querySelector('.item-note');
+    if(note)note.value='';
+    const label=document.getElementById('selected-size-label-'+itemId);
+    if(label)label.textContent='';
+  }
+}
+
 // ---- DOUBLE STAMP TUESDAY ----
 function getStampsToEarn(){
   const day=new Date().getDay();
@@ -1076,11 +1130,13 @@ document.addEventListener('touchmove',e=>{
 document.addEventListener('touchend',async()=>{
   if(ptPulling){
     ptPulling=false;
-    await loadCard(
-      document.getElementById('cname').textContent,
-      null,
-      document.getElementById('csince').dataset.phone||''
-    );
+    // Re-fetch customer from DB to get fresh data including email/birthday
+    try{
+      const{data:cust}=await db.from('customers').select('*').eq('id',customerId).limit(1);
+      if(cust&&cust[0]){
+        await loadCard(cust[0].name,cust[0].created_at,cust[0].phone,cust[0].email,cust[0].birthday);
+      }
+    }catch(e){console.log('Refresh error:',e);}
     showToast('✅ Card refreshed!');
   }
 },{passive:true});
@@ -1153,19 +1209,16 @@ async function checkMilestones(totalCoffees,custName){
   }
 }
 
-// ============ SPLASH SCREEN ============
-window.addEventListener('load',()=>{
-  setTimeout(()=>{
-    const splash=document.getElementById('splash');
-    if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
-  },1800);
-});
-
-// ============ CONFETTI ============
-
-// ============ VIP TIERS ============
-
-// ============ DAILY SPECIALS ============
+// ============ SHOW DAILY SPECIAL ============
+function showDailySpecial(){
+  const special=getDailySpecial();
+  const el=document.getElementById('daily-special');
+  if(el&&special){
+    el.style.display='flex';
+    document.getElementById('special-name').textContent=special.emoji+' '+special.title;
+    document.getElementById('special-price').textContent=special.desc;
+  }
+}
 
 // ============ STREAK ============
 function checkStreak(custId){
@@ -1305,7 +1358,7 @@ async function loadCardFeatures(custId,name,email){
       const badge=document.createElement('span');
       badge.id='vip-badge';
       badge.className='vip-badge '+tier.class;
-      badge.textContent=tier.icon+' '+tier.name;
+      badge.textContent=tier.emoji+' '+tier.name;
       nameEl.parentElement.appendChild(badge);
     }
   }
@@ -1515,7 +1568,7 @@ function logout(){
   document.getElementById('login-view').style.display='block';
   document.getElementById('main-view').style.display='none';
   document.getElementById('customer-row').style.display='none';
-  document.getElementById('inp-name').value='';document.getElementById('inp-email').value='';document.getElementById('inp-phone').value='';
+  document.getElementById('inp-name').value='';document.getElementById('inp-email').value='';document.getElementById('inp-phone').value='';if(document.getElementById('inp-birthday'))document.getElementById('inp-birthday').value='';
 }
 
 function renderCard(){
@@ -1545,7 +1598,6 @@ function renderCard(){
   document.getElementById('total-val').textContent=totalStamps;
   document.getElementById('rewards-val').textContent=rewardsEarned;
   document.getElementById('saved-val').textContent='$'+actualSaved.toFixed(2);
-  const remaining=TOTAL-displayStamps;
   const pill=document.getElementById('reward-pill');
   const rtext=document.getElementById('reward-text');
   if(displayStamps>=TOTAL){
@@ -1568,46 +1620,9 @@ function renderCard(){
     document.getElementById('redeem-btn').style.display='none';
   }
 
-  // VIP tier
-  const vip=getVIPTier(totalStamps);
-  let vipEl=document.getElementById('vip-badge');
-  if(!vipEl){vipEl=document.createElement('div');vipEl.id='vip-badge';document.getElementById('reward-pill').after(vipEl);}
-  vipEl.innerHTML=vip?`<div class="vip-badge ${vip.class}">${vip.emoji} ${vip.name} Member</div>`:'';
 
-  // Daily special
-  const special=getDailySpecial();
-  let specialEl=document.getElementById('daily-special-card');
-  if(!specialEl){
-    specialEl=document.createElement('div');specialEl.id='daily-special-card';
-    specialEl.className='daily-special';
-    document.getElementById('vip-badge').after(specialEl);
-  }
-  specialEl.innerHTML=`<div class="special-tag">TODAY'S SPECIAL ${special.emoji}</div><div style="font-size:14px;font-weight:700">${special.title}</div><div style="font-size:12px;color:#A9B29E;margin-top:3px">${special.desc}</div>`;
 
-  // Streak
-  const streak=getStreak();
-  let streakEl=document.getElementById('streak-card');
-  if(!streakEl){
-    streakEl=document.createElement('div');streakEl.id='streak-card';
-    streakEl.className='streak-banner';
-    document.getElementById('daily-special-card').after(streakEl);
-  }
-  if(streak>=2){
-    streakEl.style.display='flex';
-    streakEl.innerHTML=`<span class="streak-fire">🔥</span><div><div style="font-weight:700;font-size:14px">${streak} day streak!</div><div style="font-size:12px;opacity:0.85">Keep visiting daily to keep your streak alive</div></div>`;
-  } else {
-    streakEl.style.display='none';
-  }
 
-  // Fav drink
-  const fav=getFavDrink();
-  let favEl=document.getElementById('fav-drink-btn');
-  if(!favEl&&fav){
-    favEl=document.createElement('button');favEl.id='fav-drink-btn';favEl.className='fav-btn';
-    favEl.onclick=()=>{showTab('order');setTimeout(()=>showToast('Add your fave: '+fav.name+' ('+fav.size+')'),300);};
-    document.getElementById('stats-row-el').after(favEl);
-  }
-  if(favEl&&fav)favEl.innerHTML=`⭐ Quick order: ${fav.name} (${fav.size}) — $${fav.price.toFixed(2)}`;
 }
 
 function showToast(msg){
@@ -1665,8 +1680,8 @@ function toggleDarkMode(){
   localStorage.setItem('tdm_dark',document.body.classList.contains('dark-mode')?'1':'0');
 }
 
-// Restore dark mode preference (after DOM ready)
-document.addEventListener('DOMContentLoaded',()=>{
+// Restore dark mode preference — runs after full page load
+window.addEventListener('load',()=>{
   if(localStorage.getItem('tdm_dark')==='1'){
     document.body.classList.add('dark-mode');
     const btn=document.getElementById('dark-btn');
@@ -1677,7 +1692,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 function showPopup(title,msg,showRule){
   if(title)document.getElementById('popup-title').textContent=title;
   if(msg)document.getElementById('popup-msg').textContent=msg;
-  document.getElementById('popup-rule').style.display=showRule===false?'none':'block';
+  const prule=document.querySelector('.popup-rule');if(prule)prule.style.display=showRule===false?'none':'block';
   document.getElementById('popup-overlay').style.display='flex';
 }
 function closePopup(){
