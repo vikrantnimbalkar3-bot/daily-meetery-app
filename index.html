@@ -939,13 +939,13 @@ function resetOrder(){
 }
 
 function showTab(tab){
-  ['card','order','history','menu','leaderboard'].forEach(t=>{
+  ['card','order','history','menu'].forEach(t=>{
     document.getElementById('tab-'+t+'-view').style.display=t===tab?'block':'none';
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
   if(tab==='order')renderCart();
   if(tab==='history')loadHistory();
-  if(tab==='leaderboard')renderLeaderboard();
+  
 }
 
 async function renderLeaderboard(){
@@ -1040,7 +1040,7 @@ function setRating(star){
 async function submitRating(){
   if(currentRating===0){showToast('Please select a rating!');return;}
   showToast(['','😞 Sorry about that!','😐 Thanks for the feedback!','😊 Glad you enjoyed it!','😄 Great to hear!','🎉 You made our day!'][currentRating]);
-  document.getElementById('rating-section').style.display='none';
+  document.getElementById('rating-box').style.display='none';
   currentRating=0;
 }
 
@@ -1094,22 +1094,34 @@ const firebaseConfig={
   messagingSenderId:"723697995611",
   appId:"1:723697995611:web:bfaf3b6c0ced6e046e547e"
 };
-const firebaseApp=firebase.initializeApp(firebaseConfig);
-const messaging=firebase.messaging();
+let firebaseApp=null;
+let messaging=null;
 const VAPID_KEY='BJoL3LxvmoPghlO8NITvOsWJeAz5uvwage35jtHgMIeot0Xbgo6FOOyTLMuKng7h-MPOlzF0SCAHpjHZTOxOdeg';
+
+// Safely init Firebase — won't crash app if it fails
+try{
+  firebaseApp=firebase.initializeApp(firebaseConfig);
+  messaging=firebase.messaging();
+  // Handle foreground notifications
+  messaging.onMessage((payload)=>{
+    try{
+      const{title,body}=payload.notification;
+      showToast('🔔 '+title+': '+body);
+    }catch(e){}
+  });
+  console.log('Firebase ready');
+}catch(e){
+  console.log('Firebase not available:',e.message);
+}
 
 async function requestNotificationPermission(custId){
   try{
+    if(!messaging)return;
     if(!('Notification' in window))return;
     if(!('serviceWorker' in navigator))return;
-    
     const permission=await Notification.requestPermission();
     if(permission!=='granted')return;
-
-    // Register service worker
     const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    
-    // Get FCM token
     const token=await messaging.getToken({vapidKey:VAPID_KEY,serviceWorkerRegistration:reg});
     if(token&&custId){
       await db.from('customers').update({fcm_token:token,notifications_enabled:true}).eq('id',custId);
@@ -1119,12 +1131,6 @@ async function requestNotificationPermission(custId){
     console.log('Notification setup error:',e.message);
   }
 }
-
-// Handle foreground notifications
-messaging.onMessage((payload)=>{
-  const{title,body}=payload.notification;
-  showToast('🔔 '+title+': '+body);
-});
 
 // Check hamper milestones and send auto notifications
 async function checkMilestones(totalCoffees,custName){
@@ -1156,58 +1162,10 @@ window.addEventListener('load',()=>{
 });
 
 // ============ CONFETTI ============
-function launchConfetti(){
-  const colours=['#354C3A','#D48631','#A9B29E','#FDF8EE','#fff'];
-  const container=document.createElement('div');
-  container.className='confetti-container';
-  document.body.appendChild(container);
-  for(let i=0;i<80;i++){
-    const piece=document.createElement('div');
-    piece.className='confetti-piece';
-    piece.style.cssText=`
-      left:${Math.random()*100}%;
-      top:-20px;
-      background:${colours[Math.floor(Math.random()*colours.length)]};
-      width:${Math.random()*10+5}px;
-      height:${Math.random()*10+5}px;
-      border-radius:${Math.random()>0.5?'50%':'2px'};
-      animation-delay:${Math.random()*2}s;
-      animation-duration:${Math.random()*2+2}s;
-      transform:rotate(${Math.random()*360}deg);`;
-    container.appendChild(piece);
-  }
-  setTimeout(()=>container.remove(),4000);
-}
 
 // ============ VIP TIERS ============
-function getVIPTier(totalCoffees){
-  if(totalCoffees>=200)return{name:'Platinum',class:'vip-platinum',icon:'💎'};
-  if(totalCoffees>=100)return{name:'Gold',class:'vip-gold',icon:'🥇'};
-  if(totalCoffees>=50)return{name:'Silver',class:'vip-silver',icon:'🥈'};
-  if(totalCoffees>=25)return{name:'Bronze',class:'vip-bronze',icon:'🥉'};
-  return null;
-}
 
 // ============ DAILY SPECIALS ============
-const DAILY_SPECIALS=[
-  {day:0,name:'Sunday Signature Special — Viral Tiramisu Float',price:'Only $10.90 today!'},
-  {day:1,name:'Monday Motivation — Double shot Flat White',price:'Only $5.50 today!'},
-  {day:2,name:'Tuesday Treat — Matcha Strawberry Cloud',price:'Only $9.90 today!'},
-  {day:3,name:'Hump Day — Pistachio Coco Loco',price:'Only $10.90 today!'},
-  {day:4,name:'Friday Feels — Tropical Matcha',price:'Only $9.90 today!'},
-  {day:5,name:'Saturday Sip — Spanish Latte',price:'Only $9.90 today!'},
-  {day:6,name:'Sunday Signature Special — Viral Tiramisu Float',price:'Only $10.90 today!'},
-];
-
-function showDailySpecial(){
-  const day=new Date().getDay();
-  const special=DAILY_SPECIALS[day];
-  if(special){
-    document.getElementById('daily-special').style.display='flex';
-    document.getElementById('special-name').textContent=special.name;
-    document.getElementById('special-price').textContent=special.price;
-  }
-}
 
 // ============ STREAK ============
 function checkStreak(custId){
@@ -1416,6 +1374,66 @@ function showNearbyBanner(name,dist){
   setTimeout(()=>{if(banner.parentElement)banner.remove();},10000);
 }
 
+
+// ---- STAMP SOUND ----
+function playStampSound(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.setValueAtTime(520,ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(880,ctx.currentTime+0.1);
+    g.gain.setValueAtTime(0.3,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+0.3);
+  }catch(e){}
+}
+
+// ---- BIRTHDAY CHECK ----
+function checkBirthday(birthdayStr,name){
+  if(!birthdayStr)return;
+  const today=new Date();
+  const bday=new Date(birthdayStr);
+  if(today.getMonth()===bday.getMonth()&&today.getDate()===bday.getDate()){
+    setTimeout(()=>{showToast('🎂 Happy Birthday '+name+'! Your free coffee is on us today!');launchConfetti();},2000);
+  } else if(today.getMonth()===bday.getMonth()){
+    setTimeout(()=>showToast('🎂 Happy birthday month '+name+'! Come in on your birthday for a free coffee!'),2000);
+  }
+}
+
+// ---- WAIT TIME ----
+function getWaitTime(){
+  const hour=new Date().getHours();
+  const min=new Date().getMinutes();
+  if((hour===7||hour===8)||(hour===12&&min<30))return'10-15 mins';
+  if(hour>=6&&hour<=10)return'3-5 mins';
+  if(hour>=11&&hour<=13)return'5-8 mins';
+  return'2-3 mins';
+}
+
+// ---- WEEKLY SUMMARY ----
+async function loadWeeklySummary(){
+  if(!customerId)return;
+  const weekAgo=new Date(Date.now()-7*24*60*60*1000).toISOString();
+  const{data:weekOrders}=await db.from('orders').select('price,is_free,created_at').eq('customer_id',customerId).gte('created_at',weekAgo);
+  if(!weekOrders||weekOrders.length===0)return;
+  const total=weekOrders.reduce((s,o)=>s+(o.is_free?0:parseFloat(o.price||0)),0);
+  const el=document.getElementById('weekly-summary');
+  if(el)el.innerHTML='☕ This week: <strong>'+weekOrders.length+' coffee'+(weekOrders.length!==1?'s':'')+'</strong> · $'+total.toFixed(2)+' spent';
+}
+
+// ---- NEW DRINK BONUS ----
+async function checkNewDrink(drinkName){
+  if(!customerId)return;
+  const{data:prev}=await db.from('orders').select('item_name').eq('customer_id',customerId).eq('item_name',drinkName);
+  if(prev&&prev.length===1){
+    showToast('🌟 First time trying '+drinkName+'? Bonus stamp added!');
+    await db.from('stamps').insert({customer_id:customerId});
+    totalStamps++;
+  }
+}
+
 async function init(){
   try{
     const{error}=await db.from('customers').select('id').limit(1);
@@ -1438,6 +1456,12 @@ async function init(){
   }
 }
 
+// Safety net: always remove splash after 4 seconds no matter what
+setTimeout(()=>{
+  const splash=document.getElementById('splash-screen');
+  if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
+},4000);
+
 async function loginOrRegister(){
   const name=document.getElementById('inp-name').value.trim();
   const email=document.getElementById('inp-email').value.trim().toLowerCase();
@@ -1449,13 +1473,13 @@ async function loginOrRegister(){
   err.textContent='Finding your card...';
   try{
     const{data:ex}=await db.from('customers').select('id,name,created_at,phone,birthday').eq('email',email).limit(1);
-    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email);}
-    else{const insertData={name,email};if(phone)insertData.phone=phone;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email);}
+    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);}
+    else{const insertData={name,email};if(phone)insertData.phone=phone;if(birthday)insertData.birthday=birthday;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email,birthday);}
     err.textContent='';
   }catch(e){err.textContent='Error: '+e.message;}
 }
 
-async function loadCard(name,createdAt,phone,email){
+async function loadCard(name,createdAt,phone,email,birthday){
   const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
   const{data:r}=await db.from('rewards').select('id').eq('customer_id',customerId);
   const{data:freeOrders}=await db.from('orders').select('price').eq('customer_id',customerId).eq('is_free',true);
@@ -1467,9 +1491,6 @@ async function loadCard(name,createdAt,phone,email){
   stamps=stampsAfterRewards<0?0:stampsAfterRewards%TOTAL;
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
   // Check new drink bonus for each unique item
-  const orderItems=allItems.map(i=>i.name);
-  const uniqueItems=[...new Set(orderItems)];
-  for(const item of uniqueItems){await checkNewDrink(item);}
   document.getElementById('login-view').style.display='none';
   document.getElementById('main-view').style.display='block';
   setTimeout(()=>requestNotificationPermission(customerId),2000);
@@ -1531,7 +1552,6 @@ function renderCard(){
     pill.classList.add('earned');rtext.classList.add('earned');
     rtext.textContent='🎉 Free coffee ready! Valid on standard coffees only (S/M/L).';
     document.getElementById('redeem-btn').style.display='block';
-    launchConfetti();
   } else if(displayStamps===5){
     pill.classList.add('earned');rtext.classList.add('earned');
     rtext.textContent='🎉 10% discount unlocked! Applied automatically on your next order.';
@@ -1645,11 +1665,14 @@ function toggleDarkMode(){
   localStorage.setItem('tdm_dark',document.body.classList.contains('dark-mode')?'1':'0');
 }
 
-// Restore dark mode preference
-if(localStorage.getItem('tdm_dark')==='1'){
-  document.body.classList.add('dark-mode');
-  document.getElementById('dark-btn').textContent='☀️';
-}
+// Restore dark mode preference (after DOM ready)
+document.addEventListener('DOMContentLoaded',()=>{
+  if(localStorage.getItem('tdm_dark')==='1'){
+    document.body.classList.add('dark-mode');
+    const btn=document.getElementById('dark-btn');
+    if(btn)btn.textContent='☀️';
+  }
+});
 
 function showPopup(title,msg,showRule){
   if(title)document.getElementById('popup-title').textContent=title;
