@@ -6,6 +6,8 @@
   <title>The Daily Meetery Café — Loyalty Card</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #292927; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 20px; }
@@ -56,7 +58,7 @@
     .crowd-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FFF3DC; color: #D48631; font-weight: 500; margin-left: 6px; vertical-align: middle; }
     .free-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FFF3DC; color: #D48631; font-weight: 700; margin-left: 6px; vertical-align: middle; }
     .free-coffee-banner { background: #FFF3DC; border: 1px solid #D48631; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #D48631; font-weight: 500; text-align: center; }
-    .cart-section { background: #f7f7f7; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .cart-section { background: #f7f7f7; border-radius: 10px; padding: 12px; margin-bottom: 12px; transition: background 0.3s; }
     .cart-title { font-size: 12px; font-weight: 600; color: #292927; margin-bottom: 10px; display: flex; justify-content: space-between; }
     .cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid #eee; font-size: 13px; }
     .cart-item:last-child { border-bottom: none; }
@@ -115,6 +117,80 @@
     .success-items { text-align: left; background: #f7f7f7; border-radius: 10px; padding: 12px; margin: 12px 0; }
     .success-item-row { font-size: 13px; padding: 4px 0; color: #555; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
     .success-item-row:last-child { border-bottom: none; }
+    /* Splash */
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes stampPop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.3)} 100%{transform:scale(1);opacity:1} }
+    @keyframes dot { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
+    /* Confetti */
+    .confetti-piece { position:fixed; width:10px; height:10px; top:-10px; border-radius:2px; animation:confettiFall linear forwards; z-index:9998; pointer-events:none; }
+    @keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+    /* VIP Badge */
+    .vip-badge { display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:99px;font-weight:700;margin-top:6px; }
+    .vip-bronze { background:#F5E6D3;color:#8B4513; }
+    .vip-silver { background:#E8E8E8;color:#666; }
+    .vip-gold { background:#FFF3DC;color:#D48631; }
+    .vip-platinum { background:#E8F0FF;color:#354C3A; }
+    /* Streak */
+    .streak-banner { background:linear-gradient(135deg,#D48631,#e8a050);border-radius:10px;padding:10px 14px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:10px; }
+    .streak-fire { font-size:24px; }
+    /* Daily special */
+    .daily-special { background:linear-gradient(135deg,#354C3A,#4a6b52);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#fff;cursor:pointer; }
+    .special-tag { font-size:10px;background:#D48631;color:#fff;padding:2px 8px;border-radius:99px;font-weight:700;display:inline-block;margin-bottom:6px; }
+    /* Rating */
+    .star-rating { display:flex;gap:6px;justify-content:center;margin:12px 0; }
+    .star { font-size:28px;cursor:pointer;transition:transform 0.1s;filter:grayscale(1); }
+    .star.active { filter:none;transform:scale(1.2); }
+    /* Fav drink */
+    .fav-btn { display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid #D48631;background:#FFF3DC;cursor:pointer;font-size:13px;font-weight:500;color:#354C3A;margin-bottom:8px; }
+    /* Confetti */
+    .confetti-container { position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden; }
+    .confetti-piece { position:absolute;width:10px;height:10px;opacity:0;animation:confettiFall 3s ease-in forwards; }
+    @keyframes confettiFall {
+      0%{transform:translateY(-20px) rotate(0deg);opacity:1;}
+      100%{transform:translateY(100vh) rotate(720deg);opacity:0;}
+    }
+    /* Splash screen */
+    .splash { position:fixed;top:0;left:0;width:100%;height:100%;background:#354C3A;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s; }
+    .splash-logo { font-size:60px;margin-bottom:16px;animation:pulse 1s infinite; }
+    .splash-name { font-size:24px;font-weight:700;color:#fff;letter-spacing:1px; }
+    .splash-tag { font-size:13px;color:#A9B29E;margin-top:6px; }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    /* VIP tier badges */
+    .vip-badge { display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:99px;font-weight:700;margin-left:8px; }
+    .vip-bronze { background:#F5E6D3;color:#8B4513; }
+    .vip-silver { background:#E8E8E8;color:#666; }
+    .vip-gold { background:#FFF3C4;color:#B8860B; }
+    .vip-platinum { background:#E8F4FD;color:#1565C0; }
+    /* Daily special banner */
+    .daily-special { background:linear-gradient(135deg,#354C3A,#D48631);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:10px; }
+    .daily-special-icon { font-size:24px;flex-shrink:0; }
+    .daily-special-title { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#A9B29E; }
+    .daily-special-name { font-size:14px;font-weight:700;color:#fff; }
+    .daily-special-price { font-size:12px;color:#FDF8EE;margin-top:1px; }
+    /* Streak badge */
+    .streak-banner { background:#FFF3DC;border:1px solid #D48631;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px; }
+    .streak-fire { font-size:20px; }
+    .streak-text { font-size:13px;font-weight:500;color:#D48631; }
+    /* Savings comparison */
+    .savings-compare { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px; }
+    .savings-card { background:#FDF8EE;border-radius:10px;padding:10px;text-align:center;border:1px solid #A9B29E; }
+    .savings-val { font-size:18px;font-weight:700;color:#354C3A; }
+    .savings-lbl { font-size:10px;color:#888;margin-top:2px; }
+    /* Referral */
+    .referral-box { background:#354C3A;border-radius:10px;padding:12px 14px;margin-bottom:12px;text-align:center; }
+    .referral-code { font-size:22px;font-weight:700;color:#D48631;letter-spacing:3px;margin:8px 0; }
+    .referral-sub { font-size:12px;color:#A9B29E; }
+    /* Favourite drink */
+    .fave-drink { background:#ECFDF5;border:1px solid #354C3A;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between; }
+    .fave-drink-name { font-size:13px;font-weight:600;color:#354C3A; }
+    .fave-btn { padding:6px 14px;background:#354C3A;color:#fff;border:none;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer; }
+    /* Order rating */
+    .rating-box { background:#f7f7f7;border-radius:10px;padding:14px;margin-top:12px;text-align:center; }
+    .rating-title { font-size:13px;font-weight:600;color:#292927;margin-bottom:10px; }
+    .stars { display:flex;justify-content:center;gap:8px;margin-bottom:8px; }
+    .star { font-size:28px;cursor:pointer;transition:transform 0.1s;opacity:0.3; }
+    .star.active { opacity:1; }
+    .star:hover { transform:scale(1.2); }
     /* History */
     .history-empty { text-align: center; padding: 30px 16px; color: #888; font-size: 13px; }
     .history-group { margin-bottom: 16px; }
@@ -141,6 +217,18 @@
   </style>
 </head>
 <body>
+<!-- Splash Screen -->
+<div id="splash-screen" style="position:fixed;inset:0;background:#354C3A;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s">
+  <div style="font-size:60px;margin-bottom:16px;animation:bounce 1s infinite">☕</div>
+  <div style="font-size:28px;font-weight:700;color:#fff;letter-spacing:-0.5px">The Daily Meetery</div>
+  <div style="font-size:13px;color:#A9B29E;margin-top:6px;letter-spacing:1px">ONE DAILY STOP. ENDLESS CONNECTIONS.</div>
+  <div style="margin-top:40px;display:flex;gap:8px">
+    <div style="width:8px;height:8px;border-radius:50%;background:#D48631;animation:dot 1.2s 0s infinite"></div>
+    <div style="width:8px;height:8px;border-radius:50%;background:#D48631;animation:dot 1.2s 0.2s infinite"></div>
+    <div style="width:8px;height:8px;border-radius:50%;background:#D48631;animation:dot 1.2s 0.4s infinite"></div>
+  </div>
+</div>
+
 <div class="phone">
   <div class="phone-header">
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -154,7 +242,8 @@
     <div id="customer-row" class="customer-row" style="display:none">
       <div class="avatar" id="avatar">?</div>
       <div>
-        <div style="font-size:13px;font-weight:600;color:#fff" id="cname">—</div>
+        <div style="font-size:14px;font-weight:700;color:#fff" id="greeting-text">Welcome!</div>
+        <div style="font-size:12px;font-weight:500;color:#A9B29E" id="cname">—</div>
         <div style="font-size:11px;color:#A9B29E" id="csince">—</div>
       </div>
     </div>
@@ -180,6 +269,8 @@
       <input class="field" id="inp-email" placeholder="you@email.com" type="email">
       <div class="field-label">Phone number <span style="color:#A9B29E">(optional)</span></div>
       <input class="field" id="inp-phone" placeholder="e.g. 021 123 4567" type="tel">
+      <div class="field-label">Birthday <span style="color:#A9B29E">(optional — free coffee on your birthday!)</span></div>
+      <input class="field" id="inp-birthday" type="date" style="margin-bottom:10px">
       <button class="main-btn" onclick="loginOrRegister()">Get my stamp card</button>
       <div class="err" id="login-err"></div>
       <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">By signing up you agree to receive offers from The Daily Meetery</div>
@@ -199,6 +290,28 @@
       <img src="DSC04927%20(1).jpg" alt="The Daily Meetery" style="width:100%;height:130px;object-fit:cover;object-position:center 20%;display:block;">
       <div class="phone-body">
       <div class="toast" id="toast"></div>
+      <!-- Daily Special -->
+      <div class="daily-special" id="daily-special" style="display:none">
+        <div class="daily-special-icon">🔥</div>
+        <div>
+          <div class="daily-special-title">Today's Special</div>
+          <div class="daily-special-name" id="special-name">—</div>
+          <div class="daily-special-price" id="special-price">—</div>
+        </div>
+      </div>
+      <!-- Streak -->
+      <div class="streak-banner" id="streak-banner" style="display:none">
+        <div class="streak-fire">🔥</div>
+        <div class="streak-text" id="streak-text">You're on a streak!</div>
+      </div>
+      <!-- Favourite drink -->
+      <div class="fave-drink" id="fave-drink" style="display:none">
+        <div>
+          <div style="font-size:10px;color:#888;margin-bottom:2px">YOUR USUAL</div>
+          <div class="fave-drink-name" id="fave-name">—</div>
+        </div>
+        <button class="fave-btn" onclick="orderFavourite()">Quick order</button>
+      </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:12px;color:#888">Your stamps</span>
         <span style="font-size:13px;font-weight:600;color:#292927" id="stamp-count">0 / 10</span>
@@ -210,10 +323,29 @@
       </div>
       <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
       <div class="reward-pill" id="reward-pill"><div class="reward-text" id="reward-text">Loading...</div></div>
-      <div class="stats-row">
+      <div id="weekly-summary" style="font-size:12px;color:#888;text-align:center;padding:6px 0;margin-bottom:4px"></div>
+      <div class="stats-row" id="stats-row-el">
         <div class="stat"><div style="font-size:16px;margin-bottom:2px">☕</div><div class="stat-val" id="total-val">0</div><div class="stat-lbl">coffees</div></div>
         <div class="stat"><div style="font-size:16px;margin-bottom:2px">🎁</div><div class="stat-val" id="rewards-val">0</div><div class="stat-lbl">free earned</div></div>
         <div class="stat"><div style="font-size:16px;margin-bottom:2px">💰</div><div class="stat-val" id="saved-val">$0</div><div class="stat-lbl">saved</div></div>
+      </div>
+      <!-- Savings comparison -->
+      <div class="savings-compare" id="savings-compare" style="display:none">
+        <div class="savings-card">
+          <div class="savings-val" id="this-month-saved">$0</div>
+          <div class="savings-lbl">Saved this month</div>
+        </div>
+        <div class="savings-card">
+          <div class="savings-val" id="last-month-saved">$0</div>
+          <div class="savings-lbl">Saved last month</div>
+        </div>
+      </div>
+      <!-- Referral -->
+      <div class="referral-box" id="referral-box" style="display:none">
+        <div style="font-size:12px;color:#A9B29E;margin-bottom:4px">🎁 Refer a friend — both get a bonus stamp!</div>
+        <div class="referral-code" id="referral-code">—</div>
+        <div class="referral-sub">Share your code · Friend uses it · You both get +1 stamp</div>
+        <button onclick="shareReferral()" style="margin-top:10px;padding:7px 20px;background:#D48631;color:#fff;border:none;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer">Share code 🔗</button>
       </div>
       <button class="redeem-btn" id="redeem-btn" style="display:none" onclick="showTab('order')">Claim my free coffee</button>
       <button class="outline-btn" onclick="logout()">Sign out</button>
@@ -238,6 +370,16 @@
           <div class="cart-title">
             <span>Your cart</span>
             <span id="cart-count" style="color:#888;font-weight:400">0 items</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;margin-bottom:8px">
+            👥 Group order:
+            <select id="group-size" onchange="updateGroupSize(this.value)" style="border:1px solid #A9B29E;border-radius:6px;padding:3px 8px;font-size:12px;background:#fff;color:#354C3A">
+              <option value="1">Just me</option>
+              <option value="2">2 people</option>
+              <option value="3">3 people</option>
+              <option value="4">4 people</option>
+              <option value="5">5+ people</option>
+            </select>
           </div>
           <div id="cart-items"><div class="empty-cart">No items yet — add drinks below!</div></div>
           <div id="cart-footer" style="display:none">
@@ -301,13 +443,33 @@
         <div class="success-box">
           <div style="font-size:44px;margin-bottom:12px" id="success-emoji">✅</div>
           <div style="font-size:17px;font-weight:700;color:#222;margin-bottom:6px">Order received!</div>
-          <div style="font-size:14px;font-weight:600;color:#354C3A;margin-bottom:4px" id="success-pickup"></div><div style="font-size:13px;color:#888;margin-bottom:4px" id="success-msg"></div>
+          <div style="font-size:14px;font-weight:600;color:#354C3A;margin-bottom:4px" id="success-pickup"></div>
+          <div style="font-size:13px;color:#D48631;font-weight:500;margin-bottom:4px" id="success-wait"></div><div style="font-size:13px;color:#888;margin-bottom:4px" id="success-msg"></div>
           <div style="font-size:13px;font-weight:600;color:#354C3A;margin-bottom:12px" id="success-stamps"></div>
           <div class="success-items" id="success-items"></div>
+          <div class="rating-box" id="rating-box">
+            <div class="rating-title">How was your experience?</div>
+            <div class="stars">
+              <span class="star" onclick="rateCoffee(1)">⭐</span>
+              <span class="star" onclick="rateCoffee(2)">⭐</span>
+              <span class="star" onclick="rateCoffee(3)">⭐</span>
+              <span class="star" onclick="rateCoffee(4)">⭐</span>
+              <span class="star" onclick="rateCoffee(5)">⭐</span>
+            </div>
+            <div id="rating-thanks" style="font-size:12px;color:#888;display:none">Thanks for your feedback! 🙏</div>
+          </div>
+
           <button class="main-btn" onclick="resetOrder()">Order again</button>
           <button class="outline-btn" onclick="showTab('history')">View transaction history</button>
         </div>
       </div>
+    </div>
+
+    <!-- LEADERBOARD TAB -->
+    <div id="tab-leaderboard-view" class="phone-body" style="display:none">
+      <div style="font-size:16px;font-weight:700;color:#292927;margin-bottom:4px">🏆 Top Coffee Lovers</div>
+      <div style="font-size:12px;color:#888;margin-bottom:16px">This month's most loyal customers</div>
+      <div id="leaderboard-list"><div style="color:#888;font-size:13px">Loading...</div></div>
     </div>
 
     <!-- HISTORY TAB -->
@@ -416,7 +578,7 @@ function buildSection(id,items){
     const itemId=id+'-'+idx;
 
     // Size buttons — each calls addToCartWithOptions passing the itemId
-    const sizeBtns=item.sizes.map(s=>`<button class="size-btn" onclick="addToCartWithOptions('${item.name}',${s.p},'${s.l}','${itemId}')"><span class="add-icon">+</span>${s.l}</button>`).join('');
+    const sizeBtns=item.sizes.map(s=>`<button class="size-btn" onclick="addToCartWithOptions('${item.name}',${s.p},'${s.l}','${itemId}',this)"><span class="add-icon">+</span>${s.l}</button>`).join('');
 
     // Inline milk addons
     const milkBtns=MILK_OPTS.map(m=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','milk')">${m}</button>`).join('');
@@ -462,7 +624,7 @@ function getItemAddons(itemId){
   const milkGrid=document.getElementById('milk-'+itemId);
   if(milkGrid){
     milkGrid.querySelectorAll('.inline-addon-btn.selected').forEach(b=>{
-      const price=parseFloat(b.textContent.match(/\\$([0-9.]+)/)[1]);
+      const price=parseFloat(b.textContent.match(/\$([0-9.]+)/)[1]);
       addons.push({name:b.textContent.split(' +')[0],price});
     });
   }
@@ -470,7 +632,7 @@ function getItemAddons(itemId){
   const syrupGrid=document.getElementById('syrup-'+itemId);
   if(syrupGrid){
     syrupGrid.querySelectorAll('.inline-addon-btn.selected').forEach(b=>{
-      const price=parseFloat(b.textContent.match(/\\$([0-9.]+)/)[1]);
+      const price=parseFloat(b.textContent.match(/\$([0-9.]+)/)[1]);
       addons.push({name:b.textContent.split(' +')[0],price});
     });
   }
@@ -482,14 +644,31 @@ function getItemNote(itemId){
   return el?el.value.trim():'';
 }
 
-function addToCartWithOptions(name,price,size,itemId){
+function addToCartWithOptions(name,price,size,itemId,btn){
+  // Flash button to show added
+  if(btn){
+    const orig=btn.innerHTML;
+    btn.innerHTML='✓ Added!';
+    btn.style.background='#354C3A';
+    btn.style.color='#fff';
+    btn.style.borderColor='#354C3A';
+    setTimeout(()=>{btn.innerHTML=orig;btn.style.background='';btn.style.color='';btn.style.borderColor='';},1000);
+  }
   const addons=getItemAddons(itemId);
   const note=getItemNote(itemId);
   const addonTotal=addons.reduce((s,a)=>s+a.price,0);
   const addonNames=addons.map(a=>a.name).join(', ');
   cart.push({name,basePrice:price+addonTotal,size,addons:addonNames,note,id:Date.now()});
   recalcCart();
-  showToast(name+' added to cart!');
+  // Flash the cart section green to show item was added
+  const cartSection=document.querySelector('.cart-section');
+  if(cartSection){
+    cartSection.style.transition='background 0.3s';
+    cartSection.style.background='#ECFDF5';
+    setTimeout(()=>{cartSection.style.background='#f7f7f7';},600);
+    cartSection.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  showToast('✅ '+name+' added to cart!');
   // Reset this item's addons after adding
   const milkGrid=document.getElementById('milk-'+itemId);
   const syrupGrid=document.getElementById('syrup-'+itemId);
@@ -497,6 +676,13 @@ function addToCartWithOptions(name,price,size,itemId){
   if(syrupGrid)syrupGrid.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
   const noteEl=document.getElementById('note-'+itemId);
   if(noteEl)noteEl.value='';
+  // Close the customise panel after adding
+  const panel=document.getElementById('addons-'+itemId);
+  if(panel&&panel.classList.contains('open')){
+    panel.classList.remove('open');
+    const toggleBtn=panel.previousElementSibling;
+    if(toggleBtn)toggleBtn.textContent='+ Customise (milk, syrup, notes)';
+  }
 }
 
 
@@ -642,7 +828,8 @@ async function processOrder(freeItems,paidItems,msg){
 
   // Save paid items to orders table
   if(paidItems.length>0){
-    const stampInserts=paidItems.map(()=>({customer_id:customerId}));
+    const stampsPerItem=getStampsToEarn();
+  const stampInserts=paidItems.flatMap(()=>Array(stampsPerItem).fill({customer_id:customerId}));
     await db.from('stamps').insert(stampInserts);
     totalStamps+=paidItems.length;
     const orderInserts=paidItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.price,is_free:false,stamps_earned:1,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:orderPickupLabel}));
@@ -659,15 +846,21 @@ async function processOrder(freeItems,paidItems,msg){
   }
   const prevStamps=stamps;
   stamps=totalStamps%TOTAL;
+  playStampSound();
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
+  // Check new drink bonus for each unique item
+  const orderItems=allItems.map(i=>i.name);
+  const uniqueItems=[...new Set(orderItems)];
+  for(const item of uniqueItems){await checkNewDrink(item);}
   if(stamps>=TOTAL&&prevStamps<TOTAL){
-    setTimeout(()=>showPopup('🎉 Free coffee unlocked!','Your 10th coffee is on us! Valid on standard coffees only. Not valid on signature drinks, frappes or teas.',true),800);
+    launchConfetti();setTimeout(()=>showPopup('🎉 Free coffee unlocked!','Your 10th coffee is on us! Valid on standard coffees only. Not valid on signature drinks, frappes or teas.',true),800);
   } else if(stamps>=5&&stamps<TOTAL&&prevStamps<5){
     setTimeout(()=>showPopup('🎉 10% discount unlocked!','You have reached 5 stamps! Your next coffee order automatically gets 10% off. Keep going — 5 more stamps for a FREE coffee!',false),800);
   }
   renderCard();
   document.getElementById('success-emoji').textContent=freeItems.length>0?'🎉':'✅';
-  const successPickup=orderPickupLabel==='ASAP'?'ASAP — being made now!':'Ready at '+orderPickupLabel;document.getElementById('success-pickup').textContent='Pickup: '+successPickup;document.getElementById('success-msg').textContent=msg;
+  const successPickup=orderPickupLabel==='ASAP'?'ASAP — being made now!':'Ready at '+orderPickupLabel;document.getElementById('success-pickup').textContent='Pickup: '+successPickup;
+  document.getElementById('success-wait').textContent='⏱ Estimated wait: '+getWaitTime();document.getElementById('success-msg').textContent=msg;
   let stampsText='';
   if(paidItems.length>0)stampsText='+'+paidItems.length+' stamp'+(paidItems.length!==1?'s':'')+' added!';
   if(freeItems.length>0)stampsText+=(stampsText?' · ':'')+'🎉 '+freeItems.length+' free coffee'+(freeItems.length>1?'s':'')+' redeemed!';
@@ -746,12 +939,481 @@ function resetOrder(){
 }
 
 function showTab(tab){
-  ['card','order','history','menu'].forEach(t=>{
+  ['card','order','history','menu','leaderboard'].forEach(t=>{
     document.getElementById('tab-'+t+'-view').style.display=t===tab?'block':'none';
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
   if(tab==='order')renderCart();
   if(tab==='history')loadHistory();
+  if(tab==='leaderboard')renderLeaderboard();
+}
+
+async function renderLeaderboard(){
+  const ranked=await loadLeaderboard();
+  if(!ranked||ranked.length===0){
+    document.getElementById('leaderboard-list').innerHTML='<div style="color:#888;font-size:13px">No data yet!</div>';
+    return;
+  }
+  const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  document.getElementById('leaderboard-list').innerHTML=ranked.map((r,i)=>`
+    <div class="leaderboard-item">
+      <div class="leaderboard-rank">${medals[i]||i+1}</div>
+      <div class="leaderboard-name">${r.name}</div>
+      <div class="leaderboard-count">${r.count} ☕</div>
+    </div>`).join('');
+}
+
+
+function getVIPTier(totalCoffees){
+  if(totalCoffees>=200)return{name:'Platinum',emoji:'💎',class:'vip-platinum'};
+  if(totalCoffees>=100)return{name:'Gold',emoji:'🥇',class:'vip-gold'};
+  if(totalCoffees>=50)return{name:'Silver',emoji:'🥈',class:'vip-silver'};
+  if(totalCoffees>=25)return{name:'Bronze',emoji:'🥉',class:'vip-bronze'};
+  return null;
+}
+
+function launchConfetti(){
+  const colors=['#D48631','#354C3A','#FDF8EE','#A9B29E','#fff','#FFD700'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.left=Math.random()*100+'vw';
+    el.style.background=colors[Math.floor(Math.random()*colors.length)];
+    el.style.width=(Math.random()*10+5)+'px';
+    el.style.height=(Math.random()*10+5)+'px';
+    el.style.borderRadius=Math.random()>0.5?'50%':'2px';
+    el.style.animationDuration=(Math.random()*2+1.5)+'s';
+    el.style.animationDelay=(Math.random()*1)+'s';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),(Math.random()*2+2)*1000);
+  }
+}
+
+const DAILY_SPECIALS=[
+  {day:0,title:'Sunday Funday!',desc:'Free size upgrade on any latte today only',emoji:'🌟'},
+  {day:1,title:'Monday Magic!',desc:'Double stamps on all orders today',emoji:'⚡'},
+  {day:2,title:'Tasty Tuesday!',desc:'10% off all Signature drinks today',emoji:'✨'},
+  {day:3,title:'Hump Day Treat!',desc:'Free syrup with any coffee today',emoji:'🎉'},
+  {day:4,title:'Thirsty Thursday!',desc:'Buy 2 coffees get 1 free today',emoji:'☕'},
+  {day:5,title:'Friday Feels!',desc:'Try our new Pistachio Coco Loco — half price!',emoji:'🔥'},
+  {day:6,title:'Weekend Vibes!',desc:'Free muffin with any large coffee today',emoji:'🧁'},
+];
+
+function getDailySpecial(){
+  return DAILY_SPECIALS[new Date().getDay()];
+}
+
+function getStreak(){
+  const streak=parseInt(localStorage.getItem('tdm_streak')||'0');
+  const lastVisit=localStorage.getItem('tdm_last_visit');
+  const today=new Date().toDateString();
+  if(lastVisit===today)return streak;
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  if(lastVisit===yesterday){
+    const newStreak=streak+1;
+    localStorage.setItem('tdm_streak',newStreak);
+    localStorage.setItem('tdm_last_visit',today);
+    return newStreak;
+  }
+  localStorage.setItem('tdm_streak',1);
+  localStorage.setItem('tdm_last_visit',today);
+  return 1;
+}
+
+function saveFavDrink(name,size,price){
+  localStorage.setItem('tdm_fav',JSON.stringify({name,size,price}));
+  showToast('⭐ '+name+' saved as your favourite!');
+}
+
+function getFavDrink(){
+  try{return JSON.parse(localStorage.getItem('tdm_fav'));}catch(e){return null;}
+}
+
+let currentRating=0;
+function setRating(star){
+  currentRating=star;
+  document.querySelectorAll('.star').forEach((s,i)=>{
+    s.classList.toggle('active',i<star);
+  });
+}
+
+async function submitRating(){
+  if(currentRating===0){showToast('Please select a rating!');return;}
+  showToast(['','😞 Sorry about that!','😐 Thanks for the feedback!','😊 Glad you enjoyed it!','😄 Great to hear!','🎉 You made our day!'][currentRating]);
+  document.getElementById('rating-section').style.display='none';
+  currentRating=0;
+}
+
+
+// ---- DOUBLE STAMP TUESDAY ----
+function getStampsToEarn(){
+  const day=new Date().getDay();
+  if(day===2){showToast('⚡ Double stamp Tuesday! You earn 2 stamps today!');return 2;}
+  return 1;
+}
+
+// ---- GROUP ORDERING ----
+let groupSize=1;
+function updateGroupSize(val){
+  groupSize=parseInt(val);
+  if(groupSize>1)showToast('👥 Ordering for '+groupSize+' people — add everyone\'s drinks!');
+}
+
+// ---- PULL TO REFRESH ----
+let ptStartY=0;let ptPulling=false;
+document.addEventListener('touchstart',e=>{
+  if(document.getElementById('tab-card-view').style.display!=='none')
+    ptStartY=e.touches[0].clientY;
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(document.getElementById('tab-card-view').style.display==='none')return;
+  const diff=e.touches[0].clientY-ptStartY;
+  if(diff>60&&window.scrollY===0&&!ptPulling){
+    ptPulling=true;
+    showToast('🔄 Refreshing your card...');
+  }
+},{passive:true});
+document.addEventListener('touchend',async()=>{
+  if(ptPulling){
+    ptPulling=false;
+    await loadCard(
+      document.getElementById('cname').textContent,
+      null,
+      document.getElementById('csince').dataset.phone||''
+    );
+    showToast('✅ Card refreshed!');
+  }
+},{passive:true});
+
+// Firebase setup
+const firebaseConfig={
+  apiKey:"AIzaSyAbRJqMtELOp2WlVzfrsBXwNIBQCHhB0gA",
+  authDomain:"daily-meetery-6fe00.firebaseapp.com",
+  projectId:"daily-meetery-6fe00",
+  storageBucket:"daily-meetery-6fe00.firebasestorage.app",
+  messagingSenderId:"723697995611",
+  appId:"1:723697995611:web:bfaf3b6c0ced6e046e547e"
+};
+const firebaseApp=firebase.initializeApp(firebaseConfig);
+const messaging=firebase.messaging();
+const VAPID_KEY='BJoL3LxvmoPghlO8NITvOsWJeAz5uvwage35jtHgMIeot0Xbgo6FOOyTLMuKng7h-MPOlzF0SCAHpjHZTOxOdeg';
+
+async function requestNotificationPermission(custId){
+  try{
+    if(!('Notification' in window))return;
+    if(!('serviceWorker' in navigator))return;
+    
+    const permission=await Notification.requestPermission();
+    if(permission!=='granted')return;
+
+    // Register service worker
+    const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    
+    // Get FCM token
+    const token=await messaging.getToken({vapidKey:VAPID_KEY,serviceWorkerRegistration:reg});
+    if(token&&custId){
+      await db.from('customers').update({fcm_token:token,notifications_enabled:true}).eq('id',custId);
+      console.log('FCM token saved!');
+    }
+  }catch(e){
+    console.log('Notification setup error:',e.message);
+  }
+}
+
+// Handle foreground notifications
+messaging.onMessage((payload)=>{
+  const{title,body}=payload.notification;
+  showToast('🔔 '+title+': '+body);
+});
+
+// Check hamper milestones and send auto notifications
+async function checkMilestones(totalCoffees,custName){
+  const milestones=[
+    {count:25,msg:'🎁 Small gift hamper unlocked!'},
+    {count:50,msg:'🎁 Medium gift hamper unlocked!'},
+    {count:100,msg:'🎁 Large gift hamper unlocked!'},
+    {count:200,msg:'🎁 Premium gift hamper unlocked!'}
+  ];
+  const milestone=milestones.find(m=>m.count===totalCoffees);
+  if(milestone){
+    showToast(milestone.msg+' Visit us to claim your reward!');
+  }
+  // Check stamp milestones
+  const currentStamps=totalCoffees%10;
+  if(currentStamps===9){
+    showToast('☕ One more stamp for your FREE coffee!');
+  } else if(currentStamps===4){
+    showToast('⭐ One more stamp for your 10% discount!');
+  }
+}
+
+// ============ SPLASH SCREEN ============
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    const splash=document.getElementById('splash');
+    if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
+  },1800);
+});
+
+// ============ CONFETTI ============
+function launchConfetti(){
+  const colours=['#354C3A','#D48631','#A9B29E','#FDF8EE','#fff'];
+  const container=document.createElement('div');
+  container.className='confetti-container';
+  document.body.appendChild(container);
+  for(let i=0;i<80;i++){
+    const piece=document.createElement('div');
+    piece.className='confetti-piece';
+    piece.style.cssText=`
+      left:${Math.random()*100}%;
+      top:-20px;
+      background:${colours[Math.floor(Math.random()*colours.length)]};
+      width:${Math.random()*10+5}px;
+      height:${Math.random()*10+5}px;
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+      animation-delay:${Math.random()*2}s;
+      animation-duration:${Math.random()*2+2}s;
+      transform:rotate(${Math.random()*360}deg);`;
+    container.appendChild(piece);
+  }
+  setTimeout(()=>container.remove(),4000);
+}
+
+// ============ VIP TIERS ============
+function getVIPTier(totalCoffees){
+  if(totalCoffees>=200)return{name:'Platinum',class:'vip-platinum',icon:'💎'};
+  if(totalCoffees>=100)return{name:'Gold',class:'vip-gold',icon:'🥇'};
+  if(totalCoffees>=50)return{name:'Silver',class:'vip-silver',icon:'🥈'};
+  if(totalCoffees>=25)return{name:'Bronze',class:'vip-bronze',icon:'🥉'};
+  return null;
+}
+
+// ============ DAILY SPECIALS ============
+const DAILY_SPECIALS=[
+  {day:0,name:'Sunday Signature Special — Viral Tiramisu Float',price:'Only $10.90 today!'},
+  {day:1,name:'Monday Motivation — Double shot Flat White',price:'Only $5.50 today!'},
+  {day:2,name:'Tuesday Treat — Matcha Strawberry Cloud',price:'Only $9.90 today!'},
+  {day:3,name:'Hump Day — Pistachio Coco Loco',price:'Only $10.90 today!'},
+  {day:4,name:'Friday Feels — Tropical Matcha',price:'Only $9.90 today!'},
+  {day:5,name:'Saturday Sip — Spanish Latte',price:'Only $9.90 today!'},
+  {day:6,name:'Sunday Signature Special — Viral Tiramisu Float',price:'Only $10.90 today!'},
+];
+
+function showDailySpecial(){
+  const day=new Date().getDay();
+  const special=DAILY_SPECIALS[day];
+  if(special){
+    document.getElementById('daily-special').style.display='flex';
+    document.getElementById('special-name').textContent=special.name;
+    document.getElementById('special-price').textContent=special.price;
+  }
+}
+
+// ============ STREAK ============
+function checkStreak(custId){
+  const key='tdm_streak_'+custId;
+  const last=localStorage.getItem(key+'_last');
+  let streak=parseInt(localStorage.getItem(key+'_count')||'0');
+  const today=new Date().toDateString();
+  if(last===today){
+    // Already visited today
+  } else if(last===new Date(Date.now()-86400000).toDateString()){
+    // Visited yesterday — increment streak
+    streak++;
+    localStorage.setItem(key+'_count',streak);
+    localStorage.setItem(key+'_last',today);
+  } else {
+    // Streak broken
+    streak=1;
+    localStorage.setItem(key+'_count','1');
+    localStorage.setItem(key+'_last',today);
+  }
+  if(streak>=2){
+    document.getElementById('streak-banner').style.display='flex';
+    document.getElementById('streak-text').textContent='🔥 '+streak+'-day streak! Keep it up '+document.getElementById('cname').textContent+'!';
+  }
+}
+
+// ============ REFERRAL CODE ============
+function generateReferralCode(name,email){
+  // Generate consistent code from name + email
+  const base=(name.substring(0,3)+email.substring(0,3)).toUpperCase().replace(/[^A-Z]/g,'');
+  const num=Math.abs(email.split('').reduce((a,c)=>a+c.charCodeAt(0),0))%1000;
+  return 'TDM'+base+num;
+}
+
+function shareReferral(){
+  const code=document.getElementById('referral-code').textContent;
+  if(navigator.share){
+    navigator.share({
+      title:'The Daily Meetery Loyalty Card',
+      text:'Join The Daily Meetery loyalty app! Use my code '+code+' when you sign up and we both get a bonus stamp! ☕',
+      url:'https://daily-meetery-app.vercel.app'
+    });
+  } else {
+    navigator.clipboard.writeText(code);
+    showToast('Referral code copied to clipboard! 📋');
+  }
+}
+
+// ============ FAVOURITE DRINK ============
+async function loadFavouriteDrink(custId){
+  const{data:orders}=await db.from('orders').select('item_name,size').eq('customer_id',custId).eq('is_free',false).order('created_at',{ascending:false}).limit(20);
+  if(!orders||orders.length===0)return;
+  // Count most ordered drink
+  const counts={};
+  orders.forEach(o=>{
+    const key=o.item_name+' ('+o.size+')';
+    counts[key]=(counts[key]||0)+1;
+  });
+  const fave=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  if(fave&&fave[1]>=2){
+    document.getElementById('fave-drink').style.display='flex';
+    document.getElementById('fave-name').textContent=fave[0];
+  }
+}
+
+function orderFavourite(){
+  showTab('order');
+  showToast('Find your usual in the menu below! ☕');
+}
+
+// ============ SAVINGS COMPARISON ============
+async function loadSavingsComparison(custId){
+  const now=new Date();
+  const thisMonthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+  const lastMonthStart=new Date(now.getFullYear(),now.getMonth()-1,1).toISOString();
+  const lastMonthEnd=new Date(now.getFullYear(),now.getMonth(),0).toISOString();
+
+  const{data:thisMonth}=await db.from('orders').select('price').eq('customer_id',custId).eq('is_free',true).gte('created_at',thisMonthStart);
+  const{data:lastMonth}=await db.from('orders').select('price').eq('customer_id',custId).eq('is_free',true).gte('created_at',lastMonthStart).lte('created_at',lastMonthEnd);
+
+  const thisSaved=thisMonth?thisMonth.reduce((s,o)=>s+parseFloat(o.price||5.5),0):0;
+  const lastSaved=lastMonth?lastMonth.reduce((s,o)=>s+parseFloat(o.price||5.5),0):0;
+
+  if(thisSaved>0||lastSaved>0){
+    document.getElementById('savings-compare').style.display='grid';
+    document.getElementById('this-month-saved').textContent='$'+thisSaved.toFixed(2);
+    document.getElementById('last-month-saved').textContent='$'+lastSaved.toFixed(2);
+  }
+}
+
+// ============ ORDER RATING ============
+function rateCoffee(rating){
+  const stars=document.querySelectorAll('.star');
+  stars.forEach((s,i)=>s.classList.toggle('active',i<rating));
+  document.getElementById('rating-thanks').style.display='block';
+  // Save rating to localStorage
+  localStorage.setItem('tdm_last_rating',rating);
+  showToast('Thanks for rating us '+rating+'/5! ⭐');
+}
+
+// ============ LEADERBOARD ============
+async function loadLeaderboard(){
+  const{data:stamps}=await db.from('stamps').select('customer_id');
+  const{data:customers}=await db.from('customers').select('id,name');
+  if(!stamps||!customers)return;
+
+  const counts={};
+  stamps.forEach(s=>{counts[s.customer_id]=(counts[s.customer_id]||0)+1;});
+  const custMap={};
+  customers.forEach(c=>{custMap[c.id]=c.name;});
+
+  const ranked=Object.entries(counts)
+    .map(([id,count])=>({name:custMap[id]||'Mystery customer',count}))
+    .sort((a,b)=>b.count-a.count)
+    .slice(0,5);
+
+  return ranked;
+}
+
+// ============ LOAD ALL CARD FEATURES ============
+async function loadCardFeatures(custId,name,email){
+  showDailySpecial();
+  checkStreak(custId);
+  loadFavouriteDrink(custId);
+  loadSavingsComparison(custId);
+
+  // Referral code
+  const code=generateReferralCode(name,email);
+  document.getElementById('referral-code').textContent=code;
+  document.getElementById('referral-box').style.display='block';
+
+  // VIP tier
+  const tier=getVIPTier(totalStamps);
+  if(tier){
+    const nameEl=document.getElementById('cname');
+    if(!document.getElementById('vip-badge')){
+      const badge=document.createElement('span');
+      badge.id='vip-badge';
+      badge.className='vip-badge '+tier.class;
+      badge.textContent=tier.icon+' '+tier.name;
+      nameEl.parentElement.appendChild(badge);
+    }
+  }
+}
+
+// ============ ANIMATED STAMPS ============
+function animateStamp(index){
+  const stamps=document.querySelectorAll('.stamp');
+  if(stamps[index]){
+    stamps[index].style.transform='scale(1.3)';
+    setTimeout(()=>{stamps[index].style.transform='scale(1)';},300);
+  }
+}
+
+// Café location
+
+// Café location - 4 St Paul Street, Auckland CBD
+const CAFE_LAT=-36.8512;
+const CAFE_LNG=174.7684;
+const GEOFENCE_RADIUS=200; // metres
+
+function getGreeting(name){
+  const hour=new Date().getHours();
+  let greeting='';
+  if(hour>=5&&hour<12) greeting='Good morning';
+  else if(hour>=12&&hour<17) greeting='Good afternoon';
+  else if(hour>=17&&hour<21) greeting='Good evening';
+  else greeting='Hey';
+  return greeting+', '+name+'! ☕';
+}
+
+function getDistanceMetres(lat1,lon1,lat2,lon2){
+  const R=6371000;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+
+    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+    Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function checkGeofence(name){
+  if(!('geolocation' in navigator))return;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const dist=getDistanceMetres(
+      pos.coords.latitude,pos.coords.longitude,
+      CAFE_LAT,CAFE_LNG
+    );
+    if(dist<=GEOFENCE_RADIUS){
+      // Customer is near the café!
+      showNearbyBanner(name,dist);
+    }
+  },{enableHighAccuracy:true,timeout:5000});
+}
+
+function showNearbyBanner(name,dist){
+  const existing=document.getElementById('nearby-banner');
+  if(existing)return; // Don't show twice
+  const banner=document.createElement('div');
+  banner.id='nearby-banner';
+  banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999;background:#354C3A;color:#fff;padding:14px 20px;text-align:center;font-size:14px;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,0.3)';
+  const metres=Math.round(dist);
+  banner.innerHTML=`✨ You're SO close, ${name}! Come in and let us make your day ☕✨ <span onclick="this.parentElement.remove()" style="float:right;cursor:pointer;opacity:0.7">✕</span>`;
+  document.body.prepend(banner);
+  // Auto remove after 10 seconds
+  setTimeout(()=>{if(banner.parentElement)banner.remove();},10000);
 }
 
 async function init(){
@@ -764,26 +1426,36 @@ async function init(){
     buildSection('s-signature',MENU.signature);buildSection('s-ice',MENU.ice);
     buildSection('s-tea',MENU.tea);
     populatePickupTimes();
-  }catch(e){document.getElementById('loading-view').textContent='Connection error: '+e.message;}
+    // Dismiss splash screen
+    setTimeout(()=>{
+      const splash=document.getElementById('splash-screen');
+      if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
+    },1800);
+  }catch(e){
+    document.getElementById('loading-view').textContent='Connection error: '+e.message;
+    const splash=document.getElementById('splash-screen');
+    if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
+  }
 }
 
 async function loginOrRegister(){
   const name=document.getElementById('inp-name').value.trim();
   const email=document.getElementById('inp-email').value.trim().toLowerCase();
   const phone=document.getElementById('inp-phone')?document.getElementById('inp-phone').value.trim():'';
+  const birthday=document.getElementById('inp-birthday')?document.getElementById('inp-birthday').value:'';
   const err=document.getElementById('login-err');
   if(!name){err.textContent='Please enter your name.';return;}
   if(!email.includes('@')){err.textContent='Please enter a valid email.';return;}
   err.textContent='Finding your card...';
   try{
-    const{data:ex}=await db.from('customers').select('id,name,created_at,phone').eq('email',email).limit(1);
-    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at,ex[0].phone);}
-    else{const insertData={name,email};if(phone)insertData.phone=phone;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone);}
+    const{data:ex}=await db.from('customers').select('id,name,created_at,phone,birthday').eq('email',email).limit(1);
+    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email);}
+    else{const insertData={name,email};if(phone)insertData.phone=phone;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email);}
     err.textContent='';
   }catch(e){err.textContent='Error: '+e.message;}
 }
 
-async function loadCard(name,createdAt,phone){
+async function loadCard(name,createdAt,phone,email){
   const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
   const{data:r}=await db.from('rewards').select('id').eq('customer_id',customerId);
   const{data:freeOrders}=await db.from('orders').select('price').eq('customer_id',customerId).eq('is_free',true);
@@ -794,11 +1466,23 @@ async function loadCard(name,createdAt,phone){
   const stampsAfterRewards=totalStamps-(rewardsEarned*TOTAL);
   stamps=stampsAfterRewards<0?0:stampsAfterRewards%TOTAL;
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
+  // Check new drink bonus for each unique item
+  const orderItems=allItems.map(i=>i.name);
+  const uniqueItems=[...new Set(orderItems)];
+  for(const item of uniqueItems){await checkNewDrink(item);}
   document.getElementById('login-view').style.display='none';
   document.getElementById('main-view').style.display='block';
+  setTimeout(()=>requestNotificationPermission(customerId),2000);
+  if(birthday)checkBirthday(birthday,name);
+  loadWeeklySummary();
+  loadCardFeatures(customerId,name,email||'');
   document.getElementById('customer-row').style.display='flex';
   document.getElementById('avatar').textContent=name.charAt(0).toUpperCase();
   document.getElementById('cname').textContent=name;
+  // Update greeting with time of day
+  document.getElementById('greeting-text').textContent=getGreeting(name);
+  // Check if near café
+  setTimeout(()=>checkGeofence(name),1000);
   document.getElementById('csince').dataset.phone=phone||'';
   const joined=new Date(createdAt);
   document.getElementById('csince').textContent='Member since '+joined.toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
@@ -847,6 +1531,7 @@ function renderCard(){
     pill.classList.add('earned');rtext.classList.add('earned');
     rtext.textContent='🎉 Free coffee ready! Valid on standard coffees only (S/M/L).';
     document.getElementById('redeem-btn').style.display='block';
+    launchConfetti();
   } else if(displayStamps===5){
     pill.classList.add('earned');rtext.classList.add('earned');
     rtext.textContent='🎉 10% discount unlocked! Applied automatically on your next order.';
@@ -862,6 +1547,47 @@ function renderCard(){
     rtext.textContent=toDiscount+' stamp'+(toDiscount!==1?'s':'')+' to 10% off · '+toFree+' stamps to free coffee';
     document.getElementById('redeem-btn').style.display='none';
   }
+
+  // VIP tier
+  const vip=getVIPTier(totalStamps);
+  let vipEl=document.getElementById('vip-badge');
+  if(!vipEl){vipEl=document.createElement('div');vipEl.id='vip-badge';document.getElementById('reward-pill').after(vipEl);}
+  vipEl.innerHTML=vip?`<div class="vip-badge ${vip.class}">${vip.emoji} ${vip.name} Member</div>`:'';
+
+  // Daily special
+  const special=getDailySpecial();
+  let specialEl=document.getElementById('daily-special-card');
+  if(!specialEl){
+    specialEl=document.createElement('div');specialEl.id='daily-special-card';
+    specialEl.className='daily-special';
+    document.getElementById('vip-badge').after(specialEl);
+  }
+  specialEl.innerHTML=`<div class="special-tag">TODAY'S SPECIAL ${special.emoji}</div><div style="font-size:14px;font-weight:700">${special.title}</div><div style="font-size:12px;color:#A9B29E;margin-top:3px">${special.desc}</div>`;
+
+  // Streak
+  const streak=getStreak();
+  let streakEl=document.getElementById('streak-card');
+  if(!streakEl){
+    streakEl=document.createElement('div');streakEl.id='streak-card';
+    streakEl.className='streak-banner';
+    document.getElementById('daily-special-card').after(streakEl);
+  }
+  if(streak>=2){
+    streakEl.style.display='flex';
+    streakEl.innerHTML=`<span class="streak-fire">🔥</span><div><div style="font-weight:700;font-size:14px">${streak} day streak!</div><div style="font-size:12px;opacity:0.85">Keep visiting daily to keep your streak alive</div></div>`;
+  } else {
+    streakEl.style.display='none';
+  }
+
+  // Fav drink
+  const fav=getFavDrink();
+  let favEl=document.getElementById('fav-drink-btn');
+  if(!favEl&&fav){
+    favEl=document.createElement('button');favEl.id='fav-drink-btn';favEl.className='fav-btn';
+    favEl.onclick=()=>{showTab('order');setTimeout(()=>showToast('Add your fave: '+fav.name+' ('+fav.size+')'),300);};
+    document.getElementById('stats-row-el').after(favEl);
+  }
+  if(favEl&&fav)favEl.innerHTML=`⭐ Quick order: ${fav.name} (${fav.size}) — $${fav.price.toFixed(2)}`;
 }
 
 function showToast(msg){
@@ -886,22 +1612,43 @@ function populatePickupTimes(){
   const sel=document.getElementById('pickup-time');
   sel.innerHTML='<option value="">Select pickup time...</option>';
   const now=new Date();
-  // Round up to next 15 min slot + 10 min prep time
-  const start=new Date(now.getTime()+10*60000);
-  start.setMinutes(Math.ceil(start.getMinutes()/15)*15,0,0);
-  // Generate slots for next 3 hours
-  for(let i=0;i<12;i++){
-    const t=new Date(start.getTime()+i*15*60000);
-    const h=t.getHours();
-    const m=t.getMinutes().toString().padStart(2,'0');
-    const ampm=h>=12?'pm':'am';
-    const h12=h>12?h-12:h===0?12:h;
-    const label=h12+':'+m+ampm;
-    const opt=document.createElement('option');
-    opt.value=label;opt.textContent=label;
-    sel.appendChild(opt);
+  // Today slots - next 4 hours in 15 min increments
+  const todayGroup=document.createElement('optgroup');
+  todayGroup.label='Today';
+  for(let i=1;i<=16;i++){
+    const t=new Date(now.getTime()+i*15*60000);
+    const label=t.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const o=document.createElement('option');
+    o.value=label;o.textContent=label;
+    todayGroup.appendChild(o);
   }
-  sel.onchange=()=>{pickupTime=sel.value;};
+  sel.appendChild(todayGroup);
+  // Tomorrow slots - 6am to 4pm
+  const tomorrowGroup=document.createElement('optgroup');
+  tomorrowGroup.label='Tomorrow (pre-order)';
+  const tomorrow=new Date(now);tomorrow.setDate(tomorrow.getDate()+1);tomorrow.setHours(6,0,0,0);
+  for(let i=0;i<20;i++){
+    const t=new Date(tomorrow.getTime()+i*30*60000);
+    if(t.getHours()>=16)break;
+    const label='Tomorrow '+t.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const o=document.createElement('option');
+    o.value=label;o.textContent=label;
+    tomorrowGroup.appendChild(o);
+  }
+  sel.appendChild(tomorrowGroup);
+}
+
+function toggleDarkMode(){
+  document.body.classList.toggle('dark-mode');
+  const btn=document.getElementById('dark-btn');
+  btn.textContent=document.body.classList.contains('dark-mode')?'☀️':'🌙';
+  localStorage.setItem('tdm_dark',document.body.classList.contains('dark-mode')?'1':'0');
+}
+
+// Restore dark mode preference
+if(localStorage.getItem('tdm_dark')==='1'){
+  document.body.classList.add('dark-mode');
+  document.getElementById('dark-btn').textContent='☀️';
 }
 
 function showPopup(title,msg,showRule){
@@ -931,5 +1678,6 @@ init();
       <button class="popup-btn" onclick="closePopup()">Got it, thanks!</button>
     </div>
   </div>
+<button class="dark-toggle" onclick="toggleDarkMode()" id="dark-btn" title="Toggle dark mode">🌙</button>
 </body>
 </html>
