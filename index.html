@@ -949,6 +949,12 @@ async function processOrder(freeItems,paidItems,msg){
   document.getElementById('success-items').innerHTML=cart.map(i=>`<div class="success-item-row"><span>${i.name} (${i.size})${i.free?' 🎉':''}${i.addons?'<br><small style="color:#A9B29E">'+i.addons+'</small>':''}${i.note?'<br><small style="color:#D48631">📝 '+i.note+'</small>':''}</span><span>${i.free?'FREE':'$'+i.price.toFixed(2)}</span></div>`).join('');
   document.getElementById('order-form').style.display='none';
   document.getElementById('order-success').style.display='block';
+  }catch(e){
+    console.error('processOrder error:',e);
+    document.getElementById('order-btn').disabled=false;
+    document.getElementById('order-btn').textContent='Try again';
+    showToast('Something went wrong. Please try again.');
+  }
 }
 
 async function loadHistory(){
@@ -1359,9 +1365,6 @@ async function checkMilestones(totalCoffees,custName){
   } else if(currentStamps===4){
     showToast('⭐ One more stamp for your 10% discount!');
   }
-}
-
-// ============ SHOW DAILY SPECIAL ============
 }
 
 // ============ STREAK ============
