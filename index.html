@@ -993,7 +993,27 @@ function renderCart(){
     countEl.textContent='0 items';return;
   }
 
-  container.innerHTML=cart.map(i=>`<div class="cart-item"><span class="cart-item-name">${i.name} (${i.size})${i.free?'<span class="free-badge">FREE</span>':i.discount?'<span class="free-badge" style="background:#FFF3DC;color:#D48631">10% OFF</span>':''}${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}${i.note?'<br><span style="font-size:10px;color:#D48631">📝 '+i.note+'</span>':''}</span><span class="cart-item-price ${i.free?'free':i.discount?'free':''}">${i.free?'FREE':i.discount?'$'+i.price.toFixed(2)+' <small style="text-decoration:line-through;color:#aaa;font-size:10px">$'+i.basePrice.toFixed(2)+'</small>':'$'+i.price.toFixed(2)}</span><span class="cart-item-remove" onclick="removeFromCart(${i.id})">×</span></div>`).join('');
+  container.innerHTML=cart.map(i=>`
+    <div class="cart-item" data-dnd data-id="${i.id}" style="position:relative">
+      <span data-dnd-handle style="cursor:grab;color:#A9B29E;padding:0 6px 0 0;font-size:16px;flex-shrink:0;touch-action:none" title="Drag to reorder">⠿</span>
+      <span class="cart-item-name">${i.name} (${i.size})
+        ${i.free?'<span class="free-badge">FREE</span>':i.discount?'<span class="free-badge" style="background:#FFF3DC;color:#D48631">10% OFF</span>':''}
+        ${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}
+        ${i.note?'<br><span style="font-size:10px;color:#D48631">📝 '+i.note+'</span>':''}
+      </span>
+      <span class="cart-item-price ${i.free?'free':i.discount?'free':''}">${i.free?'FREE':i.discount?'$'+i.price.toFixed(2)+' <small style="text-decoration:line-through;color:#aaa;font-size:10px">$'+i.basePrice.toFixed(2)+'</small>':'$'+i.price.toFixed(2)}</span>
+      <span class="cart-item-remove" onclick="removeFromCart(${i.id})">×</span>
+    </div>`).join('');
+
+  // Attach cart DnD after render
+  const cartContainer = document.getElementById('cart-items');
+  if(cartContainer && cart.length > 1) {
+    TDM_DND.make(cartContainer, (newOrder) => {
+      // Reorder the cart array to match new visual order
+      const idOrder = newOrder.map(o => parseInt(o.id));
+      cart = idOrder.map(id => cart.find(i => i.id === id)).filter(Boolean);
+    }, { itemSelector:'[data-dnd]', handleSelector:'[data-dnd-handle]' });
+  }
 
   const total=cart.reduce((s,i)=>s+i.price,0);
   const paidCount=cart.filter(i=>!i.free&&!i.isFood).length;
@@ -1079,8 +1099,9 @@ async function processOrder(freeItems,paidItems,msg){
     const stampsPerItem=getStampsToEarn();
     if(drinkItems.length>0){
       const stampInserts=drinkItems.flatMap(()=>Array(stampsPerItem).fill({customer_id:customerId}));
-      await db.from('stamps').insert(stampInserts);
-      totalStamps+=drinkItems.length*stampsPerItem;
+      const{error:stampErr}=await db.from('stamps').insert(stampInserts);
+      if(stampErr){TDM.logError('HIGH','stamps.insert',stampErr);}
+      else{totalStamps+=drinkItems.length*stampsPerItem;}
     }
     const orderInserts=paidItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.price,is_free:false,stamps_earned:i.isFood?0:1,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:orderPickupLabel}));
     await db.from('orders').insert(orderInserts);
@@ -1503,7 +1524,6 @@ try{
       showToast('🔔 '+title+': '+body);
     }catch(e){}
   });
-  console.log('Firebase ready');
 }catch(e){
   console.log('Firebase not available:',e.message);
 }
@@ -1519,7 +1539,6 @@ async function requestNotificationPermission(custId){
     const token=await messaging.getToken({vapidKey:VAPID_KEY,serviceWorkerRegistration:reg});
     if(token&&custId){
       await db.from('customers').update({fcm_token:token,notifications_enabled:true}).eq('id',custId);
-      console.log('FCM token saved!');
     }
   }catch(e){
     console.log('Notification setup error:',e.message);
@@ -2053,6 +2072,59 @@ async function loadMenuFromDB(){
   }
 }
 
+
+
+// ---- TDM DRAG & DROP (Cart) ----
+const TDM_DND = {
+  make(container, onReorder, opts={}) {
+    const { itemSelector='[data-dnd]', handleSelector=null } = opts;
+    let dragging=null, placeholder=null, offsetY=0;
+    const getItems=()=>[...container.querySelectorAll(itemSelector)];
+    const getPos=(e)=>e.touches?e.touches[0].clientY:e.clientY;
+    const ph=(el)=>{
+      const p=document.createElement('div');
+      p.style.cssText=`height:${el.offsetHeight}px;background:rgba(53,76,58,0.08);border:2px dashed #A9B29E;border-radius:8px;margin-bottom:4px;`;
+      return p;
+    };
+    const start=(e,el)=>{
+      dragging=el;
+      const rect=el.getBoundingClientRect();
+      offsetY=getPos(e)-rect.top;
+      placeholder=ph(el);
+      el.after(placeholder);
+      el.style.cssText+=`position:fixed;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;z-index:999;opacity:0.95;box-shadow:0 4px 20px rgba(0,0,0,0.2);transform:scale(1.02);pointer-events:none;`;
+      document.body.style.userSelect='none';
+    };
+    const move=(e)=>{
+      if(!dragging)return;
+      e.preventDefault();
+      const y=getPos(e)-offsetY;
+      dragging.style.top=y+'px';
+      const items=getItems().filter(i=>i!==dragging);
+      let insertBefore=null;
+      for(const item of items){const r=item.getBoundingClientRect();if(getPos(e)<r.top+r.height/2){insertBefore=item;break;}}
+      insertBefore?container.insertBefore(placeholder,insertBefore):container.appendChild(placeholder);
+    };
+    const end=()=>{
+      if(!dragging)return;
+      dragging.style.cssText=dragging.style.cssText.replace(/position:[^;]+;top:[^;]+;left:[^;]+;width:[^;]+;z-index:[^;]+;opacity:[^;]+;box-shadow:[^;]+;transform:[^;]+;pointer-events:[^;]+;/,'');
+      placeholder.before(dragging);
+      placeholder.remove();
+      document.body.style.userSelect='';
+      if(onReorder)onReorder(getItems().map(el=>({id:el.dataset.id,el})));
+      dragging=null;placeholder=null;
+    };
+    const attach=(el)=>{
+      const h=handleSelector?el.querySelector(handleSelector):el;
+      if(!h)return;
+      h.addEventListener('mousedown',(e)=>{if(e.button!==0)return;start(e,el);const up=()=>{end();window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);});
+      h.addEventListener('touchstart',(e)=>{start(e,el);const te=()=>{end();window.removeEventListener('touchmove',move);window.removeEventListener('touchend',te);};window.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',te);},{passive:true});
+      h.style.cursor='grab';
+    };
+    getItems().forEach(attach);
+    return {attach,refresh:()=>getItems().forEach(attach)};
+  }
+};
 
 async function init(){
   // Maintenance mode check (toggle TDM.FLAGS.maintenanceMode to true to enable)
