@@ -438,11 +438,15 @@ function checkPW(){
   if(pw===OWNER_PASSWORD){
     document.getElementById('pw-gate').style.display='none';
     document.getElementById('dashboard-content').style.display='block';
-    ['loadStats','loadCustomers','loadNotifHistory','loadTodayOrders',
-      'loadHamperCustomers','loadMenuItems','loadDealsManager','loadExportStats'].forEach(fn=>{
-      try{ window[fn]&&window[fn](); }catch(e){ console.error(fn+' error:',e); }
-    });
-    try{loadCategories();}catch(e){console.log('Cat error:',e);}
+    try{loadStats();}catch(e){console.error('loadStats:',e);}
+    try{loadCustomers();}catch(e){console.error('loadCustomers:',e);}
+    try{loadNotifHistory();}catch(e){console.error('loadNotifHistory:',e);}
+    try{loadTodayOrders();}catch(e){console.error('loadTodayOrders:',e);}
+    try{loadHamperCustomers();}catch(e){console.error('loadHamperCustomers:',e);}
+    try{loadCategories();}catch(e){console.error('loadCategories:',e);}
+    try{loadMenuItems();}catch(e){console.error('loadMenuItems:',e);}
+    try{loadDealsManager();}catch(e){console.error('loadDealsManager:',e);}
+    try{loadExportStats();}catch(e){console.error('loadExportStats:',e);}
   } else {
     document.getElementById('pw-err').textContent='Incorrect password. Try again.';
     document.getElementById('pw-input').value='';
