@@ -54,6 +54,10 @@
   <div style="font-size:22px;font-weight:700;color:#fff">Owner Dashboard</div>
   <div style="font-size:13px;color:#A9B29E">The Daily Meetery</div>
   <input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPW()">
+  <label style="display:flex;align-items:center;gap:8px;color:#A9B29E;font-size:13px;cursor:pointer">
+    <input type="checkbox" id="remember-me" checked style="width:16px;height:16px;cursor:pointer">
+    Remember me on this device
+  </label>
   <button onclick="checkPW()">Unlock</button>
   <div id="pw-err"></div>
 </div>
@@ -210,6 +214,11 @@
     <div id="customers-list" style="margin-top:12px"><div style="color:#888;font-size:13px">Loading...</div></div>
   </div>
 
+  <!-- Logout -->
+  <div style="text-align:center;padding:8px 0 16px">
+    <button onclick="ownerLogout()" style="background:none;border:1px solid #555;color:#A9B29E;padding:8px 24px;border-radius:8px;font-size:13px;cursor:pointer">Sign out of dashboard</button>
+  </div>
+
   <!-- Orders Export -->
   <div class="section">
     <div class="section-title">Orders Export</div>
@@ -293,6 +302,15 @@ let notifType = 'flash';
 let menuCat = 'all';
 let allMenuItems = [];
 
+// Auto-login if previously authenticated
+window.addEventListener('DOMContentLoaded', ()=>{
+  if(localStorage.getItem('tdm_owner_auth')==='1' || sessionStorage.getItem('tdm_owner_auth')==='1'){
+    document.getElementById('pw-gate').style.display='none';
+    document.getElementById('main').style.display='block';
+    loadAll();
+  }
+});
+
 // Clock
 setInterval(()=>{
   const el = document.getElementById('clock');
@@ -303,6 +321,14 @@ setInterval(()=>{
 function checkPW(){
   const pw = document.getElementById('pw-input').value;
   if(pw === PASS){
+    const remember = document.getElementById('remember-me')?.checked !== false;
+    if(remember){
+      localStorage.setItem('tdm_owner_auth','1');
+    } else {
+      sessionStorage.setItem('tdm_owner_auth','1');
+      localStorage.removeItem('tdm_owner_auth');
+  sessionStorage.removeItem('tdm_owner_auth');
+    }
     document.getElementById('pw-gate').style.display = 'none';
     document.getElementById('main').style.display = 'block';
     loadAll();
@@ -668,6 +694,14 @@ async function exportData(type, format){
       showToast('✅ Menu exported!');
     }
   }catch(e){showToast('Export error: '+e.message);}
+}
+
+function ownerLogout(){
+  localStorage.removeItem('tdm_owner_auth');
+  sessionStorage.removeItem('tdm_owner_auth');
+  document.getElementById('main').style.display='none';
+  document.getElementById('pw-gate').style.display='flex';
+  document.getElementById('pw-input').value='';
 }
 
 function today(){return new Date().toISOString().slice(0,10);}
