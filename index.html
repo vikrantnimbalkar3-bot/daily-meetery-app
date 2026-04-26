@@ -133,8 +133,6 @@
     /* Streak */
     .streak-banner { background:linear-gradient(135deg,#D48631,#e8a050);border-radius:10px;padding:10px 14px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:10px; }
     .streak-fire { font-size:24px; }
-    /* Daily special */
-    .daily-special { background:linear-gradient(135deg,#354C3A,#4a6b52);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#fff;cursor:pointer; }
     .special-tag { font-size:10px;background:#D48631;color:#fff;padding:2px 8px;border-radius:99px;font-weight:700;display:inline-block;margin-bottom:6px; }
     /* Rating */
     .star-rating { display:flex;gap:6px;justify-content:center;margin:12px 0; }
@@ -316,10 +314,7 @@
       <img src="DSC04927%20(1).jpg" alt="The Daily Meetery" style="width:100%;height:130px;object-fit:cover;object-position:center 20%;display:block;">
       <div class="phone-body">
       <div class="toast" id="toast"></div>
-      <!-- Daily Special -->
-      <div class="daily-special" id="daily-special" style="display:none">
-        <div class="daily-special-icon">🔥</div>
-        <div>
+<div>
           <div class="daily-special-title">Today's Special</div>
           <div class="daily-special-name" id="special-name">—</div>
           <div class="daily-special-price" id="special-price">—</div>
@@ -1013,19 +1008,6 @@ function launchConfetti(){
   }
 }
 
-const DAILY_SPECIALS=[
-  {day:0,title:'Sunday Funday!',desc:'Free size upgrade on any latte today only',emoji:'🌟'},
-  {day:1,title:'Monday Magic!',desc:'Double stamps on all orders today',emoji:'⚡'},
-  {day:2,title:'Tasty Tuesday!',desc:'10% off all Signature drinks today',emoji:'✨'},
-  {day:3,title:'Hump Day Treat!',desc:'Free syrup with any coffee today',emoji:'🎉'},
-  {day:4,title:'Thirsty Thursday!',desc:'Buy 2 coffees get 1 free today',emoji:'☕'},
-  {day:5,title:'Friday Feels!',desc:'Try our new Pistachio Coco Loco — half price!',emoji:'🔥'},
-  {day:6,title:'Weekend Vibes!',desc:'Free muffin with any large coffee today',emoji:'🧁'},
-];
-
-function getDailySpecial(){
-  return DAILY_SPECIALS[new Date().getDay()];
-}
 
 function getStreak(){
   const streak=parseInt(localStorage.getItem('tdm_streak')||'0');
@@ -1316,14 +1298,6 @@ async function checkMilestones(totalCoffees,custName){
 }
 
 // ============ SHOW DAILY SPECIAL ============
-function showDailySpecial(){
-  const special=getDailySpecial();
-  const el=document.getElementById('daily-special');
-  if(el&&special){
-    el.style.display='flex';
-    document.getElementById('special-name').textContent=special.emoji+' '+special.title;
-    document.getElementById('special-price').textContent=special.desc;
-  }
 }
 
 // ============ STREAK ============
@@ -1446,7 +1420,7 @@ async function loadLeaderboard(){
 
 // ============ LOAD ALL CARD FEATURES ============
 async function loadCardFeatures(custId,name,email){
-  showDailySpecial();
+  
   checkStreak(custId);
   loadFavouriteDrink(custId);
   loadSavingsComparison(custId);
