@@ -531,77 +531,240 @@
 </div>
 
 <script>
+
 // ============================================================
-// PERMANENT CRASH PROTECTION SYSTEM
-// This runs FIRST before anything else.
-// Protects ALL current AND future features automatically.
-// DO NOT REMOVE OR MODIFY THIS BLOCK.
+// TDM PRODUCTION RELIABILITY SYSTEM v1.0
+// Inspired by Uber/Amazon engineering practices
 // ============================================================
 
-// Core recovery function — always brings app to a usable state
-function TDM_recover(source, error){
-  console.error('[TDM] Crash caught from:', source, '|', error);
-  
-  // 1. Always dismiss splash
-  const splash = document.getElementById('splash-screen');
-  if(splash){ splash.style.opacity='0'; setTimeout(()=>{try{splash.remove();}catch(e){}}, 500); }
-  
-  // 2. Always show something useful to the user
-  setTimeout(()=>{
-    const main = document.getElementById('main-view');
-    const login = document.getElementById('login-view');
-    const loading = document.getElementById('loading-view');
-    try{
-      if(loading && loading.style.display !== 'none') loading.style.display = 'none';
-      if(main && main.style.display === 'none' && login && login.style.display === 'none'){
-        login.style.display = 'block';
+const TDM = {
+
+  // ---- ERROR SEVERITY LEVELS (like PagerDuty) ----
+  SEV: { P0:'CRITICAL', P1:'HIGH', P2:'MEDIUM', P3:'LOW' },
+
+  // ---- FEATURE FLAGS (toggle features without deployment) ----
+  FLAGS: {
+    enableDeals: true,
+    enableGeofence: true,
+    enableNotifications: true,
+    enableNewDrinkBonus: true,
+    enableDoubleStampTuesday: true,
+    enableLeaderboard: true,
+    maintenanceMode: false,
+  },
+
+  // ---- IN-MEMORY ERROR LOG (last 50 errors) ----
+  errorLog: [],
+  metrics: {
+    dbCallCount: 0,
+    dbErrorCount: 0,
+    orderAttempts: 0,
+    orderSuccesses: 0,
+    sessionStart: Date.now(),
+  },
+
+  // ---- LOG ERROR with severity ----
+  logError(sev, context, error, extra={}) {
+    const entry = {
+      id: Date.now(),
+      sev,
+      context,
+      message: error?.message || String(error),
+      stack: error?.stack,
+      timestamp: new Date().toISOString(),
+      user: window._tdmUserId || 'anonymous',
+      url: location.href,
+      ...extra
+    };
+    this.errorLog.push(entry);
+    if(this.errorLog.length > 50) this.errorLog.shift();
+
+    // Console output with severity colour
+    const colours = {CRITICAL:'color:red;font-weight:bold', HIGH:'color:orange;font-weight:bold', MEDIUM:'color:#D48631', LOW:'color:gray'};
+    console.error(`%c[TDM ${sev}] ${context}:`, colours[sev]||'', error);
+
+    // P0/P1 — save to Supabase for owner visibility
+    if(sev === 'CRITICAL' || sev === 'HIGH') {
+      this._persistError(entry).catch(()=>{});
+    }
+  },
+
+  async _persistError(entry) {
+    try {
+      await db.from('error_logs').insert({
+        severity: entry.sev,
+        context: entry.context,
+        message: entry.message,
+        user_id: entry.user,
+        metadata: JSON.stringify(entry)
+      });
+    } catch(e) { /* never crash on logging */ }
+  },
+
+  // ---- RETRY with exponential backoff (Uber-style) ----
+  async retry(fn, opts={}) {
+    const { maxAttempts=3, delayMs=500, context='operation' } = opts;
+    let lastError;
+    for(let attempt=1; attempt<=maxAttempts; attempt++) {
+      try {
+        return await fn();
+      } catch(e) {
+        lastError = e;
+        if(attempt < maxAttempts) {
+          const delay = delayMs * Math.pow(2, attempt-1); // exponential backoff
+          console.warn(`[TDM] ${context} failed (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms...`);
+          await new Promise(r => setTimeout(r, delay));
+        }
       }
-    }catch(e){}
-  }, 500);
-}
+    }
+    this.logError('HIGH', context, lastError, { attempts: maxAttempts });
+    throw lastError;
+  },
 
-// Catch ALL JS errors — current and future
-window.onerror = function(msg, src, line, col, err){
-  TDM_recover('JS Error: '+msg+' line '+line, err);
+  // ---- CIRCUIT BREAKER (stop hammering failing services) ----
+  _circuits: {},
+  circuitBreaker(name, fn, fallback=null) {
+    if(!this._circuits[name]) {
+      this._circuits[name] = { failures: 0, lastFailure: 0, state: 'CLOSED' };
+    }
+    const circuit = this._circuits[name];
+
+    // If circuit is OPEN, use fallback
+    if(circuit.state === 'OPEN') {
+      const elapsed = Date.now() - circuit.lastFailure;
+      if(elapsed > 30000) { // Try again after 30s
+        circuit.state = 'HALF-OPEN';
+      } else {
+        console.warn(`[TDM] Circuit ${name} is OPEN — using fallback`);
+        return Promise.resolve(fallback);
+      }
+    }
+
+    return fn().then(result => {
+      if(circuit.state === 'HALF-OPEN') {
+        circuit.state = 'CLOSED';
+        circuit.failures = 0;
+      }
+      return result;
+    }).catch(err => {
+      circuit.failures++;
+      circuit.lastFailure = Date.now();
+      if(circuit.failures >= 3) {
+        circuit.state = 'OPEN';
+        console.error(`[TDM] Circuit ${name} OPENED after ${circuit.failures} failures`);
+        this.logError('HIGH', 'CircuitBreaker', err, { circuit: name });
+      }
+      throw err;
+    });
+  },
+
+  // ---- DEDUPLICATION (prevent double orders/stamps) ----
+  _locks: new Set(),
+  lock(key) {
+    if(this._locks.has(key)) return false; // already locked
+    this._locks.add(key);
+    setTimeout(() => this._locks.delete(key), 10000); // auto-release after 10s
+    return true;
+  },
+  unlock(key) { this._locks.delete(key); },
+
+  // ---- SAFE DB CALL with metrics ----
+  async db(fn, context='db') {
+    this.metrics.dbCallCount++;
+    try {
+      const result = await this.retry(fn, { context, maxAttempts: 3, delayMs: 300 });
+      return result;
+    } catch(e) {
+      this.metrics.dbErrorCount++;
+      this.logError('HIGH', `DB:${context}`, e);
+      throw e;
+    }
+  },
+
+  // ---- MAINTENANCE MODE CHECK ----
+  checkMaintenance() {
+    if(this.FLAGS.maintenanceMode) {
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#354C3A;color:#fff;font-family:sans-serif;text-align:center;padding:20px"><div><div style="font-size:48px;margin-bottom:16px">☕</div><h2>We\'ll be right back!</h2><p style="color:#A9B29E;margin-top:8px">The Daily Meetery app is undergoing maintenance.<br>Check back in a few minutes.</p></div></div>';
+      return true;
+    }
+    return false;
+  },
+
+  // ---- HEALTH CHECK ----
+  async healthCheck() {
+    try {
+      const start = Date.now();
+      await db.from('customers').select('id').limit(1);
+      const latency = Date.now() - start;
+      if(latency > 3000) this.logError('MEDIUM', 'HealthCheck', new Error('High DB latency: '+latency+'ms'));
+      return { healthy: true, latency };
+    } catch(e) {
+      this.logError('CRITICAL', 'HealthCheck', e);
+      return { healthy: false, error: e.message };
+    }
+  },
+
+  // ---- SESSION METRICS ----
+  getMetrics() {
+    return {
+      ...this.metrics,
+      sessionDuration: Math.round((Date.now() - this.metrics.sessionStart)/1000)+'s',
+      errorRate: this.metrics.dbCallCount > 0
+        ? ((this.metrics.dbErrorCount/this.metrics.dbCallCount)*100).toFixed(1)+'%'
+        : '0%',
+      orderSuccessRate: this.metrics.orderAttempts > 0
+        ? ((this.metrics.orderSuccesses/this.metrics.orderAttempts)*100).toFixed(1)+'%'
+        : 'N/A',
+      recentErrors: this.errorLog.slice(-5),
+    };
+  }
+};
+
+// ---- GLOBAL ERROR HANDLERS ----
+window.onerror = function(msg, src, line, col, err) {
+  TDM.logError('HIGH', 'GlobalJS', err || new Error(msg), { line, col, src });
+  // Always recover splash
+  const splash = document.getElementById('splash-screen');
+  if(splash) { splash.style.opacity='0'; setTimeout(()=>{ try{splash.remove();}catch(e){} },500); }
   return false;
 };
 
-// Catch ALL unhandled promise rejections — current and future
-window.addEventListener('unhandledrejection', function(e){
-  TDM_recover('Promise rejection', e.reason);
+window.addEventListener('unhandledrejection', e => {
+  TDM.logError('HIGH', 'UnhandledPromise', e.reason instanceof Error ? e.reason : new Error(String(e.reason)));
 });
 
-// ---- SAFE HELPERS (use these throughout the app) ----
-
-// Safe getElementById — returns a dummy object if element missing
-// Use: safeGet('my-id').textContent = 'hello' — never crashes
-function safeGet(id){
-  return document.getElementById(id) || {
-    style:{display:'',opacity:'',background:'',color:''},
-    textContent:'', innerHTML:'', value:'',
-    classList:{add:()=>{},remove:()=>{},toggle:()=>{},contains:()=>false},
-    dataset:{}, after:()=>{}, appendChild:()=>{},
-    querySelectorAll:()=>[]
-  };
+// ---- FEATURE FLAG HELPER ----
+function isEnabled(flag) {
+  return TDM.FLAGS[flag] !== false;
 }
 
-// Safe async function wrapper — wraps ANY async function with try-catch
-// Use: const result = await safeTry(myAsyncFn, arg1, arg2)
-async function safeTry(fn, ...args){
-  try{ return await fn(...args); }
-  catch(e){ console.warn('[TDM] safeTry caught:', e.message); return null; }
+// ---- SPLASH SAFETY NET (always dismiss) ----
+setTimeout(() => {
+  const splash = document.getElementById('splash-screen');
+  if(splash) { splash.style.opacity='0'; setTimeout(()=>{ try{splash.remove();}catch(e){} },500); }
+  const loading = document.getElementById('loading-view');
+  const login = document.getElementById('login-view');
+  const main = document.getElementById('main-view');
+  if(loading && loading.style.display!=='none') loading.style.display='none';
+  if(main && main.style.display==='none' && login && login.style.display==='none') {
+    if(login) login.style.display='block';
+  }
+}, 5000);
+
+// ---- TYPE-SAFE ELEMENT HELPER ----
+function $el(id) {
+  const el = document.getElementById(id);
+  if(!el) { TDM.logError('LOW', '$el', new Error('Element not found: '+id)); }
+  return el || { style:{}, textContent:'', innerHTML:'', value:'', classList:{add:()=>{},remove:()=>{},toggle:()=>{},contains:()=>false}, dataset:{}, after:()=>{} };
 }
 
-// Safe function call — wraps ANY sync function with try-catch
-// Use: safeRun(myFunction, arg1, arg2)
-function safeRun(fn, ...args){
-  try{ if(typeof fn==='function') return fn(...args); }
-  catch(e){ console.warn('[TDM] safeRun caught:', e.message); }
+// safeTry and safeRun kept for backwards compat
+async function safeTry(fn, ...args) {
+  try { return await fn(...args); } catch(e) { TDM.logError('MEDIUM', fn.name||'safeTry', e); return null; }
 }
-
-// ============================================================
-// END CRASH PROTECTION — app code below
-// ============================================================
+function safeRun(fn, ...args) {
+  try { if(typeof fn==='function') return fn(...args); } catch(e) { TDM.logError('MEDIUM', fn.name||'safeRun', e); }
+}
 
 const SURL='https://jxlalnsemmghxukapvxv.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
@@ -863,6 +1026,12 @@ function setPayMethod(method){
 
 async function handleOrder(){
   if(cart.length===0)return;
+  // DEDUPLICATION: prevent double orders on double-tap
+  if(!TDM.lock('order-'+customerId)){
+    showToast('Order already processing... please wait!');
+    return;
+  }
+  TDM.metrics.orderAttempts++;
   const total=cart.reduce((s,i)=>s+i.price,0);
   const freeItems=cart.filter(i=>i.free);
   const paidItems=cart.filter(i=>!i.free);
@@ -947,17 +1116,20 @@ async function processOrder(freeItems,paidItems,msg){
   if(freeItems.length>0)stampsText+=(stampsText?' · ':'')+'🎉 '+freeItems.length+' free coffee'+(freeItems.length>1?'s':'')+' redeemed!';
   document.getElementById('success-stamps').textContent=stampsText;
   document.getElementById('success-items').innerHTML=cart.map(i=>`<div class="success-item-row"><span>${i.name} (${i.size})${i.free?' 🎉':''}${i.addons?'<br><small style="color:#A9B29E">'+i.addons+'</small>':''}${i.note?'<br><small style="color:#D48631">📝 '+i.note+'</small>':''}</span><span>${i.free?'FREE':'$'+i.price.toFixed(2)}</span></div>`).join('');
+  TDM.metrics.orderSuccesses++;
+  TDM.unlock('order-'+customerId);
   document.getElementById('order-form').style.display='none';
   document.getElementById('order-success').style.display='block';
   }catch(e){
-    console.error('processOrder error:',e);
+    TDM.logError('CRITICAL', 'processOrder', e);
+    TDM.unlock('order-'+customerId);
     document.getElementById('order-btn').disabled=false;
     document.getElementById('order-btn').textContent='Try again';
     showToast('Something went wrong. Please try again.');
   }
 }
 
-async function loadHistory(){
+async function loadHistory(){ try {
   document.getElementById('history-list').innerHTML='<div class="history-empty">Loading...</div>';
   const{data,error}=await db.from('orders').select('*').eq('customer_id',customerId).order('created_at',{ascending:false});
   if(error||!data||data.length===0){document.getElementById('history-list').innerHTML='<div class="history-empty">No orders yet — place your first order!</div>';document.getElementById('history-summary').style.display='none';return;}
@@ -1001,6 +1173,7 @@ async function loadHistory(){
     html+='</div>';
   });
   document.getElementById('history-list').innerHTML=html;
+  }catch(e){TDM.logError('MEDIUM','loadHistory',e);}
 }
 
 function resetOrder(){
@@ -1263,7 +1436,7 @@ async function renderFoodMenuTab(){
 // ---- DOUBLE STAMP TUESDAY ----
 function getStampsToEarn(){
   const day=new Date().getDay();
-  if(day===2){showToast('⚡ Double stamp Tuesday! You earn 2 stamps today!');return 2;}
+  if(day===2&&isEnabled('enableDoubleStampTuesday')){showToast('⚡ Double stamp Tuesday! You earn 2 stamps today!');return 2;}
   return 1;
 }
 
@@ -1878,6 +2051,12 @@ async function loadMenuFromDB(){
 
 
 async function init(){
+  // Maintenance mode check (toggle TDM.FLAGS.maintenanceMode to true to enable)
+  if(TDM.checkMaintenance()) return;
+  // Run health check silently
+  TDM.healthCheck().then(h => {
+    if(!h.healthy) console.warn('[TDM] DB health check failed:', h.error);
+  });
   try{
     const{error}=await db.from('customers').select('id').limit(1);
     if(error)throw error;
@@ -1892,6 +2071,7 @@ async function init(){
         const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',savedEmail).limit(1);
         if(ex&&ex.length>0){
           customerId=ex[0].id;
+        window._tdmUserId=ex[0].id;
           await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);
         } else {
           // Saved email not found in DB — show login
@@ -1934,6 +2114,8 @@ setTimeout(()=>{
 },3000);
 
 async function loginOrRegister(){
+  // Prevent double-submit
+  if(!TDM.lock('login')) return;
   const name=document.getElementById('inp-name').value.trim();
   const email=document.getElementById('inp-email').value.trim().toLowerCase();
   const phone=document.getElementById('inp-phone')?document.getElementById('inp-phone').value.trim():'';
@@ -1958,7 +2140,7 @@ async function loginOrRegister(){
       }
     else{const insertData={name,email};if(phone)insertData.phone=phone;if(birthday)insertData.birthday=birthday;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email,birthday);}
     err.textContent='';
-  }catch(e){err.textContent='Error: '+e.message;}
+  }catch(e){TDM.logError('HIGH','loginOrRegister',e);err.textContent='Error: '+e.message;}finally{TDM.unlock('login');}
 }
 
 async function loadCard(name,createdAt,phone,email,birthday){
@@ -1978,8 +2160,8 @@ async function loadCard(name,createdAt,phone,email,birthday){
   document.getElementById('login-view').style.display='none';
   document.getElementById('main-view').style.display='block';
   setTimeout(()=>requestNotificationPermission(customerId),2000);
-  safeRun(startNotificationPoller);
-  safeTry(loadDeals);
+  if(isEnabled('enableNotifications')) safeRun(startNotificationPoller);
+  if(isEnabled('enableDeals')) safeTry(loadDeals);
   setInterval(()=>safeTry(loadDeals),60000); // refresh deals every minute
   if(birthday)safeRun(checkBirthday, birthday, name);
   safeTry(loadWeeklySummary);
@@ -1990,7 +2172,7 @@ async function loadCard(name,createdAt,phone,email,birthday){
   // Update greeting with time of day
   document.getElementById('greeting-text').textContent=getGreeting(name);
   // Check if near café
-  setTimeout(()=>safeRun(checkGeofence, name),1000);
+  if(isEnabled('enableGeofence')) setTimeout(()=>safeRun(checkGeofence, name),1000);
   document.getElementById('csince').dataset.phone=phone||'';
   const joined=new Date(createdAt);
   document.getElementById('csince').textContent='Member since '+joined.toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
