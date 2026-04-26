@@ -1429,76 +1429,85 @@ function showNearbyBanner(name,dist){
 
 // ---- NOTIFICATION POLLER ----
 let notifPollInterval = null;
-const NOTIF_SEEN_KEY = 'tdm_last_notif_id';
+let lastNotifTimestamp = null;
 
 async function startNotificationPoller(){
   if(notifPollInterval)clearInterval(notifPollInterval);
-  // Check immediately on login
-  await checkForNewNotifications();
-  // Then check every 20 seconds
+  
+  // Set the timestamp to NOW so we only show notifications sent AFTER login
+  lastNotifTimestamp = new Date().toISOString();
+  
+  // Check every 20 seconds
   notifPollInterval = setInterval(checkForNewNotifications, 20000);
 }
 
 async function checkForNewNotifications(){
+  if(!lastNotifTimestamp||!customerId)return;
   try{
-    const lastSeenId = localStorage.getItem(NOTIF_SEEN_KEY);
-    
-    // Get latest 5 notifications
     const{data:notifs}=await db
       .from('notifications')
       .select('*')
-      .order('sent_at',{ascending:false})
-      .limit(5);
+      .gt('sent_at', lastNotifTimestamp)
+      .order('sent_at',{ascending:true});
     
     if(!notifs||notifs.length===0)return;
     
-    // Find notifications we haven't shown yet
-    const unseen = lastSeenId
-      ? notifs.filter(n=>n.id!==lastSeenId && new Date(n.sent_at)>new Date(localStorage.getItem('tdm_notif_time')||0))
-      : [notifs[0]]; // First time — show only the most recent one
+    // Update timestamp to the latest one we received
+    lastNotifTimestamp = notifs[notifs.length-1].sent_at;
     
-    if(unseen.length>0){
-      // Save latest as seen
-      localStorage.setItem(NOTIF_SEEN_KEY, notifs[0].id);
-      localStorage.setItem('tdm_notif_time', notifs[0].sent_at);
-      
-      // Show each unseen notification with a delay between them
-      unseen.reverse().forEach((n,i)=>{
-        setTimeout(()=>showNotificationBanner(n.title, n.body, n.type), i*2000);
-      });
-    }
+    // Show each notification with a small delay between them
+    notifs.forEach((n,i)=>{
+      setTimeout(()=>showNotificationBanner(n.title, n.body, n.type), i*2500);
+    });
+    
   }catch(e){
     console.log('Notification poll error:',e.message);
   }
 }
 
 function showNotificationBanner(title, body, type){
-  // Remove existing banner if any
-  const existing = document.getElementById('notif-banner');
-  if(existing) existing.remove();
+  // Remove any existing banner first
+  const existing=document.getElementById('notif-banner');
+  if(existing)existing.remove();
   
-  const banner = document.createElement('div');
-  banner.id = 'notif-banner';
+  const banner=document.createElement('div');
+  banner.id='notif-banner';
   
-  const emoji = type==='flash'?'⚡':type==='hamper'?'🎁':type==='menu'?'🆕':'🎉';
+  const emoji=type==='flash'?'⚡':type==='hamper'?'🎁':type==='menu'?'🆕':'🎉';
   
-  banner.style.cssText = `
-    position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
-    background:#354C3A;color:#fff;padding:14px 18px;border-radius:14px;
-    font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.3);
-    z-index:9999;max-width:320px;width:90%;text-align:center;
-    animation:slideUp 0.3s ease;
+  banner.style.cssText=`
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:#354C3A;color:#fff;padding:16px 20px;border-radius:16px;
+    font-size:13px;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,0.35);
+    z-index:9999;max-width:320px;width:88%;text-align:center;
+    transition:transform 0.3s ease,opacity 0.3s ease;opacity:0;
   `;
-  banner.innerHTML = `
-    <div style="font-size:20px;margin-bottom:6px">${emoji}</div>
-    <div style="font-weight:700;margin-bottom:4px">${title}</div>
-    <div style="font-size:12px;opacity:0.85">${body}</div>
-    <div onclick="this.parentElement.remove()" style="margin-top:8px;font-size:11px;opacity:0.6;cursor:pointer">Tap to dismiss</div>
+  banner.innerHTML=`
+    <div style="font-size:24px;margin-bottom:6px">${emoji}</div>
+    <div style="font-weight:700;font-size:14px;margin-bottom:4px">${title}</div>
+    <div style="font-size:12px;opacity:0.85;line-height:1.5">${body}</div>
+    <div onclick="this.parentElement.remove()" 
+         style="margin-top:10px;font-size:11px;opacity:0.6;cursor:pointer;text-decoration:underline">
+      Dismiss
+    </div>
   `;
+  
   document.body.appendChild(banner);
   
+  // Animate in
+  requestAnimationFrame(()=>{
+    banner.style.transform='translateX(-50%) translateY(0)';
+    banner.style.opacity='1';
+  });
+  
   // Auto dismiss after 8 seconds
-  setTimeout(()=>{if(banner.parentElement)banner.remove();}, 8000);
+  setTimeout(()=>{
+    if(banner.parentElement){
+      banner.style.opacity='0';
+      banner.style.transform='translateX(-50%) translateY(20px)';
+      setTimeout(()=>banner.remove(),300);
+    }
+  },8000);
 }
 
 // ---- STAMP SOUND ----
