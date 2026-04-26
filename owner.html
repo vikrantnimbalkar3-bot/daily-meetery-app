@@ -157,6 +157,70 @@
   <div id="stamp-result" style="font-size:13px;margin-top:10px;color:#354C3A"></div>
 </div>
 
+<!-- Deals Manager -->
+<div class="section-full">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div class="card-title" style="margin-bottom:0">🔥 Deals & Specials</div>
+    <button class="btn btn-accent" style="width:auto;padding:8px 16px" onclick="showDealForm()">+ Create Deal</button>
+  </div>
+
+  <!-- Deal Form -->
+  <div id="deal-form" style="display:none;background:#FDF8EE;border-radius:12px;padding:16px;margin-bottom:16px;border:1.5px solid #D48631">
+    <div style="font-size:13px;font-weight:700;color:#354C3A;margin-bottom:12px" id="deal-form-title">Create New Deal</div>
+    <input type="hidden" id="edit-deal-id">
+    
+    <div class="field-label">Deal Title</div>
+    <input class="field" id="deal-title" placeholder="e.g. ⚡ Monday Morning Deal!">
+    
+    <div class="field-label">Description</div>
+    <input class="field" id="deal-desc" placeholder="e.g. Flat White + Muffin combo">
+
+    <div class="field-label">Badge Label</div>
+    <input class="field" id="deal-badge" placeholder="e.g. DEAL, HOT, NEW, LIMITED" value="DEAL">
+
+    <div class="field-label">Items included in deal</div>
+    <div id="deal-items-container"></div>
+    <button onclick="addDealItemRow()" style="font-size:12px;color:#354C3A;background:none;border:1px dashed #A9B29E;border-radius:8px;padding:6px 14px;cursor:pointer;margin-bottom:10px;width:100%">+ Add item to deal</button>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div>
+        <div class="field-label">Original price ($)</div>
+        <input class="field" id="deal-original-price" type="number" step="0.50" placeholder="16.50" style="margin-bottom:0">
+      </div>
+      <div>
+        <div class="field-label">Deal price ($)</div>
+        <input class="field" id="deal-price" type="number" step="0.50" placeholder="12.00" style="margin-bottom:0">
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div>
+        <div class="field-label">Start time</div>
+        <input class="field" id="deal-start" type="datetime-local" style="margin-bottom:0">
+      </div>
+      <div>
+        <div class="field-label">End time</div>
+        <input class="field" id="deal-end" type="datetime-local" style="margin-bottom:0">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="deal-active" checked> Active immediately
+      </label>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-accent" onclick="saveDeal()" style="flex:1">Save Deal 🔥</button>
+      <button class="btn" onclick="hideDealForm()" style="flex:1;background:#eee;color:#555">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Active deals -->
+  <div style="font-size:11px;font-weight:700;color:#A9B29E;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Active & Upcoming Deals</div>
+  <div id="deals-list"><div style="color:#888;font-size:13px">Loading deals...</div></div>
+</div>
+
 <!-- Category Manager -->
 <div class="section-full">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -251,7 +315,7 @@ function checkPW(){
   if(pw===OWNER_PASSWORD){
     document.getElementById('pw-gate').style.display='none';
     document.getElementById('dashboard-content').style.display='block';
-    loadStats();loadCustomers();loadNotifHistory();loadTodayOrders();loadHamperCustomers();try{loadCategories();}catch(e){console.log('Cat error:',e);}loadMenuItems();
+    loadStats();loadCustomers();loadNotifHistory();loadTodayOrders();loadHamperCustomers();try{loadCategories();}catch(e){console.log('Cat error:',e);}loadMenuItems();loadDealsManager();
   } else {
     document.getElementById('pw-err').textContent='Incorrect password. Try again.';
     document.getElementById('pw-input').value='';
@@ -430,6 +494,214 @@ async function addManualStamp(){
   document.getElementById('stamp-email').value='';
   loadCustomers();
   setTimeout(()=>result.textContent='',3000);
+}
+
+// ============ DEALS MANAGER ============
+let allMenuItemsForDeals = [];
+
+async function loadDealsManager(){
+  // Load menu items for deal builder
+  const{data:items}=await db.from('menu_items').select('id,name,sizes,category').eq('is_available',true).order('category').order('sort_order');
+  allMenuItemsForDeals = items||[];
+
+  // Load all deals
+  const{data:deals}=await db.from('deals').select('*').order('start_time',{ascending:false});
+  const el=document.getElementById('deals-list');
+  if(!el)return;
+
+  if(!deals||deals.length===0){
+    el.innerHTML='<div style="color:#888;font-size:13px">No deals created yet</div>';
+    return;
+  }
+
+  const now=new Date();
+  el.innerHTML=deals.map(deal=>{
+    const start=new Date(deal.start_time);
+    const end=new Date(deal.end_time);
+    const isLive=deal.is_active&&now>=start&&now<=end;
+    const isUpcoming=deal.is_active&&now<start;
+    const isExpired=now>end||!deal.is_active;
+    const status=isLive?'🟢 LIVE':isUpcoming?'🕐 Upcoming':'🔴 Expired';
+    const items=deal.items.map(i=>i.name+(i.size?' ('+i.size+')':'')).join(' + ');
+    return `<div class="customer-row" style="flex-wrap:wrap;gap:6px;align-items:flex-start">
+      <div style="flex:1">
+        <div class="customer-name">${deal.title} <span style="font-size:10px;padding:2px 6px;border-radius:99px;background:${isLive?'#ECFDF5':isUpcoming?'#FFF3DC':'#fee'};color:${isLive?'#354C3A':isUpcoming?'#D48631':'#c00'}">${status}</span></div>
+        <div class="customer-detail">${items}</div>
+        <div class="customer-detail" style="color:#D48631">
+          <s style="color:#aaa">$${parseFloat(deal.original_price).toFixed(2)}</s> → $${parseFloat(deal.deal_price).toFixed(2)} · 
+          ${start.toLocaleString('en-NZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} – ${end.toLocaleString('en-NZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="editDeal('${deal.id}')" style="padding:5px 10px;border-radius:8px;border:1px solid #A9B29E;background:#fff;font-size:12px;cursor:pointer;color:#354C3A">Edit</button>
+        <button onclick="toggleDeal('${deal.id}',${deal.is_active})" style="padding:5px 10px;border-radius:8px;border:1px solid ${deal.is_active?'#D48631':'#354C3A'};background:#fff;font-size:12px;cursor:pointer;color:${deal.is_active?'#D48631':'#354C3A'}">${deal.is_active?'Pause':'Resume'}</button>
+        <button onclick="deleteDeal('${deal.id}')" style="padding:5px 10px;border-radius:8px;border:1px solid #fee;background:#fff;font-size:12px;cursor:pointer;color:#c00">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showDealForm(){
+  document.getElementById('edit-deal-id').value='';
+  document.getElementById('deal-form-title').textContent='Create New Deal';
+  document.getElementById('deal-title').value='';
+  document.getElementById('deal-desc').value='';
+  document.getElementById('deal-badge').value='DEAL';
+  document.getElementById('deal-original-price').value='';
+  document.getElementById('deal-price').value='';
+  document.getElementById('deal-active').checked=true;
+  document.getElementById('deal-items-container').innerHTML='';
+  // Set default start = now, end = midnight
+  const now=new Date();
+  const midnight=new Date();midnight.setHours(23,59,0,0);
+  document.getElementById('deal-start').value=toLocalInput(now);
+  document.getElementById('deal-end').value=toLocalInput(midnight);
+  addDealItemRow();
+  document.getElementById('deal-form').style.display='block';
+  document.getElementById('deal-form').scrollIntoView({behavior:'smooth'});
+}
+
+function hideDealForm(){
+  document.getElementById('deal-form').style.display='none';
+}
+
+function toLocalInput(date){
+  const d=new Date(date);
+  d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  return d.toISOString().slice(0,16);
+}
+
+function addDealItemRow(name='',size='',customPrice=''){
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap';
+  
+  // Item select
+  const sel=document.createElement('select');
+  sel.className='field';
+  sel.style.cssText='flex:2;margin-bottom:0;font-size:12px';
+  sel.innerHTML='<option value="">Select item...</option>'+
+    allMenuItemsForDeals.map(item=>
+      `<option value="${item.name}" ${item.name===name?'selected':''}>${item.name}</option>`
+    ).join('');
+  
+  // Size input
+  const sizeIn=document.createElement('input');
+  sizeIn.className='field';
+  sizeIn.style.cssText='flex:1;margin-bottom:0;font-size:12px';
+  sizeIn.placeholder='Size (e.g. M)';
+  sizeIn.value=size;
+
+  // Custom price (optional)
+  const priceIn=document.createElement('input');
+  priceIn.className='field';
+  priceIn.type='number';
+  priceIn.step='0.50';
+  priceIn.style.cssText='flex:1;margin-bottom:0;font-size:12px';
+  priceIn.placeholder='Price (opt)';
+  priceIn.value=customPrice;
+
+  const removeBtn=document.createElement('button');
+  removeBtn.textContent='×';
+  removeBtn.style.cssText='background:none;border:none;color:#c00;font-size:18px;cursor:pointer;padding:0 4px';
+  removeBtn.onclick=()=>div.remove();
+
+  div.appendChild(sel);
+  div.appendChild(sizeIn);
+  div.appendChild(priceIn);
+  div.appendChild(removeBtn);
+  document.getElementById('deal-items-container').appendChild(div);
+}
+
+async function saveDeal(){
+  const id=document.getElementById('edit-deal-id').value;
+  const title=document.getElementById('deal-title').value.trim();
+  const description=document.getElementById('deal-desc').value.trim();
+  const badge=document.getElementById('deal-badge').value.trim()||'DEAL';
+  const original_price=parseFloat(document.getElementById('deal-original-price').value);
+  const deal_price=parseFloat(document.getElementById('deal-price').value);
+  const start_time=document.getElementById('deal-start').value;
+  const end_time=document.getElementById('deal-end').value;
+  const is_active=document.getElementById('deal-active').checked;
+
+  if(!title){showToast('Please enter a deal title!');return;}
+  if(isNaN(deal_price)){showToast('Please enter a deal price!');return;}
+  if(!start_time||!end_time){showToast('Please set start and end times!');return;}
+
+  // Build items array
+  const rows=document.getElementById('deal-items-container').querySelectorAll('div');
+  const items=[];
+  rows.forEach(row=>{
+    const sel=row.querySelector('select');
+    const inputs=row.querySelectorAll('input');
+    if(sel&&sel.value){
+      items.push({
+        name:sel.value,
+        size:inputs[0]?inputs[0].value:'',
+        customPrice:inputs[1]&&inputs[1].value?parseFloat(inputs[1].value):null
+      });
+    }
+  });
+
+  if(!items.length){showToast('Please add at least one item!');return;}
+
+  const data={
+    title,description,badge,items,
+    deal_price,
+    original_price:isNaN(original_price)?deal_price:original_price,
+    start_time:new Date(start_time).toISOString(),
+    end_time:new Date(end_time).toISOString(),
+    is_active
+  };
+
+  try{
+    if(id){
+      await db.from('deals').update(data).eq('id',id);
+      showToast('✅ Deal updated!');
+    } else {
+      await db.from('deals').insert(data);
+      showToast('✅ Deal created! 🔥');
+    }
+    hideDealForm();
+    loadDealsManager();
+  }catch(e){
+    showToast('Error: '+e.message);
+  }
+}
+
+async function editDeal(id){
+  const{data:deals}=await db.from('deals').select('*').eq('id',id).limit(1);
+  if(!deals||!deals.length)return;
+  const deal=deals[0];
+  
+  document.getElementById('edit-deal-id').value=id;
+  document.getElementById('deal-form-title').textContent='Edit Deal';
+  document.getElementById('deal-title').value=deal.title;
+  document.getElementById('deal-desc').value=deal.description||'';
+  document.getElementById('deal-badge').value=deal.badge||'DEAL';
+  document.getElementById('deal-original-price').value=deal.original_price;
+  document.getElementById('deal-price').value=deal.deal_price;
+  document.getElementById('deal-start').value=toLocalInput(deal.start_time);
+  document.getElementById('deal-end').value=toLocalInput(deal.end_time);
+  document.getElementById('deal-active').checked=deal.is_active;
+  
+  document.getElementById('deal-items-container').innerHTML='';
+  deal.items.forEach(i=>addDealItemRow(i.name,i.size,i.customPrice));
+  
+  document.getElementById('deal-form').style.display='block';
+  document.getElementById('deal-form').scrollIntoView({behavior:'smooth'});
+}
+
+async function toggleDeal(id,current){
+  await db.from('deals').update({is_active:!current}).eq('id',id);
+  showToast(current?'Deal paused':'Deal resumed!');
+  loadDealsManager();
+}
+
+async function deleteDeal(id){
+  if(!confirm('Delete this deal?'))return;
+  await db.from('deals').delete().eq('id',id);
+  showToast('Deal deleted');
+  loadDealsManager();
 }
 
 // ============ CATEGORY MANAGER ============
