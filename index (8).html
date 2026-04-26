@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Daily Meetery Café — Loyalty Card</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #292927; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 20px; }
+    .phone { width: 360px; background: #fff; border-radius: 28px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.25); }
+    .phone-header { background: #354C3A; padding: 22px 20px 16px; }
+    .cafe-name { font-size: 11px; letter-spacing: 2px; color: #A9B29E; text-transform: uppercase; margin-bottom: 3px; }
+    .card-label { font-size: 20px; font-weight: 700; color: #fff; }
+    .card-sub { font-size: 12px; color: #A9B29E; margin-top: 2px; }
+    .live-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 10px; border-radius: 99px; background: rgba(212,134,49,0.2); color: #D48631; font-weight: 500; margin-top: 10px; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #D48631; }
+    .customer-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid rgba(212,134,49,0.2); }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: rgba(212,134,49,0.2); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #D48631; flex-shrink: 0; }
+    .nav-tabs { display: flex; border-bottom: 1px solid #f0f0f0; }
+    .nav-tab { flex: 1; padding: 10px 2px; font-size: 11px; font-weight: 500; color: #999; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; position: relative; }
+    .nav-tab.active { color: #354C3A; border-bottom-color: #D48631; }
+    .cart-badge { position: absolute; top: 6px; right: 4px; background: #354C3A; color: #fff; font-size: 10px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .phone-body { padding: 18px; }
+    .stamp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
+    .stamp { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px dashed #A9B29E; background: #FDF8EE; transition: all 0.2s; }
+    .stamp.filled { border: 2.5px solid #354C3A; background: #FDF8EE; }
+    .stamp.discount { border: 2.5px solid #D48631; background: #FFF3DC; }
+    .stamp-label { font-size: 8px; font-weight: 700; color: #D48631; text-align: center; line-height: 1.2; }
+    .stamp svg { width: 20px; height: 20px; }
+    .bar-wrap { background: #f0f0f0; border-radius: 99px; height: 5px; margin-bottom: 12px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; background: #354C3A; transition: width 0.4s; }
+    .reward-pill { display: flex; align-items: center; gap: 8px; background: #FDF8EE; border-radius: 10px; padding: 9px 12px; margin-bottom: 12px; border: 1px solid #A9B29E; }
+    .reward-pill.earned { background: #FFF3DC; border-color: #D48631; }
+    .reward-text { font-size: 12px; color: #354C3A; font-weight: 500; }
+    .reward-text.earned { color: #D48631; }
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .stat { background: #f7f7f7; border-radius: 10px; padding: 9px 6px; text-align: center; }
+    .stat-val { font-size: 18px; font-weight: 700; color: #292927; }
+    .stat-lbl { font-size: 10px; color: #888; margin-top: 1px; }
+    .section-title { font-size: 11px; font-weight: 700; color: #354C3A; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 1.5px solid #FDF8EE; }
+    .menu-item { border: 1.5px solid #A9B29E; border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; background: #fff; }
+    .item-name { font-size: 13px; font-weight: 500; color: #292927; margin-bottom: 5px; }
+    .item-desc { font-size: 11px; color: #888; margin-bottom: 6px; }
+    .size-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .size-btn { padding: 5px 11px; border-radius: 99px; font-size: 11px; border: 1.5px solid #A9B29E; background: #fff; cursor: pointer; color: #354C3A; transition: all 0.15s; display: flex; align-items: center; gap: 4px; }
+    .size-btn:hover { border-color: #354C3A; color: #354C3A; }
+    .add-icon { font-size: 14px; font-weight: 700; color: #354C3A; }
+    .add-on-section { background: #f7f7f7; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+    .add-on-title { font-size: 11px; font-weight: 600; color: #555; margin-bottom: 7px; }
+    .add-on-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+    .add-on-btn { padding: 4px 10px; border-radius: 99px; font-size: 11px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #555; transition: all 0.15s; }
+    .add-on-btn.selected { border-color: #354C3A; background: #354C3A; color: #fff; }
+    .sig-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FEE2E2; color: #991B1B; font-weight: 500; margin-left: 6px; vertical-align: middle; }
+    .crowd-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FFF3DC; color: #D48631; font-weight: 500; margin-left: 6px; vertical-align: middle; }
+    .free-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FFF3DC; color: #D48631; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+    .free-coffee-banner { background: #FFF3DC; border: 1px solid #D48631; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #D48631; font-weight: 500; text-align: center; }
+    .cart-section { background: #f7f7f7; border-radius: 10px; padding: 12px; margin-bottom: 12px; transition: background 0.3s; }
+    .cart-title { font-size: 12px; font-weight: 600; color: #292927; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    .cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-name { color: #222; flex: 1; }
+    .cart-item-price { color: #555; font-weight: 500; margin: 0 10px; white-space: nowrap; }
+    .cart-item-price.free { color: #354C3A; font-weight: 700; }
+    .cart-item-remove { color: #c0392b; cursor: pointer; font-size: 16px; font-weight: 700; padding: 0 4px; }
+    .cart-total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding-top: 10px; border-top: 1px solid #ddd; margin-top: 6px; }
+    .cart-stamps { font-size: 11px; color: #354C3A; font-weight: 500; margin-top: 6px; text-align: center; }
+    .empty-cart { text-align: center; padding: 16px; color: #888; font-size: 13px; }
+    .item-addons { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e0d9ce; display: none; }
+    .item-addons.open { display: block; }
+    .inline-addon-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .inline-addon-btn { padding: 4px 9px; border-radius: 99px; font-size: 11px; border: 1.5px solid #A9B29E; background: #fff; cursor: pointer; color: #354C3A; transition: all 0.15s; }
+    .inline-addon-btn.selected { border-color: #354C3A; background: #354C3A; color: #fff; }
+    .inline-addon-title { font-size: 10px; font-weight: 600; color: #A9B29E; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .item-note { width: 100%; padding: 7px 10px; font-size: 12px; border-radius: 8px; border: 1.5px solid #A9B29E; background: #fff; color: #354C3A; outline: none; resize: none; margin-top: 4px; font-family: inherit; }
+    .item-note:focus { border-color: #354C3A; }
+    .item-note::placeholder { color: #A9B29E; }
+    .toggle-addons-btn { font-size: 11px; color: #A9B29E; cursor: pointer; background: none; border: none; padding: 4px 0; text-decoration: underline; margin-top: 4px; }
+    .pickup-section { background: #FDF8EE; border: 1.5px solid #A9B29E; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .pickup-title { font-size: 12px; font-weight: 600; color: #354C3A; margin-bottom: 10px; }
+    .pickup-options { display: flex; gap: 8px; margin-bottom: 10px; }
+    .pickup-opt { flex: 1; padding: 8px; border: 1.5px solid #A9B29E; border-radius: 8px; background: #fff; cursor: pointer; font-size: 12px; text-align: center; color: #354C3A; transition: all 0.15s; }
+    .pickup-opt.active { border-color: #354C3A; background: #354C3A; color: #fff; font-weight: 600; }
+    .pickup-time-row { display: flex; gap: 8px; align-items: center; }
+    .pickup-time-row select { flex: 1; padding: 8px 10px; font-size: 13px; border-radius: 8px; border: 1.5px solid #A9B29E; background: #fff; color: #354C3A; outline: none; }
+    .pickup-time-row select:focus { border-color: #354C3A; }
+    .pickup-note { font-size: 11px; color: #A9B29E; margin-top: 6px; }
+    .payment-box { background: #f7f7f7; border-radius: 10px; padding: 14px; margin: 12px 0; }
+    .payment-title { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 12px; }
+    #card-element { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+    .pay-methods { display: flex; gap: 8px; margin-bottom: 12px; }
+    .pay-method { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-size: 12px; text-align: center; color: #555; transition: all 0.15s; }
+    .pay-method.active { border-color: #354C3A; color: #354C3A; font-weight: 600; background: #FDF8EE; }
+    .counter-note { background: #FFF3DC; border: 1px solid #D48631; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #D48631; text-align: center; margin-bottom: 8px; }
+    .main-btn { width: 100%; padding: 13px; border-radius: 10px; background: #354C3A; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
+    .main-btn:hover { background: #292927; }
+    .main-btn:disabled { background: #eee; color: #aaa; cursor: default; }
+    .free-btn { width: 100%; padding: 13px; border-radius: 10px; background: #D48631; color: #fff; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 8px; }
+    .redeem-btn { width: 100%; padding: 13px; border-radius: 10px; background: #D48631; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 8px; }
+    .outline-btn { width: 100%; padding: 9px; border-radius: 10px; border: 1px solid #ddd; background: transparent; cursor: pointer; color: #888; font-size: 12px; margin-top: 8px; }
+    input.field { width: 100%; padding: 10px 12px; font-size: 14px; border-radius: 10px; border: 1px solid #ddd; background: #fff; color: #222; margin-bottom: 10px; outline: none; }
+    input.field:focus { border-color: #354C3A; }
+    .field-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .toast { font-size: 13px; color: #354C3A; background: #FDF8EE; border: 1px solid #A9B29E; border-radius: 8px; padding: 9px 12px; margin-bottom: 12px; display: none; }
+    .toast.show { display: block; }
+    .err { font-size: 12px; color: #c0392b; margin-top: 6px; }
+    .loading { text-align: center; padding: 30px 20px; font-size: 13px; color: #888; }
+    .hero-img { width: 100%; height: 180px; object-fit: cover; object-position: center 40%; display: block; }
+    .hero-img-small { width: 100%; height: 120px; object-fit: cover; object-position: center 30%; display: block; border-radius: 10px; margin-bottom: 12px; }
+    .photo-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .photo-strip img { width: 100%; height: 90px; object-fit: cover; border-radius: 10px; }
+    .photo-caption { font-size: 10px; color: #A9B29E; text-align: center; margin-top: 4px; }
+    .success-box { text-align: center; padding: 24px 16px; }
+    .success-items { text-align: left; background: #f7f7f7; border-radius: 10px; padding: 12px; margin: 12px 0; }
+    .success-item-row { font-size: 13px; padding: 4px 0; color: #555; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+    .success-item-row:last-child { border-bottom: none; }
+    /* Splash */
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes stampPop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.3)} 100%{transform:scale(1);opacity:1} }
+    @keyframes dot { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
+    /* Confetti */
+    .confetti-piece { position:fixed; width:10px; height:10px; top:-10px; border-radius:2px; animation:confettiFall linear forwards; z-index:9998; pointer-events:none; }
+    @keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+    /* VIP Badge */
+    .vip-badge { display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:99px;font-weight:700;margin-top:6px; }
+    .vip-bronze { background:#F5E6D3;color:#8B4513; }
+    .vip-silver { background:#E8E8E8;color:#666; }
+    .vip-gold { background:#FFF3DC;color:#D48631; }
+    .vip-platinum { background:#E8F0FF;color:#354C3A; }
+    /* Streak */
+    .streak-banner { background:linear-gradient(135deg,#D48631,#e8a050);border-radius:10px;padding:10px 14px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:10px; }
+    .streak-fire { font-size:24px; }
+    /* Daily special */
+    .daily-special { background:linear-gradient(135deg,#354C3A,#4a6b52);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#fff;cursor:pointer; }
+    .special-tag { font-size:10px;background:#D48631;color:#fff;padding:2px 8px;border-radius:99px;font-weight:700;display:inline-block;margin-bottom:6px; }
+    /* Rating */
+    .star-rating { display:flex;gap:6px;justify-content:center;margin:12px 0; }
+    .star { font-size:28px;cursor:pointer;transition:transform 0.1s;filter:grayscale(1); }
+    .star.active { filter:none;transform:scale(1.2); }
+    /* Fav drink */
+    .fav-btn { display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid #D48631;background:#FFF3DC;cursor:pointer;font-size:13px;font-weight:500;color:#354C3A;margin-bottom:8px; }
+    /* Confetti */
+    .confetti-container { position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden; }
+    .confetti-piece { position:absolute;width:10px;height:10px;opacity:0;animation:confettiFall 3s ease-in forwards; }
+    @keyframes confettiFall {
+      0%{transform:translateY(-20px) rotate(0deg);opacity:1;}
+      100%{transform:translateY(100vh) rotate(720deg);opacity:0;}
+    }
+    /* Splash screen */
+    .splash { position:fixed;top:0;left:0;width:100%;height:100%;background:#354C3A;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s; }
+    .splash-logo { font-size:60px;margin-bottom:16px;animation:pulse 1s infinite; }
+    .splash-name { font-size:24px;font-weight:700;color:#fff;letter-spacing:1px; }
+    .splash-tag { font-size:13px;color:#A9B29E;margin-top:6px; }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    /* VIP tier badges */
+    .vip-badge { display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:99px;font-weight:700;margin-left:8px; }
+    .vip-bronze { background:#F5E6D3;color:#8B4513; }
+    .vip-silver { background:#E8E8E8;color:#666; }
+    .vip-gold { background:#FFF3C4;color:#B8860B; }
+    .vip-platinum { background:#E8F4FD;color:#1565C0; }
+    /* Daily special banner */
+    .daily-special { background:linear-gradient(135deg,#354C3A,#D48631);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:10px; }
+    .daily-special-icon { font-size:24px;flex-shrink:0; }
+    .daily-special-title { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#A9B29E; }
+    .daily-special-name { font-size:14px;font-weight:700;color:#fff; }
+    .daily-special-price { font-size:12px;color:#FDF8EE;margin-top:1px; }
+    /* Streak badge */
+    .streak-banner { background:#FFF3DC;border:1px solid #D48631;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px; }
+    .streak-fire { font-size:20px; }
+    .streak-text { font-size:13px;font-weight:500;color:#D48631; }
+    /* Savings comparison */
+    .savings-compare { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px; }
+    .savings-card { background:#FDF8EE;border-radius:10px;padding:10px;text-align:center;border:1px solid #A9B29E; }
+    .savings-val { font-size:18px;font-weight:700;color:#354C3A; }
+    .savings-lbl { font-size:10px;color:#888;margin-top:2px; }
+    /* Referral */
+    .referral-box { background:#354C3A;border-radius:10px;padding:12px 14px;margin-bottom:12px;text-align:center; }
+    .referral-code { font-size:22px;font-weight:700;color:#D48631;letter-spacing:3px;margin:8px 0; }
+    .referral-sub { font-size:12px;color:#A9B29E; }
+    /* Favourite drink */
+    .fave-drink { background:#ECFDF5;border:1px solid #354C3A;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between; }
+    .fave-drink-name { font-size:13px;font-weight:600;color:#354C3A; }
+    .fave-btn { padding:6px 14px;background:#354C3A;color:#fff;border:none;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer; }
+    /* Order rating */
+    .rating-box { background:#f7f7f7;border-radius:10px;padding:14px;margin-top:12px;text-align:center; }
+    .rating-title { font-size:13px;font-weight:600;color:#292927;margin-bottom:10px; }
+    .stars { display:flex;justify-content:center;gap:8px;margin-bottom:8px; }
+    .star { font-size:28px;cursor:pointer;transition:transform 0.1s;opacity:0.3; }
+    .star.active { opacity:1; }
+    .star:hover { transform:scale(1.2); }
+    /* History */
+    .history-empty { text-align: center; padding: 30px 16px; color: #888; font-size: 13px; }
+    .history-group { margin-bottom: 16px; }
+    .history-date { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .history-item { background: #f7f7f7; border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; }
+    .history-item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .history-item-name { font-size: 13px; font-weight: 500; color: #292927; }
+    .history-item-price { font-size: 13px; font-weight: 600; color: #222; }
+    .history-item-price.free-price { color: #354C3A; }
+    .history-item-bottom { display: flex; gap: 6px; align-items: center; }
+    .history-time { font-size: 11px; color: #888; }
+    .history-stamp-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FDF8EE; color: #354C3A; font-weight: 500; }
+    .history-free-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: #FFF3DC; color: #D48631; font-weight: 700; }
+    .history-summary { background: #FDF8EE; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center; }
+    .history-summary-val { font-size: 16px; font-weight: 700; color: #354C3A; }
+    .history-summary-lbl { font-size: 10px; color: #888; margin-top: 2px; }
+    .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .popup-box { background: #fff; border-radius: 16px; padding: 24px 20px; max-width: 300px; width: 90%; text-align: center; }
+    .popup-emoji { font-size: 44px; margin-bottom: 12px; }
+    .popup-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
+    .popup-msg { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 12px; }
+    .popup-rule { background: #FFF3DC; border: 1px solid #D48631; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #D48631; margin-bottom: 16px; text-align: left; line-height: 1.7; }
+    .popup-btn { width: 100%; padding: 11px; border-radius: 10px; background: #354C3A; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; }
+    @keyframes slideUp { from{transform:translateX(-50%) translateY(20px);opacity:0} to{transform:translateX(-50%) translateY(0);opacity:1} }
+    .leaderboard-item { display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0; }
+    .leaderboard-item:last-child { border-bottom:none; }
+    .leaderboard-rank { font-size:20px;width:30px;text-align:center; }
+    .leaderboard-name { flex:1;font-size:13px;font-weight:500;color:#292927; }
+    .leaderboard-count { font-size:13px;font-weight:600;color:#354C3A; }
+    .add-to-cart-btn { width:100%;margin-top:10px;padding:11px;border-radius:10px;background:#354C3A;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:background 0.15s; }
+    .add-to-cart-btn:hover { background:#292927; }
+    .cancel-btn { width:100%;margin-top:6px;padding:8px;border-radius:10px;background:transparent;color:#888;font-size:12px;border:1px solid #ddd;cursor:pointer; }
+  </style>
+</head>
+<body>
+<!-- Splash Screen -->
+<div id="splash-screen" style="position:fixed;inset:0;background:#354C3A;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s">
+  <div style="font-size:60px;margin-bottom:16px;animation:bounce 1s infinite">☕</div>
+  <div style="font-size:28px;font-weight:700;color:#fff;letter-spacing:-0.5px">The Daily Meetery</div>
+  <div style="font-size:13px;color:#A9B29E;margin-top:6px;letter-spacing:1px">ONE DAILY STOP. ENDLESS CONNECTIONS.</div>
+  <div style="margin-top:40px;display:flex;gap:8px">
+    <div style="width:8px;height:8px;border-radius:50%;background:#D48631;animation:dot 1.2s 0s infinite"></div>
+    <div style="width:8px;height:8px;border-radius:50%;background:#D48631;animation:dot 1.2s 0.2s infinite"></div>
+    <div style="width:8px;height:8px;border-radius:50%;background:#D48631;animation:dot 1.2s 0.4s infinite"></div>
+  </div>
+</div>
+
+<div class="phone">
+  <div class="phone-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="cafe-name">The Daily Meetery</div>
+        <div class="card-label">Loyalty Card</div>
+        <div class="card-sub">5 stamps = 10% off · 10 stamps = free coffee</div>
+      </div>
+    </div>
+    <div class="live-badge"><span class="live-dot"></span>Live</div>
+    <div id="customer-row" class="customer-row" style="display:none">
+      <div class="avatar" id="avatar">?</div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#fff" id="greeting-text">Welcome!</div>
+        <div style="font-size:12px;font-weight:500;color:#A9B29E" id="cname">—</div>
+        <div style="font-size:11px;color:#A9B29E" id="csince">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading-view" style="text-align:center;padding:30px 20px;font-size:13px;color:#888;">Connecting to your database...</div>
+
+  <div id="login-view" style="display:none">
+    <div style="position:relative">
+      <img src="DSC04901.jpg" alt="The Daily Meetery coffee" class="hero-img">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(53,76,58,0.95));padding:20px 20px 16px;text-align:center">
+        <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:3px">Welcome back!</div>
+        <div style="font-size:12px;color:#A9B29E">One Daily Stop. Endless Connections.</div>
+      </div>
+    </div>
+    <div class="phone-body" style="padding-top:20px">
+      <div style="background:#FDF8EE;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#354C3A;text-align:center;border:1px solid #A9B29E">
+        🎟 Earn stamps · Get 10% off at 5 · Free coffee at 10
+      </div>
+      <div class="field-label">Your name</div>
+      <input class="field" id="inp-name" placeholder="e.g. Sarah">
+      <div class="field-label">Email address</div>
+      <input class="field" id="inp-email" placeholder="you@email.com" type="email">
+      <div class="field-label">Phone number <span style="color:#A9B29E">(optional)</span></div>
+      <input class="field" id="inp-phone" placeholder="e.g. 021 123 4567" type="tel">
+      <div class="field-label">Birthday <span style="color:#A9B29E">(optional — free coffee on your birthday!)</span></div>
+      <input class="field" id="inp-birthday" type="date" style="margin-bottom:10px">
+      <button class="main-btn" onclick="loginOrRegister()">Get my stamp card</button>
+      <div class="err" id="login-err"></div>
+      <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">By signing up you agree to receive offers from The Daily Meetery</div>
+    </div>
+  </div>
+
+  <div id="main-view" style="display:none">
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showTab('card')" id="tab-card">My Card</button>
+      <button class="nav-tab" onclick="showTab('order')" id="tab-order">Order<span class="cart-badge" id="cart-badge" style="display:none">0</span></button>
+      <button class="nav-tab" onclick="showTab('history')" id="tab-history">History</button>
+      <button class="nav-tab" onclick="showTab('menu')" id="tab-menu">Menu</button>
+    </div>
+
+    <!-- CARD TAB -->
+    <div id="tab-card-view">
+      <img src="DSC04927%20(1).jpg" alt="The Daily Meetery" style="width:100%;height:130px;object-fit:cover;object-position:center 20%;display:block;">
+      <div class="phone-body">
+      <div class="toast" id="toast"></div>
+      <!-- Daily Special -->
+      <div class="daily-special" id="daily-special" style="display:none">
+        <div class="daily-special-icon">🔥</div>
+        <div>
+          <div class="daily-special-title">Today's Special</div>
+          <div class="daily-special-name" id="special-name">—</div>
+          <div class="daily-special-price" id="special-price">—</div>
+        </div>
+      </div>
+      <!-- Streak -->
+      <div class="streak-banner" id="streak-banner" style="display:none">
+        <div class="streak-fire">🔥</div>
+        <div class="streak-text" id="streak-text">You're on a streak!</div>
+      </div>
+      <!-- Favourite drink -->
+      <div class="fave-drink" id="fave-drink" style="display:none">
+        <div>
+          <div style="font-size:10px;color:#888;margin-bottom:2px">YOUR USUAL</div>
+          <div class="fave-drink-name" id="fave-name">—</div>
+        </div>
+        <button class="fave-btn" onclick="orderFavourite()">Quick order</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:12px;color:#888">Your stamps</span>
+        <span style="font-size:13px;font-weight:600;color:#292927" id="stamp-count">0 / 10</span>
+      </div>
+      <div class="stamp-grid" id="stamp-grid"></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:10px;color:#D48631;font-weight:600">⭐ 5th = 10% off</span>
+        <span style="font-size:10px;color:#354C3A;font-weight:600">🎁 10th = free coffee</span>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
+      <div class="reward-pill" id="reward-pill"><div class="reward-text" id="reward-text">Loading...</div></div>
+      <div id="weekly-summary" style="font-size:12px;color:#888;text-align:center;padding:6px 0;margin-bottom:4px"></div>
+      <div class="stats-row" id="stats-row-el">
+        <div class="stat"><div style="font-size:16px;margin-bottom:2px">☕</div><div class="stat-val" id="total-val">0</div><div class="stat-lbl">coffees</div></div>
+        <div class="stat"><div style="font-size:16px;margin-bottom:2px">🎁</div><div class="stat-val" id="rewards-val">0</div><div class="stat-lbl">free earned</div></div>
+        <div class="stat"><div style="font-size:16px;margin-bottom:2px">💰</div><div class="stat-val" id="saved-val">$0</div><div class="stat-lbl">saved</div></div>
+      </div>
+      <!-- Savings comparison -->
+      <div class="savings-compare" id="savings-compare" style="display:none">
+        <div class="savings-card">
+          <div class="savings-val" id="this-month-saved">$0</div>
+          <div class="savings-lbl">Saved this month</div>
+        </div>
+        <div class="savings-card">
+          <div class="savings-val" id="last-month-saved">$0</div>
+          <div class="savings-lbl">Saved last month</div>
+        </div>
+      </div>
+      <!-- Referral -->
+      <div class="referral-box" id="referral-box" style="display:none">
+        <div style="font-size:12px;color:#A9B29E;margin-bottom:4px">🎁 Refer a friend — both get a bonus stamp!</div>
+        <div class="referral-code" id="referral-code">—</div>
+        <div class="referral-sub">Share your code · Friend uses it · You both get +1 stamp</div>
+        <button onclick="shareReferral()" style="margin-top:10px;padding:7px 20px;background:#D48631;color:#fff;border:none;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer">Share code 🔗</button>
+      </div>
+      <button class="redeem-btn" id="redeem-btn" style="display:none" onclick="showTab('order')">Claim my free coffee</button>
+      <button class="outline-btn" onclick="logout()">Sign out</button>
+      </div>
+    </div>
+
+    <!-- ORDER TAB -->
+    <div id="tab-order-view" style="display:none">
+      <div style="position:relative;overflow:hidden">
+        <img src="DSC04901.jpg" alt="Order" style="width:100%;height:100px;object-fit:cover;object-position:center 60%;display:block;">
+        <div style="position:absolute;inset:0;background:rgba(53,76,58,0.6);display:flex;align-items:center;justify-content:center">
+          <div style="text-align:center">
+            <div style="font-size:15px;font-weight:700;color:#fff">What can we make for you?</div>
+            <div style="font-size:11px;color:#A9B29E;margin-top:2px">Fresh made with love ☕</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-body">
+      <div id="order-form">
+        <div id="free-banner" class="free-coffee-banner" style="display:none"></div>
+        <div class="cart-section">
+          <div class="cart-title">
+            <span>Your cart</span>
+            <span id="cart-count" style="color:#888;font-weight:400">0 items</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;margin-bottom:8px">
+            👥 Group order:
+            <select id="group-size" onchange="updateGroupSize(this.value)" style="border:1px solid #A9B29E;border-radius:6px;padding:3px 8px;font-size:12px;background:#fff;color:#354C3A">
+              <option value="1">Just me</option>
+              <option value="2">2 people</option>
+              <option value="3">3 people</option>
+              <option value="4">4 people</option>
+              <option value="5">5+ people</option>
+            </select>
+          </div>
+          <div id="cart-items"><div class="empty-cart">No items yet — add drinks below!</div></div>
+          <div id="cart-footer" style="display:none">
+            <div class="cart-total-row"><span>Total</span><span id="cart-total">$0.00</span></div>
+            <div class="cart-stamps" id="cart-stamps"></div>
+          </div>
+        </div>
+        <!-- Pickup time -->
+        <div class="pickup-section">
+          <div class="pickup-title">When do you need it ready?</div>
+          <div class="pickup-options">
+            <div class="pickup-opt active" id="pickup-asap" onclick="setPickup('asap')">ASAP</div>
+            <div class="pickup-opt" id="pickup-later" onclick="setPickup('later')">Choose time</div>
+          </div>
+          <div id="pickup-time-row" class="pickup-time-row" style="display:none">
+            <select id="pickup-time">
+              <option value="">Select pickup time...</option>
+            </select>
+          </div>
+          <div class="pickup-note" id="pickup-note">Your order will be prepared as soon as it is received.</div>
+        </div>
+
+
+        <div class="section-title">Coffee</div>
+        <div id="s-coffee"></div>
+        <div class="section-title">Superfood Latte</div>
+        <div id="s-superfood"></div>
+        <div class="section-title">TDM Signature <span class="sig-badge">Meetery Fave</span></div>
+        <div id="s-signature"></div>
+        <div class="section-title">Over Ice / Frappe</div>
+        <div id="s-ice"></div>
+        <div class="section-title">Tea</div>
+        <div id="s-tea"></div>
+        <div class="section-title" id="food-section-title" style="display:none">🥐 Food</div>
+        <div id="s-food" style="display:none"></div>
+        <div id="payment-section" style="display:none">
+          <div id="paid-payment">
+            <div class="pay-methods">
+              <div class="pay-method active" id="pm-card" onclick="setPayMethod('card')">Pay by card</div>
+              <div class="pay-method" id="pm-counter" onclick="setPayMethod('counter')">Pay at counter</div>
+            </div>
+            <div id="card-payment">
+              <div class="payment-box">
+                <div class="payment-title">Card details</div>
+                <div id="card-element"></div>
+                <div class="err" id="card-err"></div>
+              </div>
+            </div>
+            <div id="counter-payment" style="display:none">
+              <div class="counter-note">Order sent to counter — pay with cash or card when you pick up!</div>
+            </div>
+          </div>
+          <div id="free-payment" style="display:none">
+            <div class="counter-note" style="background:#FDF8EE;border-color:#A9B29E;color:#354C3A;font-size:13px;padding:12px">
+              🎉 Your free coffee is ready! Show this to your barista — no payment needed!
+            </div>
+          </div>
+        </div>
+        <button class="main-btn" id="order-btn" onclick="handleOrder()" disabled>Add drinks to your cart first</button>
+      </div>
+      </div><!-- end phone-body -->
+      <div id="order-success" style="display:none;padding:0 18px 18px;">
+        <div class="success-box">
+          <div style="font-size:44px;margin-bottom:12px" id="success-emoji">✅</div>
+          <div style="font-size:17px;font-weight:700;color:#222;margin-bottom:6px">Order received!</div>
+          <div style="font-size:14px;font-weight:600;color:#354C3A;margin-bottom:4px" id="success-pickup"></div>
+          <div style="font-size:13px;color:#D48631;font-weight:500;margin-bottom:4px" id="success-wait"></div><div style="font-size:13px;color:#888;margin-bottom:4px" id="success-msg"></div>
+          <div style="font-size:13px;font-weight:600;color:#354C3A;margin-bottom:12px" id="success-stamps"></div>
+          <div class="success-items" id="success-items"></div>
+          <div class="rating-box" id="rating-box">
+            <div class="rating-title">How was your experience?</div>
+            <div class="stars">
+              <span class="star" onclick="rateCoffee(1)">⭐</span>
+              <span class="star" onclick="rateCoffee(2)">⭐</span>
+              <span class="star" onclick="rateCoffee(3)">⭐</span>
+              <span class="star" onclick="rateCoffee(4)">⭐</span>
+              <span class="star" onclick="rateCoffee(5)">⭐</span>
+            </div>
+            <div id="rating-thanks" style="font-size:12px;color:#888;display:none">Thanks for your feedback! 🙏</div>
+          </div>
+
+          <button class="main-btn" onclick="resetOrder()">Order again</button>
+          <button class="outline-btn" onclick="showTab('history')">View transaction history</button>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history-view" class="phone-body" style="display:none">
+      <div id="history-summary" class="history-summary" style="display:none">
+        <div><div class="history-summary-val" id="h-total">0</div><div class="history-summary-lbl">total orders</div></div>
+        <div><div class="history-summary-val" id="h-spent">$0</div><div class="history-summary-lbl">total spent</div></div>
+        <div><div class="history-summary-val" id="h-saved">$0</div><div class="history-summary-lbl">saved free</div></div>
+      </div>
+      <div id="history-list"><div class="history-empty">Loading your history...</div></div>
+    </div>
+
+    <!-- MENU TAB -->
+    <div id="tab-menu-view" style="display:none">
+      <img src="DSC04927%20(1).jpg" alt="Menu" style="width:100%;height:110px;object-fit:cover;object-position:center 20%;display:block;">
+      <div class="phone-body">
+      <div style="font-size:13px;color:#888;margin-bottom:14px">Full menu — go to Order tab to place an order.</div>
+      <div class="section-title">Coffee — S / M / L</div>
+      <div style="font-size:12px;color:#555;line-height:2">Espresso — $4.50<br>Flat White / Latte / Cappuccino — S $5.20 · M $5.50 · L $6.50<br>Long Black / Americano — S $5.20 · M $5.50<br>Hot Chocolate / Mocha — M $5.50 · L $6.50<br>Macchiato / Piccolo / Fluffy — $5.00<br><strong>Extra large available on request</strong></div>
+      <div class="section-title">Superfood Latte — M / L</div>
+      <div style="font-size:12px;color:#555;line-height:2">Spicy Chai / Sweet Chai — M $6.00 · L $6.50<br>Spiced Pumpkin / Gingerbread — M $6.20 · L $6.70<br>Bananabread / Turkish Delatte — M $6.20 · L $6.70<br>Matcha — M $6.20 · L $6.70</div>
+      <div class="section-title">TDM Signature <span class="sig-badge">Meetery Fave</span></div>
+      <div style="font-size:12px;color:#555;line-height:2.2">Matcha Strawberry Cloud — $10.90<br>Pistachio Coco Loco — $11.90<br>Tropical Matcha — $10.90<br>Viral Tiramisu Float — $12.90<br>Spanish Latte — $10.50<br>Turkish Delatte — $10.50</div>
+      <div class="section-title">Over Ice / Frappe — R / L</div>
+      <div style="font-size:12px;color:#555;line-height:2">Wild Berry Frappe — R $8.00 · L $9.50<br>Spiced Pumpkin / Gingerbread — R $7.00 · L $8.30<br>Bananabread — R $7.00 · L $8.30<br>Matcha — R $7.00 · L $8.30<br>Iced Americano — R $5.90 · L $6.50<br>Chocolate / Mocha / Latte — R $6.70 · L $8.00<br>Chai Sweet or Spicy — R $6.70 · L $8.00</div>
+      <div class="section-title">Tea — $5.00</div>
+      <div style="font-size:12px;color:#555;line-height:2">English Breakfast · Earl Grey · Green Lime · Peppermint · Lemon Ginger Honey</div>
+      <div class="section-title" id="food-menu-title" style="display:none">🥐 Food</div>
+      <div id="food-menu-list" style="font-size:12px;color:#555;line-height:2;display:none"></div>
+      <div style="font-size:11px;color:#888;margin-top:14px;padding:10px;background:#f7f7f7;border-radius:10px;line-height:1.8"><strong>Add-ons:</strong><br>Soy / Oat / Coconut / Almond / Decaf +$0.80 (iced +$1.00)<br>Caramel / Vanilla / Hazelnut syrup +$0.60<br>Make it a Frappe +$1.50 · Blend with ice cream +$4.00</div>
+      <button class="main-btn" style="margin-top:14px" onclick="showTab('order')">Go to order screen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SURL='https://jxlalnsemmghxukapvxv.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
+const STRIPE_PK='pk_test_51TGz94Pik0Ketj6i4Vtm2XFC3p6woiSfTfzrPhTwwDEgEYGpbXhznj3LRwH3OalhjBUfZVv3XeV8GRJ9XCIHbV7400MkQ0jJOL';
+const TOTAL=10;
+const db=supabase.createClient(SURL,SKEY);
+const stripeObj=Stripe(STRIPE_PK);
+const elements=stripeObj.elements();
+let cardElement=null;
+let customerId=null,stamps=0,totalStamps=0,rewardsEarned=0;
+let cart=[],payMethod='card',actualSaved=0;
+
+const MENU={
+  coffee:[
+    {name:'Espresso',sizes:[{l:'Single $4.50',p:4.5}]},
+    {name:'Flat White',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Latte',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Cappuccino',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Long Black',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5}]},
+    {name:'Americano',sizes:[{l:'S $5.20',p:5.2},{l:'M $5.50',p:5.5}]},
+    {name:'Hot Chocolate',sizes:[{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Mocha',sizes:[{l:'M $5.50',p:5.5},{l:'L $6.50',p:6.5}]},
+    {name:'Macchiato / Piccolo / Fluffy',sizes:[{l:'$5.00',p:5.0}]},
+  ],
+  superfood:[
+    {name:'Spicy Chai',sizes:[{l:'M $6.00',p:6.0},{l:'L $6.50',p:6.5}]},
+    {name:'Sweet Chai',sizes:[{l:'M $6.00',p:6.0},{l:'L $6.50',p:6.5}]},
+    {name:'Spiced Pumpkin',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+    {name:'Gingerbread',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+    {name:'Bananabread Latte',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+    {name:'Turkish Delatte Latte',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+    {name:'Matcha Latte',sizes:[{l:'M $6.20',p:6.2},{l:'L $6.70',p:6.7}]},
+  ],
+  signature:[
+    {name:'Matcha Strawberry Cloud',desc:'Strawberry puree · Milk · Matcha foam · Berries',sizes:[{l:'$10.90',p:10.9}]},
+    {name:'Pistachio Coco Loco',desc:'Cocoa · Pistachio · Hot or cold',sizes:[{l:'$11.90',p:11.9}]},
+    {name:'Tropical Matcha',desc:'Mango · Coconut milk · Matcha foam',sizes:[{l:'$10.90',p:10.9}]},
+    {name:'Viral Tiramisu Float',desc:'Tiramisu slice · Espresso · Milk · Coco dust',sizes:[{l:'$12.90',p:12.9}]},
+    {name:'Spanish Latte',desc:'Atomic coffee · Condensed milk · Whipped cream',sizes:[{l:'$10.50',p:10.5}]},
+    {name:'Turkish Delatte',desc:'Iced latte · Floral · Spice · Espresso finish',sizes:[{l:'$10.50',p:10.5}]},
+  ],
+  ice:[
+    {name:'Wild Berry Frappe',sizes:[{l:'R $8.00',p:8.0},{l:'L $9.50',p:9.5}]},
+    {name:'Spiced Pumpkin Frappe',sizes:[{l:'R $7.00',p:7.0},{l:'L $8.30',p:8.3}]},
+    {name:'Gingerbread Frappe',sizes:[{l:'R $7.00',p:7.0},{l:'L $8.30',p:8.3}]},
+    {name:'Bananabread Frappe',desc:'Crowd Favourite',sizes:[{l:'R $7.00',p:7.0},{l:'L $8.30',p:8.3}]},
+    {name:'Matcha Frappe',sizes:[{l:'R $7.00',p:7.0},{l:'L $8.30',p:8.3}]},
+    {name:'Iced Americano',sizes:[{l:'R $5.90',p:5.9},{l:'L $6.50',p:6.5}]},
+    {name:'Iced Chocolate / Mocha / Latte',sizes:[{l:'R $6.70',p:6.7},{l:'L $8.00',p:8.0}]},
+    {name:'Iced Chai Sweet or Spicy',sizes:[{l:'R $6.70',p:6.7},{l:'L $8.00',p:8.0}]},
+  ],
+  tea:[
+    {name:'English Breakfast',sizes:[{l:'$5.00',p:5.0}]},
+    {name:'Earl Grey',sizes:[{l:'$5.00',p:5.0}]},
+    {name:'Green Lime',sizes:[{l:'$5.00',p:5.0}]},
+    {name:'Peppermint',sizes:[{l:'$5.00',p:5.0}]},
+    {name:'Lemon Ginger Honey',sizes:[{l:'$5.00',p:5.0}]},
+  ]
+};
+
+const MILK_OPTS=['Soy +$0.80','Oat +$0.80','Coconut +$0.80','Almond +$0.80','Decaf +$0.80'];
+const SYRUP_OPTS=['Caramel +$0.60','Vanilla +$0.60','Hazelnut +$0.60'];
+
+function buildSection(id,items){
+  const c=document.getElementById(id);
+  items.forEach((item,idx)=>{
+    const d=document.createElement('div');
+    d.className='menu-item';
+    const crowd=item.desc==='Crowd Favourite'?'<span class="crowd-badge">Crowd Fave</span>':'';
+    const sig=id==='s-signature'?'<span class="sig-badge">Signature</span>':'';
+    const desc=item.desc&&item.desc!=='Crowd Favourite'?`<div class="item-desc">${item.desc}</div>`:'';
+    const itemId=id+'-'+idx;
+
+    // Size buttons — each calls addToCartWithOptions passing the itemId
+    const sizeBtns=item.sizes.map(s=>`<button class="size-btn" onclick="selectSize(this,'${item.name}',${s.p},'${s.l}','${itemId}')" data-price="${s.p}" data-size="${s.l}" data-name="${item.name}"><span class="add-icon">+</span>${s.l}</button>`).join('');
+
+    // Inline milk addons
+    const milkBtns=MILK_OPTS.map(m=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','milk')">${m}</button>`).join('');
+    // Inline syrup addons
+    const syrupBtns=SYRUP_OPTS.map(s=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','syrup')">${s}</button>`).join('');
+
+    d.innerHTML=`
+      <div class="item-name">${item.name}${sig}${crowd}</div>
+      ${desc}
+      <div class="size-row">${sizeBtns}</div>
+      <div class="item-addons" id="addons-${itemId}">
+        <div style="font-size:11px;color:#354C3A;font-weight:600;margin-bottom:8px" id="selected-size-label-${itemId}"></div>
+        <div class="inline-addon-title">Milk alternative <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
+        <div class="inline-addon-grid" id="milk-${itemId}">${milkBtns}</div>
+        <div class="inline-addon-title">Syrups <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
+        <div class="inline-addon-grid" id="syrup-${itemId}">${syrupBtns}</div>
+        <div class="inline-addon-title">Special instructions <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
+        <textarea class="item-note" id="note-${itemId}" rows="2" placeholder="e.g. extra hot, no sugar, half strength..."></textarea>
+        <button class="add-to-cart-btn" id="add-btn-${itemId}" onclick="addToCartFromPanel('${itemId}')">Add to cart ☕</button>
+        <button class="cancel-btn" onclick="closeItemPanel('${itemId}')">Cancel</button>
+      </div>`;
+    c.appendChild(d);
+  });
+}
+
+function toggleItemAddons(itemId){
+  // Legacy — kept for compatibility
+  const panel=document.getElementById('addons-'+itemId);
+  if(panel)panel.classList.toggle('open');
+}
+
+function toggleInlineAddon(btn,itemId,type){
+  // For milk — only one can be selected at a time
+  if(type==='milk'){
+    const grid=document.getElementById('milk-'+itemId);
+    grid.querySelectorAll('.inline-addon-btn').forEach(b=>{if(b!==btn)b.classList.remove('selected');});
+  }
+  btn.classList.toggle('selected');
+}
+
+function getItemAddons(itemId){
+  const addons=[];
+  // Milk
+  const milkGrid=document.getElementById('milk-'+itemId);
+  if(milkGrid){
+    milkGrid.querySelectorAll('.inline-addon-btn.selected').forEach(b=>{
+      const price=parseFloat(b.textContent.split('$')[1]||0);
+      addons.push({name:b.textContent.split(' +')[0],price});
+    });
+  }
+  // Syrups
+  const syrupGrid=document.getElementById('syrup-'+itemId);
+  if(syrupGrid){
+    syrupGrid.querySelectorAll('.inline-addon-btn.selected').forEach(b=>{
+      const price=parseFloat(b.textContent.split('$')[1]||0);
+      addons.push({name:b.textContent.split(' +')[0],price});
+    });
+  }
+  return addons;
+}
+
+function getItemNote(itemId){
+  const el=document.getElementById('note-'+itemId);
+  return el?el.value.trim():'';
+}
+
+function addToCartWithOptions(name,price,size,itemId,btn){
+  // Routes to new panel flow
+  selectedItemData[itemId]={name,price,size};
+  addToCartFromPanel(itemId);
+}
+
+
+
+
+
+
+
+function removeFromCart(id){
+  cart=cart.filter(i=>i.id!==id);
+  recalcCart();
+}
+
+// Only these items qualify for the free coffee reward (10th stamp)
+const FREE_ELIGIBLE=['Espresso','Flat White','Latte','Cappuccino','Long Black','Americano','Hot Chocolate','Mocha','Macchiato / Piccolo / Fluffy'];
+
+function recalcCart(){
+  let simStamps=stamps;
+  cart.forEach(item=>{
+    const prevSim=simStamps;
+    simStamps++;
+    const hitsReward=simStamps>=TOTAL;
+    // Discount triggers when crossing the 5 stamp boundary
+    const hitsDiscount=prevSim<5&&simStamps>=5&&!hitsReward;
+    const eligible=FREE_ELIGIBLE.includes(item.name);
+    item.free=hitsReward&&eligible;
+    item.discount=hitsDiscount&&!item.free;
+    if(item.free){
+      item.price=0;
+      item.discountAmt=0;
+    } else if(item.discount){
+      item.discountAmt=parseFloat((item.basePrice*0.1).toFixed(2));
+      item.price=parseFloat((item.basePrice*0.9).toFixed(2));
+    } else {
+      item.price=item.basePrice;
+      item.discountAmt=0;
+    }
+    if(hitsReward&&eligible)simStamps=0;
+    else if(hitsReward&&!eligible)simStamps=0;
+  });
+  renderCart();
+}
+
+function renderCart(){
+  const container=document.getElementById('cart-items');
+  const footer=document.getElementById('cart-footer');
+  const badge=document.getElementById('cart-badge');
+  const countEl=document.getElementById('cart-count');
+  const freeBanner=document.getElementById('free-banner');
+  const freeCount=cart.filter(i=>i.free).length;
+
+  if(stamps>=TOTAL&&cart.length===0){
+    freeBanner.style.display='block';
+    freeBanner.textContent='🎉 Your 10th coffee is FREE! Add any standard coffee below (S/M/L only) to claim it.';
+  } else if(freeCount>0){
+    freeBanner.style.display='block';
+    freeBanner.textContent='🎉 '+freeCount+' FREE drink'+(freeCount>1?'s':'')+' in your cart!';
+  } else {
+    freeBanner.style.display='none';
+  }
+
+  if(cart.length===0){
+    container.innerHTML='<div class="empty-cart">No items yet — add drinks below!</div>';
+    footer.style.display='none';badge.style.display='none';
+    document.getElementById('payment-section').style.display='none';
+    document.getElementById('order-btn').disabled=true;
+    document.getElementById('order-btn').textContent='Add drinks to your cart first';
+    document.getElementById('order-btn').className='main-btn';
+    countEl.textContent='0 items';return;
+  }
+
+  container.innerHTML=cart.map(i=>`<div class="cart-item"><span class="cart-item-name">${i.name} (${i.size})${i.free?'<span class="free-badge">FREE</span>':i.discount?'<span class="free-badge" style="background:#FFF3DC;color:#D48631">10% OFF</span>':''}${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}${i.note?'<br><span style="font-size:10px;color:#D48631">📝 '+i.note+'</span>':''}</span><span class="cart-item-price ${i.free?'free':i.discount?'free':''}">${i.free?'FREE':i.discount?'$'+i.price.toFixed(2)+' <small style="text-decoration:line-through;color:#aaa;font-size:10px">$'+i.basePrice.toFixed(2)+'</small>':'$'+i.price.toFixed(2)}</span><span class="cart-item-remove" onclick="removeFromCart(${i.id})">×</span></div>`).join('');
+
+  const total=cart.reduce((s,i)=>s+i.price,0);
+  const paidCount=cart.filter(i=>!i.free).length;
+  document.getElementById('cart-total').textContent='$'+total.toFixed(2);
+  const discountCount=cart.filter(i=>i.discount).length;
+  let stampsText='+'+paidCount+' stamp'+(paidCount!==1?'s':'');
+  if(discountCount>0)stampsText+=' · 10% discount applied!';
+  if(freeCount>0)stampsText+=' · '+freeCount+' free reward'+(freeCount>1?'s':'')+' used';
+  document.getElementById('cart-stamps').textContent=stampsText;
+  footer.style.display='block';badge.style.display='flex';badge.textContent=cart.length;
+  countEl.textContent=cart.length+' item'+(cart.length!==1?'s':'');
+  document.getElementById('payment-section').style.display='block';
+  const btn=document.getElementById('order-btn');
+  btn.disabled=false;
+  const isWholeOrderFree=total===0;
+  document.getElementById('paid-payment').style.display=isWholeOrderFree?'none':'block';
+  document.getElementById('free-payment').style.display=isWholeOrderFree?'block':'none';
+  if(isWholeOrderFree){btn.textContent='Claim my free coffee — $0.00';btn.className='free-btn';}
+  else{btn.className='main-btn';btn.textContent=payMethod==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';}
+  if(!isWholeOrderFree&&!cardElement){
+    cardElement=elements.create('card',{style:{base:{fontSize:'14px',color:'#222'}}});
+    cardElement.mount('#card-element');
+  }
+}
+
+function setPayMethod(method){
+  payMethod=method;
+  document.getElementById('pm-card').classList.toggle('active',method==='card');
+  document.getElementById('pm-counter').classList.toggle('active',method==='counter');
+  document.getElementById('card-payment').style.display=method==='card'?'block':'none';
+  document.getElementById('counter-payment').style.display=method==='counter'?'block':'none';
+  if(cart.length>0){const total=cart.reduce((s,i)=>s+i.price,0);if(total>0)document.getElementById('order-btn').textContent=method==='card'?'Pay $'+total.toFixed(2)+' by card':'Place order — pay at counter';}
+}
+
+async function handleOrder(){
+  if(cart.length===0)return;
+  const total=cart.reduce((s,i)=>s+i.price,0);
+  const freeItems=cart.filter(i=>i.free);
+  const paidItems=cart.filter(i=>!i.free);
+  document.getElementById('order-btn').disabled=true;
+  document.getElementById('order-btn').textContent='Processing...';
+  if(total===0){await processOrder(freeItems,paidItems,'Show this to your barista — enjoy your free coffee!');return;}
+  if(payMethod==='counter'){await processOrder(freeItems,paidItems,'Order sent to counter. Pay when you pick up!');return;}
+  try{
+    const pickupLabelForCheckout=pickupType==='asap'?'ASAP':pickupTime||'ASAP';const res=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:total,description:cart.map(i=>i.name+' ('+i.size+')').join(', '),pickup:pickupLabelForCheckout})});
+    const{clientSecret,error:apiErr}=await res.json();
+    if(apiErr)throw new Error(apiErr);
+    const{error:stripeErr,paymentIntent}=await stripeObj.confirmCardPayment(clientSecret,{payment_method:{card:cardElement}});
+    if(stripeErr){document.getElementById('card-err').textContent=stripeErr.message;document.getElementById('order-btn').disabled=false;document.getElementById('order-btn').textContent='Pay $'+total.toFixed(2)+' by card';return;}
+    if(paymentIntent.status==='succeeded'){await processOrder(freeItems,paidItems,'Payment successful!');}
+  }catch(e){document.getElementById('card-err').textContent='Payment error: '+e.message;document.getElementById('order-btn').disabled=false;document.getElementById('order-btn').textContent='Pay $'+total.toFixed(2)+' by card';}
+}
+
+async function processOrder(freeItems,paidItems,msg){
+  const now=new Date().toISOString();
+  const allItems=[...paidItems,...freeItems];
+  const total=allItems.reduce((s,i)=>s+i.price,0);
+  const orderPickupLabel=pickupType==='asap'?'ASAP':pickupTime||'ASAP';
+
+  // Create order group for kitchen display
+  const{data:groupData}=await db.from('order_groups').insert({
+    customer_id:customerId,
+    customer_name:document.getElementById('cname').textContent,
+    customer_phone:document.getElementById('csince').dataset.phone||'',
+    pickup_time:orderPickupLabel,
+    total:total,
+    payment_method:payMethod,
+    printed:false
+  }).select();
+  const groupId=groupData&&groupData[0]?groupData[0].id:null;
+
+  // Save paid items to orders table
+  if(paidItems.length>0){
+    const stampsPerItem=getStampsToEarn();
+  const stampInserts=paidItems.flatMap(()=>Array(stampsPerItem).fill({customer_id:customerId}));
+    await db.from('stamps').insert(stampInserts);
+    totalStamps+=paidItems.length;
+    const orderInserts=paidItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.price,is_free:false,stamps_earned:1,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:orderPickupLabel}));
+    await db.from('orders').insert(orderInserts);
+  }
+  // Save free items to orders table
+  if(freeItems.length>0){
+    const rewardInserts=freeItems.map(()=>({customer_id:customerId}));
+    await db.from('rewards').insert(rewardInserts);
+    rewardsEarned+=freeItems.length;
+    const orderInserts=freeItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.basePrice,is_free:true,stamps_earned:0,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:orderPickupLabel}));
+    await db.from('orders').insert(orderInserts);
+    actualSaved+=freeItems.reduce((sum,i)=>sum+i.basePrice,0);
+  }
+  const prevStamps=stamps;
+  stamps=totalStamps%TOTAL;
+  playStampSound();
+  if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
+  checkMilestones(totalStamps,document.getElementById('cname').textContent);
+  // Check new drink bonus for each unique item
+  const orderItems=allItems.map(i=>i.name);
+  const uniqueItems=[...new Set(orderItems)];
+  for(const item of uniqueItems){await checkNewDrink(item);}
+  if(stamps>=TOTAL&&prevStamps<TOTAL){
+    launchConfetti();setTimeout(()=>showPopup('🎉 Free coffee unlocked!','Your 10th coffee is on us! Valid on standard coffees only. Not valid on signature drinks, frappes or teas.',true),800);
+  } else if(stamps>=5&&stamps<TOTAL&&prevStamps<5){
+    setTimeout(()=>showPopup('🎉 10% discount unlocked!','You have reached 5 stamps! Your next coffee order automatically gets 10% off. Keep going — 5 more stamps for a FREE coffee!',false),800);
+  }
+  renderCard();
+  document.getElementById('success-emoji').textContent=freeItems.length>0?'🎉':'✅';
+  const successPickup=orderPickupLabel==='ASAP'?'ASAP — being made now!':'Ready at '+orderPickupLabel;document.getElementById('success-pickup').textContent='Pickup: '+successPickup;
+  document.getElementById('success-wait').textContent='⏱ Estimated wait: '+getWaitTime();document.getElementById('success-msg').textContent=msg;
+  let stampsText='';
+  if(paidItems.length>0)stampsText='+'+paidItems.length+' stamp'+(paidItems.length!==1?'s':'')+' added!';
+  if(freeItems.length>0)stampsText+=(stampsText?' · ':'')+'🎉 '+freeItems.length+' free coffee'+(freeItems.length>1?'s':'')+' redeemed!';
+  document.getElementById('success-stamps').textContent=stampsText;
+  document.getElementById('success-items').innerHTML=cart.map(i=>`<div class="success-item-row"><span>${i.name} (${i.size})${i.free?' 🎉':''}${i.addons?'<br><small style="color:#A9B29E">'+i.addons+'</small>':''}${i.note?'<br><small style="color:#D48631">📝 '+i.note+'</small>':''}</span><span>${i.free?'FREE':'$'+i.price.toFixed(2)}</span></div>`).join('');
+  document.getElementById('order-form').style.display='none';
+  document.getElementById('order-success').style.display='block';
+}
+
+async function loadHistory(){
+  document.getElementById('history-list').innerHTML='<div class="history-empty">Loading...</div>';
+  const{data,error}=await db.from('orders').select('*').eq('customer_id',customerId).order('created_at',{ascending:false});
+  if(error||!data||data.length===0){document.getElementById('history-list').innerHTML='<div class="history-empty">No orders yet — place your first order!</div>';document.getElementById('history-summary').style.display='none';return;}
+
+  // Summary stats
+  const totalOrders=data.length;
+  const totalSpent=data.reduce((s,o)=>s+parseFloat(o.price),0);
+  const totalSaved=data.filter(o=>o.is_free).reduce((s,o)=>s+parseFloat(o.price||5.5),0);
+  const freeCoffees=data.filter(o=>o.is_free).length;
+  document.getElementById('h-total').textContent=totalOrders;
+  document.getElementById('h-spent').textContent='$'+totalSpent.toFixed(2);
+  document.getElementById('h-saved').textContent=freeCoffees+' free';
+  document.getElementById('history-summary').style.display='grid';
+
+  // Group by date
+  const groups={};
+  data.forEach(o=>{
+    const d=new Date(o.created_at);
+    const key=d.toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    if(!groups[key])groups[key]=[];
+    groups[key].push(o);
+  });
+
+  let html='';
+  Object.keys(groups).forEach(date=>{
+    html+=`<div class="history-group"><div class="history-date">${date}</div>`;
+    groups[date].forEach(o=>{
+      const time=new Date(o.created_at).toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'});
+      html+=`<div class="history-item">
+        <div class="history-item-top">
+          <span class="history-item-name">${o.item_name} (${o.size||'—'})</span>
+          <span class="history-item-price ${o.is_free?'free-price':''}">${o.is_free?'FREE':'$'+parseFloat(o.price).toFixed(2)}</span>
+        </div>
+        <div class="history-item-bottom">
+          <span class="history-time">${time}</span>
+          ${o.is_free?'<span class="history-free-badge">🎉 Free coffee</span>':''}
+          ${!o.is_free&&o.stamps_earned>0?'<span class="history-stamp-badge">+'+o.stamps_earned+' stamp</span>':''}
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('history-list').innerHTML=html;
+}
+
+function resetOrder(){
+  pickupType='asap';pickupTime='';
+  document.getElementById('pickup-asap').classList.add('active');
+  document.getElementById('pickup-later').classList.remove('active');
+  document.getElementById('pickup-time-row').style.display='none';
+  document.getElementById('pickup-note').textContent='Your order will be prepared as soon as it is received.';
+  populatePickupTimes();
+  cart=[];cardElement=null;payMethod='card';
+  document.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.item-addons.open').forEach(p=>{p.classList.remove('open');});
+  selectedItemData={};
+  document.querySelectorAll('.item-note').forEach(n=>n.value='');
+  document.getElementById('payment-section').style.display='none';
+  document.getElementById('order-btn').disabled=true;
+  document.getElementById('order-btn').textContent='Add drinks to your cart first';
+  document.getElementById('order-btn').className='main-btn';
+  document.getElementById('order-form').style.display='block';
+  document.getElementById('order-success').style.display='none';
+  document.getElementById('card-err').textContent='';
+  document.getElementById('card-element').innerHTML='';
+  renderCart();
+}
+
+function showTab(tab){
+  ['card','order','history','menu'].forEach(t=>{
+    document.getElementById('tab-'+t+'-view').style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='order')renderCart();
+  if(tab==='history')loadHistory();
+  
+}
+
+async function renderLeaderboard(){
+  const ranked=await loadLeaderboard();
+  if(!ranked||ranked.length===0){
+    document.getElementById('leaderboard-list').innerHTML='<div style="color:#888;font-size:13px">No data yet!</div>';
+    return;
+  }
+  const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  document.getElementById('leaderboard-list').innerHTML=ranked.map((r,i)=>`
+    <div class="leaderboard-item">
+      <div class="leaderboard-rank">${medals[i]||i+1}</div>
+      <div class="leaderboard-name">${r.name}</div>
+      <div class="leaderboard-count">${r.count} ☕</div>
+    </div>`).join('');
+}
+
+
+function getVIPTier(totalCoffees){
+  if(totalCoffees>=200)return{name:'Platinum',emoji:'💎',class:'vip-platinum'};
+  if(totalCoffees>=100)return{name:'Gold',emoji:'🥇',class:'vip-gold'};
+  if(totalCoffees>=50)return{name:'Silver',emoji:'🥈',class:'vip-silver'};
+  if(totalCoffees>=25)return{name:'Bronze',emoji:'🥉',class:'vip-bronze'};
+  return null;
+}
+
+function launchConfetti(){
+  const colors=['#D48631','#354C3A','#FDF8EE','#A9B29E','#fff','#FFD700'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.left=Math.random()*100+'vw';
+    el.style.background=colors[Math.floor(Math.random()*colors.length)];
+    el.style.width=(Math.random()*10+5)+'px';
+    el.style.height=(Math.random()*10+5)+'px';
+    el.style.borderRadius=Math.random()>0.5?'50%':'2px';
+    el.style.animationDuration=(Math.random()*2+1.5)+'s';
+    el.style.animationDelay=(Math.random()*1)+'s';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),(Math.random()*2+2)*1000);
+  }
+}
+
+const DAILY_SPECIALS=[
+  {day:0,title:'Sunday Funday!',desc:'Free size upgrade on any latte today only',emoji:'🌟'},
+  {day:1,title:'Monday Magic!',desc:'Double stamps on all orders today',emoji:'⚡'},
+  {day:2,title:'Tasty Tuesday!',desc:'10% off all Signature drinks today',emoji:'✨'},
+  {day:3,title:'Hump Day Treat!',desc:'Free syrup with any coffee today',emoji:'🎉'},
+  {day:4,title:'Thirsty Thursday!',desc:'Buy 2 coffees get 1 free today',emoji:'☕'},
+  {day:5,title:'Friday Feels!',desc:'Try our new Pistachio Coco Loco — half price!',emoji:'🔥'},
+  {day:6,title:'Weekend Vibes!',desc:'Free muffin with any large coffee today',emoji:'🧁'},
+];
+
+function getDailySpecial(){
+  return DAILY_SPECIALS[new Date().getDay()];
+}
+
+function getStreak(){
+  const streak=parseInt(localStorage.getItem('tdm_streak')||'0');
+  const lastVisit=localStorage.getItem('tdm_last_visit');
+  const today=new Date().toDateString();
+  if(lastVisit===today)return streak;
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  if(lastVisit===yesterday){
+    const newStreak=streak+1;
+    localStorage.setItem('tdm_streak',newStreak);
+    localStorage.setItem('tdm_last_visit',today);
+    return newStreak;
+  }
+  localStorage.setItem('tdm_streak',1);
+  localStorage.setItem('tdm_last_visit',today);
+  return 1;
+}
+
+function saveFavDrink(name,size,price){
+  localStorage.setItem('tdm_fav',JSON.stringify({name,size,price}));
+  showToast('⭐ '+name+' saved as your favourite!');
+}
+
+function getFavDrink(){
+  try{return JSON.parse(localStorage.getItem('tdm_fav'));}catch(e){return null;}
+}
+
+let currentRating=0;
+function setRating(star){
+  currentRating=star;
+  document.querySelectorAll('.star').forEach((s,i)=>{
+    s.classList.toggle('active',i<star);
+  });
+}
+
+async function submitRating(){
+  if(currentRating===0){showToast('Please select a rating!');return;}
+  showToast(['','😞 Sorry about that!','😐 Thanks for the feedback!','😊 Glad you enjoyed it!','😄 Great to hear!','🎉 You made our day!'][currentRating]);
+  document.getElementById('rating-box').style.display='none';
+  currentRating=0;
+}
+
+
+
+// ---- NEW FLOW: Select size → open panel → add to cart ----
+let selectedItemData={}; // stores {name, price, size} per itemId
+
+function selectSize(btn,name,price,size,itemId){
+  // Highlight selected size button
+  const sizeRow=btn.closest('.size-row');
+  sizeRow.querySelectorAll('.size-btn').forEach(b=>{
+    b.style.background='';b.style.color='';b.style.borderColor='';
+  });
+  btn.style.background='#354C3A';
+  btn.style.color='#fff';
+  btn.style.borderColor='#354C3A';
+
+  // Store selection
+  selectedItemData[itemId]={name,price,size};
+
+  // Update label inside panel
+  const label=document.getElementById('selected-size-label-'+itemId);
+  if(label)label.textContent='Selected: '+name+' ('+size+')';
+
+  // Open the customise panel
+  const panel=document.getElementById('addons-'+itemId);
+  if(panel){
+    panel.classList.add('open');
+    // Smooth scroll to panel
+    setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+  }
+}
+
+function addToCartFromPanel(itemId){
+  const data=selectedItemData[itemId];
+  if(!data){showToast('Please select a size first!');return;}
+
+  const addons=getItemAddons(itemId);
+  const note=getItemNote(itemId);
+  const addonTotal=addons.reduce((s,a)=>s+a.price,0);
+  const addonNames=addons.map(a=>a.name).join(', ');
+
+  cart.push({
+    name:data.name,
+    basePrice:data.price+addonTotal,
+    size:data.size,
+    addons:addonNames,
+    note,
+    id:Date.now()
+  });
+
+  recalcCart();
+
+  // Flash cart green
+  const cartSection=document.querySelector('.cart-section');
+  if(cartSection){
+    cartSection.style.background='#ECFDF5';
+    setTimeout(()=>{cartSection.style.background='#f7f7f7';},600);
+  }
+
+  showToast('✅ '+data.name+' added to cart!');
+
+  // Close and reset panel
+  closeItemPanel(itemId);
+  delete selectedItemData[itemId];
+}
+
+function closeItemPanel(itemId){
+  // Reset size button styles
+  const panel=document.getElementById('addons-'+itemId);
+  if(panel){
+    panel.classList.remove('open');
+    // Reset size buttons
+    const sizeRow=panel.closest('.menu-item').querySelector('.size-row');
+    if(sizeRow)sizeRow.querySelectorAll('.size-btn').forEach(b=>{
+      b.style.background='';b.style.color='';b.style.borderColor='';
+    });
+    // Reset addons
+    panel.querySelectorAll('.inline-addon-btn').forEach(b=>b.classList.remove('selected'));
+    const note=panel.querySelector('.item-note');
+    if(note)note.value='';
+    const label=document.getElementById('selected-size-label-'+itemId);
+    if(label)label.textContent='';
+  }
+}
+
+// ---- DOUBLE STAMP TUESDAY ----
+function getStampsToEarn(){
+  const day=new Date().getDay();
+  if(day===2){showToast('⚡ Double stamp Tuesday! You earn 2 stamps today!');return 2;}
+  return 1;
+}
+
+// ---- GROUP ORDERING ----
+let groupSize=1;
+function updateGroupSize(val){
+  groupSize=parseInt(val);
+  if(groupSize>1)showToast('👥 Ordering for '+groupSize+' people — add everyone\'s drinks!');
+}
+
+// ---- PULL TO REFRESH ----
+let ptStartY=0;let ptPulling=false;
+document.addEventListener('touchstart',e=>{
+  if(document.getElementById('tab-card-view').style.display!=='none')
+    ptStartY=e.touches[0].clientY;
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(document.getElementById('tab-card-view').style.display==='none')return;
+  const diff=e.touches[0].clientY-ptStartY;
+  if(diff>60&&window.scrollY===0&&!ptPulling){
+    ptPulling=true;
+    showToast('🔄 Refreshing your card...');
+  }
+},{passive:true});
+document.addEventListener('touchend',async()=>{
+  if(ptPulling){
+    ptPulling=false;
+    // Re-fetch customer from DB to get fresh data including email/birthday
+    try{
+      const{data:cust}=await db.from('customers').select('*').eq('id',customerId).limit(1);
+      if(cust&&cust[0]){
+        await loadCard(cust[0].name,cust[0].created_at,cust[0].phone,cust[0].email,cust[0].birthday);
+      }
+    }catch(e){console.log('Refresh error:',e);}
+    showToast('✅ Card refreshed!');
+  }
+},{passive:true});
+
+// Firebase setup
+const firebaseConfig={
+  apiKey:"AIzaSyAbRJqMtELOp2WlVzfrsBXwNIBQCHhB0gA",
+  authDomain:"daily-meetery-6fe00.firebaseapp.com",
+  projectId:"daily-meetery-6fe00",
+  storageBucket:"daily-meetery-6fe00.firebasestorage.app",
+  messagingSenderId:"723697995611",
+  appId:"1:723697995611:web:bfaf3b6c0ced6e046e547e"
+};
+let firebaseApp=null;
+let messaging=null;
+const VAPID_KEY='BJoL3LxvmoPghlO8NITvOsWJeAz5uvwage35jtHgMIeot0Xbgo6FOOyTLMuKng7h-MPOlzF0SCAHpjHZTOxOdeg';
+
+// Safely init Firebase — won't crash app if it fails
+try{
+  firebaseApp=firebase.initializeApp(firebaseConfig);
+  messaging=firebase.messaging();
+  // Handle foreground notifications
+  messaging.onMessage((payload)=>{
+    try{
+      const{title,body}=payload.notification;
+      showToast('🔔 '+title+': '+body);
+    }catch(e){}
+  });
+  console.log('Firebase ready');
+}catch(e){
+  console.log('Firebase not available:',e.message);
+}
+
+async function requestNotificationPermission(custId){
+  try{
+    if(!messaging)return;
+    if(!('Notification' in window))return;
+    if(!('serviceWorker' in navigator))return;
+    const permission=await Notification.requestPermission();
+    if(permission!=='granted')return;
+    const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const token=await messaging.getToken({vapidKey:VAPID_KEY,serviceWorkerRegistration:reg});
+    if(token&&custId){
+      await db.from('customers').update({fcm_token:token,notifications_enabled:true}).eq('id',custId);
+      console.log('FCM token saved!');
+    }
+  }catch(e){
+    console.log('Notification setup error:',e.message);
+  }
+}
+
+// Check hamper milestones and send auto notifications
+async function checkMilestones(totalCoffees,custName){
+  const milestones=[
+    {count:250,msg:'🎁 Gift hamper unlocked! You have had 250 coffees with us!'}
+  ];
+  const milestone=milestones.find(m=>m.count===totalCoffees);
+  if(milestone){
+    showToast(milestone.msg+' Visit us to claim your reward!');
+  }
+  // Check stamp milestones
+  const currentStamps=totalCoffees%10;
+  if(currentStamps===9){
+    showToast('☕ One more stamp for your FREE coffee!');
+  } else if(currentStamps===4){
+    showToast('⭐ One more stamp for your 10% discount!');
+  }
+}
+
+// ============ SHOW DAILY SPECIAL ============
+function showDailySpecial(){
+  const special=getDailySpecial();
+  const el=document.getElementById('daily-special');
+  if(el&&special){
+    el.style.display='flex';
+    document.getElementById('special-name').textContent=special.emoji+' '+special.title;
+    document.getElementById('special-price').textContent=special.desc;
+  }
+}
+
+// ============ STREAK ============
+function checkStreak(custId){
+  const key='tdm_streak_'+custId;
+  const last=localStorage.getItem(key+'_last');
+  let streak=parseInt(localStorage.getItem(key+'_count')||'0');
+  const today=new Date().toDateString();
+  if(last===today){
+    // Already visited today
+  } else if(last===new Date(Date.now()-86400000).toDateString()){
+    // Visited yesterday — increment streak
+    streak++;
+    localStorage.setItem(key+'_count',streak);
+    localStorage.setItem(key+'_last',today);
+  } else {
+    // Streak broken
+    streak=1;
+    localStorage.setItem(key+'_count','1');
+    localStorage.setItem(key+'_last',today);
+  }
+  if(streak>=2){
+    document.getElementById('streak-banner').style.display='flex';
+    document.getElementById('streak-text').textContent='🔥 '+streak+'-day streak! Keep it up '+document.getElementById('cname').textContent+'!';
+  }
+}
+
+// ============ REFERRAL CODE ============
+function generateReferralCode(name,email){
+  // Generate consistent code from name + email
+  const base=(name.substring(0,3)+email.substring(0,3)).toUpperCase().replace(/[^A-Z]/g,'');
+  const num=Math.abs(email.split('').reduce((a,c)=>a+c.charCodeAt(0),0))%1000;
+  return 'TDM'+base+num;
+}
+
+function shareReferral(){
+  const code=document.getElementById('referral-code').textContent;
+  if(navigator.share){
+    navigator.share({
+      title:'The Daily Meetery Loyalty Card',
+      text:'Join The Daily Meetery loyalty app! Use my code '+code+' when you sign up and we both get a bonus stamp! ☕',
+      url:'https://daily-meetery-app.vercel.app'
+    });
+  } else {
+    navigator.clipboard.writeText(code);
+    showToast('Referral code copied to clipboard! 📋');
+  }
+}
+
+// ============ FAVOURITE DRINK ============
+async function loadFavouriteDrink(custId){
+  const{data:orders}=await db.from('orders').select('item_name,size').eq('customer_id',custId).eq('is_free',false).order('created_at',{ascending:false}).limit(20);
+  if(!orders||orders.length===0)return;
+  // Count most ordered drink
+  const counts={};
+  orders.forEach(o=>{
+    const key=o.item_name+' ('+o.size+')';
+    counts[key]=(counts[key]||0)+1;
+  });
+  const fave=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  if(fave&&fave[1]>=2){
+    document.getElementById('fave-drink').style.display='flex';
+    document.getElementById('fave-name').textContent=fave[0];
+  }
+}
+
+function orderFavourite(){
+  showTab('order');
+  showToast('Find your usual in the menu below! ☕');
+}
+
+// ============ SAVINGS COMPARISON ============
+async function loadSavingsComparison(custId){
+  const now=new Date();
+  const thisMonthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+  const lastMonthStart=new Date(now.getFullYear(),now.getMonth()-1,1).toISOString();
+  const lastMonthEnd=new Date(now.getFullYear(),now.getMonth(),0).toISOString();
+
+  const{data:thisMonth}=await db.from('orders').select('price').eq('customer_id',custId).eq('is_free',true).gte('created_at',thisMonthStart);
+  const{data:lastMonth}=await db.from('orders').select('price').eq('customer_id',custId).eq('is_free',true).gte('created_at',lastMonthStart).lte('created_at',lastMonthEnd);
+
+  const thisSaved=thisMonth?thisMonth.reduce((s,o)=>s+parseFloat(o.price||5.5),0):0;
+  const lastSaved=lastMonth?lastMonth.reduce((s,o)=>s+parseFloat(o.price||5.5),0):0;
+
+  if(thisSaved>0||lastSaved>0){
+    document.getElementById('savings-compare').style.display='grid';
+    document.getElementById('this-month-saved').textContent='$'+thisSaved.toFixed(2);
+    document.getElementById('last-month-saved').textContent='$'+lastSaved.toFixed(2);
+  }
+}
+
+// ============ ORDER RATING ============
+function rateCoffee(rating){
+  const stars=document.querySelectorAll('.star');
+  stars.forEach((s,i)=>s.classList.toggle('active',i<rating));
+  document.getElementById('rating-thanks').style.display='block';
+  // Save rating to localStorage
+  localStorage.setItem('tdm_last_rating',rating);
+  showToast('Thanks for rating us '+rating+'/5! ⭐');
+}
+
+// ============ LEADERBOARD ============
+async function loadLeaderboard(){
+  const{data:stamps}=await db.from('stamps').select('customer_id');
+  const{data:customers}=await db.from('customers').select('id,name');
+  if(!stamps||!customers)return;
+
+  const counts={};
+  stamps.forEach(s=>{counts[s.customer_id]=(counts[s.customer_id]||0)+1;});
+  const custMap={};
+  customers.forEach(c=>{custMap[c.id]=c.name;});
+
+  const ranked=Object.entries(counts)
+    .map(([id,count])=>({name:custMap[id]||'Mystery customer',count}))
+    .sort((a,b)=>b.count-a.count)
+    .slice(0,5);
+
+  return ranked;
+}
+
+// ============ LOAD ALL CARD FEATURES ============
+async function loadCardFeatures(custId,name,email){
+  showDailySpecial();
+  checkStreak(custId);
+  loadFavouriteDrink(custId);
+  loadSavingsComparison(custId);
+
+  // Referral code
+  const code=generateReferralCode(name,email);
+  document.getElementById('referral-code').textContent=code;
+  document.getElementById('referral-box').style.display='block';
+
+  // VIP tier
+  const tier=getVIPTier(totalStamps);
+  if(tier){
+    const nameEl=document.getElementById('cname');
+    if(!document.getElementById('vip-badge')){
+      const badge=document.createElement('span');
+      badge.id='vip-badge';
+      badge.className='vip-badge '+tier.class;
+      badge.textContent=tier.emoji+' '+tier.name;
+      nameEl.parentElement.appendChild(badge);
+    }
+  }
+}
+
+// ============ ANIMATED STAMPS ============
+function animateStamp(index){
+  const stamps=document.querySelectorAll('.stamp');
+  if(stamps[index]){
+    stamps[index].style.transform='scale(1.3)';
+    setTimeout(()=>{stamps[index].style.transform='scale(1)';},300);
+  }
+}
+
+// Café location
+
+// Café location - 4 St Paul Street, Auckland CBD
+const CAFE_LAT=-36.8512;
+const CAFE_LNG=174.7684;
+const GEOFENCE_RADIUS=200; // metres
+
+function getGreeting(name){
+  const hour=new Date().getHours();
+  let greeting='';
+  if(hour>=5&&hour<12) greeting='Good morning';
+  else if(hour>=12&&hour<17) greeting='Good afternoon';
+  else if(hour>=17&&hour<21) greeting='Good evening';
+  else greeting='Hey';
+  return greeting+', '+name+'! ☕';
+}
+
+function getDistanceMetres(lat1,lon1,lat2,lon2){
+  const R=6371000;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+
+    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+    Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function checkGeofence(name){
+  if(!('geolocation' in navigator))return;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const dist=getDistanceMetres(
+      pos.coords.latitude,pos.coords.longitude,
+      CAFE_LAT,CAFE_LNG
+    );
+    if(dist<=GEOFENCE_RADIUS){
+      // Customer is near the café!
+      showNearbyBanner(name,dist);
+    }
+  },{enableHighAccuracy:true,timeout:5000});
+}
+
+function showNearbyBanner(name,dist){
+  const existing=document.getElementById('nearby-banner');
+  if(existing)return; // Don't show twice
+  const banner=document.createElement('div');
+  banner.id='nearby-banner';
+  banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999;background:#354C3A;color:#fff;padding:14px 20px;text-align:center;font-size:14px;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,0.3)';
+  const metres=Math.round(dist);
+  banner.innerHTML=`✨ You're SO close, ${name}! Come in and let us make your day ☕✨ <span onclick="this.parentElement.remove()" style="float:right;cursor:pointer;opacity:0.7">✕</span>`;
+  document.body.prepend(banner);
+  // Auto remove after 10 seconds
+  setTimeout(()=>{if(banner.parentElement)banner.remove();},10000);
+}
+
+
+
+// ---- NOTIFICATION POLLER ----
+let notifPollInterval = null;
+let lastNotifTimestamp = null;
+
+async function startNotificationPoller(){
+  if(notifPollInterval)clearInterval(notifPollInterval);
+  
+  // Set the timestamp to NOW so we only show notifications sent AFTER login
+  lastNotifTimestamp = new Date().toISOString();
+  
+  // Check every 20 seconds
+  notifPollInterval = setInterval(checkForNewNotifications, 20000);
+}
+
+async function checkForNewNotifications(){
+  if(!lastNotifTimestamp||!customerId)return;
+  try{
+    const{data:notifs}=await db
+      .from('notifications')
+      .select('*')
+      .gt('sent_at', lastNotifTimestamp)
+      .order('sent_at',{ascending:true});
+    
+    if(!notifs||notifs.length===0)return;
+    
+    // Update timestamp to the latest one we received
+    lastNotifTimestamp = notifs[notifs.length-1].sent_at;
+    
+    // Show each notification with a small delay between them
+    notifs.forEach((n,i)=>{
+      setTimeout(()=>showNotificationBanner(n.title, n.body, n.type), i*2500);
+    });
+    
+  }catch(e){
+    console.log('Notification poll error:',e.message);
+  }
+}
+
+function showNotificationBanner(title, body, type){
+  // Remove any existing banner first
+  const existing=document.getElementById('notif-banner');
+  if(existing)existing.remove();
+  
+  const banner=document.createElement('div');
+  banner.id='notif-banner';
+  
+  const emoji=type==='flash'?'⚡':type==='hamper'?'🎁':type==='menu'?'🆕':'🎉';
+  
+  banner.style.cssText=`
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:#354C3A;color:#fff;padding:16px 20px;border-radius:16px;
+    font-size:13px;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,0.35);
+    z-index:9999;max-width:320px;width:88%;text-align:center;
+    transition:transform 0.3s ease,opacity 0.3s ease;opacity:0;
+  `;
+  banner.innerHTML=`
+    <div style="font-size:24px;margin-bottom:6px">${emoji}</div>
+    <div style="font-weight:700;font-size:14px;margin-bottom:4px">${title}</div>
+    <div style="font-size:12px;opacity:0.85;line-height:1.5">${body}</div>
+    <div onclick="this.parentElement.remove()" 
+         style="margin-top:10px;font-size:11px;opacity:0.6;cursor:pointer;text-decoration:underline">
+      Dismiss
+    </div>
+  `;
+  
+  document.body.appendChild(banner);
+  
+  // Animate in
+  requestAnimationFrame(()=>{
+    banner.style.transform='translateX(-50%) translateY(0)';
+    banner.style.opacity='1';
+  });
+  
+  // Auto dismiss after 8 seconds
+  setTimeout(()=>{
+    if(banner.parentElement){
+      banner.style.opacity='0';
+      banner.style.transform='translateX(-50%) translateY(20px)';
+      setTimeout(()=>banner.remove(),300);
+    }
+  },8000);
+}
+
+// ---- STAMP SOUND ----
+function playStampSound(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.setValueAtTime(520,ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(880,ctx.currentTime+0.1);
+    g.gain.setValueAtTime(0.3,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+0.3);
+  }catch(e){}
+}
+
+// ---- BIRTHDAY CHECK ----
+function checkBirthday(birthdayStr,name){
+  if(!birthdayStr)return;
+  const today=new Date();
+  const bday=new Date(birthdayStr);
+  if(today.getMonth()===bday.getMonth()&&today.getDate()===bday.getDate()){
+    setTimeout(()=>{showToast('🎂 Happy Birthday '+name+'! Your free coffee is on us today!');launchConfetti();},2000);
+  } else if(today.getMonth()===bday.getMonth()){
+    setTimeout(()=>showToast('🎂 Happy birthday month '+name+'! Come in on your birthday for a free coffee!'),2000);
+  }
+}
+
+// ---- WAIT TIME ----
+function getWaitTime(){
+  const hour=new Date().getHours();
+  const min=new Date().getMinutes();
+  if((hour===7||hour===8)||(hour===12&&min<30))return'10-15 mins';
+  if(hour>=6&&hour<=10)return'3-5 mins';
+  if(hour>=11&&hour<=13)return'5-8 mins';
+  return'2-3 mins';
+}
+
+// ---- WEEKLY SUMMARY ----
+async function loadWeeklySummary(){
+  if(!customerId)return;
+  const weekAgo=new Date(Date.now()-7*24*60*60*1000).toISOString();
+  const{data:weekOrders}=await db.from('orders').select('price,is_free,created_at').eq('customer_id',customerId).gte('created_at',weekAgo);
+  if(!weekOrders||weekOrders.length===0)return;
+  const total=weekOrders.reduce((s,o)=>s+(o.is_free?0:parseFloat(o.price||0)),0);
+  const el=document.getElementById('weekly-summary');
+  if(el)el.innerHTML='☕ This week: <strong>'+weekOrders.length+' coffee'+(weekOrders.length!==1?'s':'')+'</strong> · $'+total.toFixed(2)+' spent';
+}
+
+// ---- NEW DRINK BONUS ----
+async function checkNewDrink(drinkName){
+  if(!customerId)return;
+  const{data:prev}=await db.from('orders').select('item_name').eq('customer_id',customerId).eq('item_name',drinkName);
+  if(prev&&prev.length===1){
+    showToast('🌟 First time trying '+drinkName+'? Bonus stamp added!');
+    await db.from('stamps').insert({customer_id:customerId});
+    totalStamps++;
+  }
+}
+
+
+// ---- LOAD MENU FROM SUPABASE ----
+async function loadMenuFromDB(){
+  try{
+    const{data:items}=await db.from('menu_items')
+      .select('*')
+      .eq('is_available',true)
+      .order('sort_order');
+    
+    if(!items||items.length===0){
+      // Fallback to hardcoded menu if DB empty
+      buildSection('s-coffee',MENU.coffee);
+      buildSection('s-superfood',MENU.superfood);
+      buildSection('s-signature',MENU.signature);
+      buildSection('s-ice',MENU.ice);
+      buildSection('s-tea',MENU.tea);
+      return;
+    }
+
+    // Group by category
+    const grouped={};
+    items.forEach(item=>{
+      if(!grouped[item.category])grouped[item.category]=[];
+      grouped[item.category].push({
+        name:item.name,
+        desc:item.description,
+        sizes:item.sizes,
+        isSignature:item.is_signature,
+        isFood:item.is_food
+      });
+    });
+
+    // Build each section
+    const catMap={
+      coffee:'s-coffee',
+      superfood:'s-superfood',
+      signature:'s-signature',
+      ice:'s-ice',
+      tea:'s-tea',
+      food:'s-food'
+    };
+
+    Object.keys(catMap).forEach(cat=>{
+      const el=document.getElementById(catMap[cat]);
+      if(el)el.innerHTML=''; // clear existing
+      if(grouped[cat]){
+        buildSection(catMap[cat], grouped[cat]);
+      }
+    });
+
+    // Show food section if there are food items
+    if(grouped['food']&&grouped['food'].length>0){
+      const foodTitle=document.getElementById('food-section-title');
+      const foodSection=document.getElementById('s-food');
+      if(foodTitle)foodTitle.style.display='block';
+      if(foodSection)foodSection.style.display='block';
+    }
+
+  }catch(e){
+    console.log('Menu load error:',e.message);
+    // Fallback to hardcoded
+    buildSection('s-coffee',MENU.coffee);
+    buildSection('s-superfood',MENU.superfood);
+    buildSection('s-signature',MENU.signature);
+    buildSection('s-ice',MENU.ice);
+    buildSection('s-tea',MENU.tea);
+  }
+}
+
+async function init(){
+  try{
+    const{error}=await db.from('customers').select('id').limit(1);
+    if(error)throw error;
+    document.getElementById('loading-view').style.display='none';
+    await loadMenuFromDB();
+    populatePickupTimes();
+
+    // Auto-login if previously logged in — check BEFORE showing login screen
+    const savedEmail=localStorage.getItem('tdm_customer_email');
+    if(savedEmail){
+      try{
+        const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',savedEmail).limit(1);
+        if(ex&&ex.length>0){
+          customerId=ex[0].id;
+          await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);
+        } else {
+          // Saved email not found in DB — show login
+          localStorage.removeItem('tdm_customer_email');
+          document.getElementById('login-view').style.display='block';
+        }
+      }catch(e){
+        console.log('Auto-login failed:',e.message);
+        document.getElementById('login-view').style.display='block';
+      }
+    } else {
+      // No saved email — show login screen
+      document.getElementById('login-view').style.display='block';
+    }
+
+    // Dismiss splash screen
+    setTimeout(()=>{
+      const splash=document.getElementById('splash-screen');
+      if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
+    },1800);
+  }catch(e){
+    document.getElementById('loading-view').textContent='Connection error: '+e.message;
+    const splash=document.getElementById('splash-screen');
+    if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
+  }
+}
+
+// Safety net: always remove splash after 4 seconds no matter what
+setTimeout(()=>{
+  const splash=document.getElementById('splash-screen');
+  if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
+},4000);
+
+async function loginOrRegister(){
+  const name=document.getElementById('inp-name').value.trim();
+  const email=document.getElementById('inp-email').value.trim().toLowerCase();
+  const phone=document.getElementById('inp-phone')?document.getElementById('inp-phone').value.trim():'';
+  const birthday=document.getElementById('inp-birthday')?document.getElementById('inp-birthday').value:'';
+  const err=document.getElementById('login-err');
+  if(!name){err.textContent='Please enter your name.';return;}
+  if(!email.includes('@')){err.textContent='Please enter a valid email.';return;}
+  err.textContent='Finding your card...';
+  try{
+    const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',email).limit(1);
+    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);}
+    else{const insertData={name,email};if(phone)insertData.phone=phone;if(birthday)insertData.birthday=birthday;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email,birthday);}
+    err.textContent='';
+  }catch(e){err.textContent='Error: '+e.message;}
+}
+
+async function loadCard(name,createdAt,phone,email,birthday){
+  const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
+  const{data:r}=await db.from('rewards').select('id').eq('customer_id',customerId);
+  const{data:freeOrders}=await db.from('orders').select('price').eq('customer_id',customerId).eq('is_free',true);
+  totalStamps=s?s.length:0;rewardsEarned=r?r.length:0;
+  const ordersValue=freeOrders&&freeOrders.length>0?freeOrders.reduce((sum,o)=>sum+parseFloat(o.price||5.5),0):0;
+  const unrecordedRewards=Math.max(0,rewardsEarned-(freeOrders?freeOrders.length:0));
+  actualSaved=ordersValue+(unrecordedRewards*5.5);
+  const stampsAfterRewards=totalStamps-(rewardsEarned*TOTAL);
+  stamps=stampsAfterRewards<0?0:stampsAfterRewards%TOTAL;
+  if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
+  // Save login to localStorage so user stays logged in on refresh
+  localStorage.setItem('tdm_customer_email', email||'');
+  localStorage.setItem('tdm_customer_name', name);
+  document.getElementById('login-view').style.display='none';
+  document.getElementById('main-view').style.display='block';
+  setTimeout(()=>requestNotificationPermission(customerId),2000);
+  startNotificationPoller();
+  if(birthday)checkBirthday(birthday,name);
+  loadWeeklySummary();
+  loadCardFeatures(customerId,name,email||'');
+  document.getElementById('customer-row').style.display='flex';
+  document.getElementById('avatar').textContent=name.charAt(0).toUpperCase();
+  document.getElementById('cname').textContent=name;
+  // Update greeting with time of day
+  document.getElementById('greeting-text').textContent=getGreeting(name);
+  // Check if near café
+  setTimeout(()=>checkGeofence(name),1000);
+  document.getElementById('csince').dataset.phone=phone||'';
+  const joined=new Date(createdAt);
+  document.getElementById('csince').textContent='Member since '+joined.toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
+  renderCard();
+}
+
+function logout(){
+  customerId=null;stamps=0;totalStamps=0;rewardsEarned=0;
+  localStorage.removeItem('tdm_customer_email');
+  localStorage.removeItem('tdm_customer_name');
+  if(notifPollInterval){clearInterval(notifPollInterval);notifPollInterval=null;}
+  document.getElementById('login-view').style.display='block';
+  document.getElementById('main-view').style.display='none';
+  document.getElementById('customer-row').style.display='none';
+  document.getElementById('inp-name').value='';
+  document.getElementById('inp-email').value='';
+  document.getElementById('inp-phone').value='';
+}
+
+function renderCard(){
+  const grid=document.getElementById('stamp-grid');
+  grid.innerHTML='';
+  const displayStamps=stamps>TOTAL?TOTAL:stamps;
+  for(let i=0;i<TOTAL;i++){
+    const s=document.createElement('div');
+    const isDiscount=i===4; // 5th stamp (index 4)
+    const isFilled=i<displayStamps;
+    if(isDiscount){
+      s.className='stamp'+(isFilled?' discount':'');
+      if(isFilled){
+        s.innerHTML=`<div style="text-align:center"><svg viewBox="0 0 24 24" fill="none" style="width:14px;height:14px;display:block;margin:0 auto"><path d="M6 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1H6V2z" fill="#D48631"/><path d="M5 4h14l-1.5 13A2 2 0 0 1 15.5 19h-7A2 2 0 0 1 6.5 17L5 4z" fill="#D48631"/><path d="M19 7h1a2 2 0 0 1 0 4h-1" stroke="#D48631" stroke-width="1.5" stroke-linecap="round"/><rect x="7" y="20" width="10" height="1.5" rx="0.75" fill="#D48631"/></svg><span class="stamp-label">10% OFF</span></div>`;
+      } else {
+        s.innerHTML=`<span class="stamp-label" style="color:#A9B29E">10%</span>`;
+      }
+    } else {
+      s.className='stamp'+(isFilled?' filled':'');
+      if(isFilled)s.innerHTML=`<svg viewBox="0 0 24 24" fill="none"><path d="M6 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1H6V2z" fill="#354C3A"/><path d="M5 4h14l-1.5 13A2 2 0 0 1 15.5 19h-7A2 2 0 0 1 6.5 17L5 4z" fill="#354C3A"/><path d="M19 7h1a2 2 0 0 1 0 4h-1" stroke="#354C3A" stroke-width="1.5" stroke-linecap="round"/><rect x="7" y="20" width="10" height="1.5" rx="0.75" fill="#354C3A"/></svg>`;
+    }
+    grid.appendChild(s);
+  }
+  const pct=Math.round((displayStamps/TOTAL)*100);
+  document.getElementById('bar-fill').style.width=pct+'%';
+  document.getElementById('stamp-count').textContent=displayStamps+' / '+TOTAL;
+  document.getElementById('total-val').textContent=totalStamps;
+  document.getElementById('rewards-val').textContent=rewardsEarned;
+  document.getElementById('saved-val').textContent='$'+actualSaved.toFixed(2);
+  const pill=document.getElementById('reward-pill');
+  const rtext=document.getElementById('reward-text');
+  if(displayStamps>=TOTAL){
+    pill.classList.add('earned');rtext.classList.add('earned');
+    rtext.textContent='🎉 Free coffee ready! Valid on standard coffees only (S/M/L).';
+    document.getElementById('redeem-btn').style.display='block';
+  } else if(displayStamps===5){
+    pill.classList.add('earned');rtext.classList.add('earned');
+    rtext.textContent='🎉 10% discount unlocked! Applied automatically on your next order.';
+    document.getElementById('redeem-btn').style.display='none';
+  } else if(displayStamps>5){
+    pill.classList.remove('earned');rtext.classList.remove('earned');
+    rtext.textContent=(TOTAL-displayStamps)+' more stamp'+(TOTAL-displayStamps!==1?'s':'')+' for a free coffee';
+    document.getElementById('redeem-btn').style.display='none';
+  } else {
+    pill.classList.remove('earned');rtext.classList.remove('earned');
+    const toDiscount=5-displayStamps;
+    const toFree=TOTAL-displayStamps;
+    rtext.textContent=toDiscount+' stamp'+(toDiscount!==1?'s':'')+' to 10% off · '+toFree+' stamps to free coffee';
+    document.getElementById('redeem-btn').style.display='none';
+  }
+
+
+
+
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+let pickupType='asap';
+let pickupTime='';
+
+function setPickup(type){
+  pickupType=type;
+  document.getElementById('pickup-asap').classList.toggle('active',type==='asap');
+  document.getElementById('pickup-later').classList.toggle('active',type==='later');
+  document.getElementById('pickup-time-row').style.display=type==='later'?'flex':'none';
+  document.getElementById('pickup-note').textContent=type==='asap'?'Your order will be prepared as soon as it is received.':'Select your preferred pickup time above.';
+  pickupTime=type==='asap'?'ASAP':'';
+}
+
+function populatePickupTimes(){
+  const sel=document.getElementById('pickup-time');
+  sel.innerHTML='<option value="">Select pickup time...</option>';
+  const now=new Date();
+  // Today slots - next 4 hours in 15 min increments
+  const todayGroup=document.createElement('optgroup');
+  todayGroup.label='Today';
+  for(let i=1;i<=16;i++){
+    const t=new Date(now.getTime()+i*15*60000);
+    const label=t.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const o=document.createElement('option');
+    o.value=label;o.textContent=label;
+    todayGroup.appendChild(o);
+  }
+  sel.appendChild(todayGroup);
+  // Tomorrow slots - 6am to 4pm
+  const tomorrowGroup=document.createElement('optgroup');
+  tomorrowGroup.label='Tomorrow (pre-order)';
+  const tomorrow=new Date(now);tomorrow.setDate(tomorrow.getDate()+1);tomorrow.setHours(6,0,0,0);
+  for(let i=0;i<20;i++){
+    const t=new Date(tomorrow.getTime()+i*30*60000);
+    if(t.getHours()>=16)break;
+    const label='Tomorrow '+t.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const o=document.createElement('option');
+    o.value=label;o.textContent=label;
+    tomorrowGroup.appendChild(o);
+  }
+  sel.appendChild(tomorrowGroup);
+}
+
+function toggleDarkMode(){
+  document.body.classList.toggle('dark-mode');
+  const btn=document.getElementById('dark-btn');
+  btn.textContent=document.body.classList.contains('dark-mode')?'☀️':'🌙';
+  localStorage.setItem('tdm_dark',document.body.classList.contains('dark-mode')?'1':'0');
+}
+
+// Restore dark mode preference — runs after full page load
+window.addEventListener('load',()=>{
+  if(localStorage.getItem('tdm_dark')==='1'){
+    document.body.classList.add('dark-mode');
+    const btn=document.getElementById('dark-btn');
+    if(btn)btn.textContent='☀️';
+  }
+});
+
+function showPopup(title,msg,showRule){
+  if(title)document.getElementById('popup-title').textContent=title;
+  if(msg)document.getElementById('popup-msg').textContent=msg;
+  const prule=document.querySelector('.popup-rule');if(prule)prule.style.display=showRule===false?'none':'block';
+  document.getElementById('popup-overlay').style.display='flex';
+}
+function closePopup(){
+  document.getElementById('popup-overlay').style.display='none';
+}
+
+init();
+</script>
+
+  <div id="popup-overlay" class="popup-overlay" style="display:none" onclick="closePopup()">
+    <div class="popup-box" onclick="event.stopPropagation()">
+      <div class="popup-emoji">🎉</div>
+      <div class="popup-title" id="popup-title">Milestone reached!</div>
+      <div class="popup-msg" id="popup-msg">Congratulations! Your next coffee is on us.</div>
+      <div class="popup-rule">
+        <strong>Valid on:</strong><br>
+        Espresso, Flat White, Latte, Cappuccino, Long Black, Americano, Hot Chocolate, Mocha, Macchiato / Piccolo / Fluffy (S/M/L)<br><br>
+        <strong>Not valid on:</strong><br>
+        Signature drinks, Superfood lattes, Frappes or Tea
+      </div>
+      <button class="popup-btn" onclick="closePopup()">Got it, thanks!</button>
+    </div>
+  </div>
+<button class="dark-toggle" onclick="toggleDarkMode()" id="dark-btn" title="Toggle dark mode">🌙</button>
+</body>
+</html>
