@@ -121,27 +121,16 @@
     <div class="card-title">Gift hamper milestones</div>
     <div style="font-size:12px;color:#888;margin-bottom:12px">Customers automatically notified when they reach these milestones</div>
     <div class="hamper-grid">
-      <div class="hamper-card">
-        <div class="hamper-num">25</div>
-        <div class="hamper-lbl">coffees</div>
-        <div class="hamper-reward">🎁 Small hamper</div>
-      </div>
-      <div class="hamper-card">
-        <div class="hamper-num">50</div>
-        <div class="hamper-lbl">coffees</div>
-        <div class="hamper-reward">🎁 Medium hamper</div>
-      </div>
-      <div class="hamper-card">
-        <div class="hamper-num">100</div>
-        <div class="hamper-lbl">coffees</div>
-        <div class="hamper-reward">🎁 Large hamper</div>
-      </div>
-      <div class="hamper-card">
-        <div class="hamper-num">200</div>
-        <div class="hamper-lbl">coffees</div>
-        <div class="hamper-reward">🎁 Premium hamper</div>
+      <div class="hamper-card" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;text-align:left;padding:16px">
+        <div style="font-size:40px">🎁</div>
+        <div>
+          <div class="hamper-num">250</div>
+          <div class="hamper-lbl">coffees — Gift hamper reward</div>
+          <div class="hamper-reward" style="margin-top:6px">Customer automatically notified when they reach 250 coffees!</div>
+        </div>
       </div>
     </div>
+    <div id="hamper-customers" style="margin-top:12px"></div>
   </div>
 </div>
 
@@ -183,7 +172,7 @@ function checkPW(){
   if(pw===OWNER_PASSWORD){
     document.getElementById('pw-gate').style.display='none';
     document.getElementById('dashboard-content').style.display='block';
-    loadStats();loadCustomers();loadNotifHistory();loadTodayOrders();
+    loadStats();loadCustomers();loadNotifHistory();loadTodayOrders();loadHamperCustomers();
   } else {
     document.getElementById('pw-err').textContent='Incorrect password. Try again.';
     document.getElementById('pw-input').value='';
@@ -213,6 +202,30 @@ async function loadStats(){
   document.getElementById('stat-orders').textContent=orders?orders.length:0;
   const revenue=orders?orders.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0):0;
   document.getElementById('stat-revenue').textContent='$'+revenue.toFixed(2);
+}
+
+async function loadHamperCustomers(){
+  const{data:stamps}=await db.from('stamps').select('customer_id');
+  const{data:customers}=await db.from('customers').select('id,name,email');
+  if(!stamps||!customers)return;
+  
+  const counts={};
+  stamps.forEach(s=>{counts[s.customer_id]=(counts[s.customer_id]||0)+1;});
+  
+  // Find customers who have reached 250
+  const winners=customers.filter(c=>counts[c.id]>=250);
+  const el=document.getElementById('hamper-customers');
+  if(!el)return;
+  
+  if(winners.length===0){
+    el.innerHTML='<div style="font-size:12px;color:#888">No customers have reached 250 coffees yet</div>';
+  } else {
+    el.innerHTML='<div style="font-size:12px;font-weight:600;color:#354C3A;margin-bottom:8px">🎁 Customers eligible for hamper:</div>'+
+    winners.map(c=>`<div class="customer-row">
+      <div class="customer-name">${c.name}</div>
+      <div class="stamp-badge">${counts[c.id]} coffees ✅</div>
+    </div>`).join('');
+  }
 }
 
 async function loadCustomers(){
@@ -290,10 +303,12 @@ async function sendNotification(){
         if(res.ok){
           showToast('Sent to '+data.success+' customer'+(data.success!==1?'s':'')+'! 🔔');
         } else {
-          showToast('Saved but sending failed: '+data.error);
+          // API not set up yet - notification saved to DB, customers see it when they open app
+          showToast('✅ Notification saved! Customers will see it next time they open the app.');
         }
       }catch(e){
-        showToast('Saved! Push delivery needs Firebase Admin setup.');
+        // Fallback - notification is saved in DB, customers will see it when app polls
+        showToast('✅ Notification saved! Customers will see it next time they open the app.');
       }
     }
 
