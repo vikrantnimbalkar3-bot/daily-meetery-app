@@ -1428,29 +1428,43 @@ function showNearbyBanner(name,dist){
 
 
 // ---- NOTIFICATION POLLER ----
-let lastNotifCheck = new Date().toISOString();
 let notifPollInterval = null;
+const NOTIF_SEEN_KEY = 'tdm_last_notif_id';
 
 async function startNotificationPoller(){
   if(notifPollInterval)clearInterval(notifPollInterval);
   // Check immediately on login
   await checkForNewNotifications();
-  // Then check every 30 seconds
-  notifPollInterval = setInterval(checkForNewNotifications, 30000);
+  // Then check every 20 seconds
+  notifPollInterval = setInterval(checkForNewNotifications, 20000);
 }
 
 async function checkForNewNotifications(){
   try{
+    const lastSeenId = localStorage.getItem(NOTIF_SEEN_KEY);
+    
+    // Get latest 5 notifications
     const{data:notifs}=await db
       .from('notifications')
       .select('*')
-      .gt('sent_at', lastNotifCheck)
-      .order('sent_at',{ascending:true});
+      .order('sent_at',{ascending:false})
+      .limit(5);
     
-    if(notifs&&notifs.length>0){
-      lastNotifCheck = notifs[notifs.length-1].sent_at;
-      notifs.forEach(n=>{
-        showNotificationBanner(n.title, n.body, n.type);
+    if(!notifs||notifs.length===0)return;
+    
+    // Find notifications we haven't shown yet
+    const unseen = lastSeenId
+      ? notifs.filter(n=>n.id!==lastSeenId && new Date(n.sent_at)>new Date(localStorage.getItem('tdm_notif_time')||0))
+      : [notifs[0]]; // First time — show only the most recent one
+    
+    if(unseen.length>0){
+      // Save latest as seen
+      localStorage.setItem(NOTIF_SEEN_KEY, notifs[0].id);
+      localStorage.setItem('tdm_notif_time', notifs[0].sent_at);
+      
+      // Show each unseen notification with a delay between them
+      unseen.reverse().forEach((n,i)=>{
+        setTimeout(()=>showNotificationBanner(n.title, n.body, n.type), i*2000);
       });
     }
   }catch(e){
