@@ -248,6 +248,37 @@
     <div id="hamper-list"><div style="color:#888;font-size:13px">Loading...</div></div>
   </div>
 
+
+  <!-- System Monitor -->
+  <div class="section" id="monitor-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-title" style="margin-bottom:0">🔍 System Monitor</div>
+      <button class="btn-small btn-green" onclick="loadErrorLogs()">🔄 Refresh</button>
+    </div>
+    <div id="system-health" style="margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:#ECFDF5;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#354C3A" id="health-status">—</div>
+          <div style="font-size:11px;color:#888">DB Status</div>
+        </div>
+        <div style="background:#FDF8EE;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#D48631" id="health-latency">—</div>
+          <div style="font-size:11px;color:#888">DB Latency</div>
+        </div>
+        <div style="background:#FDF8EE;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#354C3A" id="error-count">—</div>
+          <div style="font-size:11px;color:#888">Open Errors</div>
+        </div>
+      </div>
+    </div>
+    <!-- Feature Flags -->
+    <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Feature Flags</div>
+    <div id="feature-flags" style="margin-bottom:12px"></div>
+    <!-- Error Log -->
+    <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Recent Errors</div>
+    <div id="error-log"><div style="color:#888;font-size:13px">Loading...</div></div>
+  </div>
+
 </div><!-- end main -->
 
 <div class="toast" id="toast"></div>
@@ -289,6 +320,7 @@ function loadAll(){
   loadDeals();
   loadNotifHistory();
   loadHampers();
+  loadErrorLogs();
 }
 
 // ---- STATS ----
@@ -639,6 +671,73 @@ async function exportData(type, format){
 }
 
 function today(){return new Date().toISOString().slice(0,10);}
+
+// ============ SYSTEM MONITOR ============
+
+async function runHealthCheck(){
+  try{
+    const start=Date.now();
+    const {error}=await db.from('customers').select('id').limit(1);
+    const latency=Date.now()-start;
+    document.getElementById('health-status').textContent=error?'❌ Error':'✅ OK';
+    document.getElementById('health-latency').textContent=latency+'ms';
+    document.getElementById('health-status').parentElement.style.background=error?'#FEE':'#ECFDF5';
+  }catch(e){
+    document.getElementById('health-status').textContent='❌ Down';
+  }
+}
+
+async function loadErrorLogs(){
+  runHealthCheck();
+  try{
+    // Load error count
+    const {data:errors}=await db.from('error_logs')
+      .select('*').eq('resolved',false).order('created_at',{ascending:false}).limit(20);
+    document.getElementById('error-count').textContent=errors?errors.length:0;
+
+    const el=document.getElementById('error-log');
+    if(!errors||!errors.length){
+      el.innerHTML='<div style="color:#888;font-size:13px">✅ No open errors</div>';
+    } else {
+      const sevColour={CRITICAL:'#FEE',HIGH:'#FFF3DC',MEDIUM:'#FDF8EE',LOW:'#f7f7f7'};
+      const sevText={CRITICAL:'🔴',HIGH:'🟠',MEDIUM:'🟡',LOW:'⚪'};
+      el.innerHTML=errors.map(e=>`
+        <div style="padding:8px;border-radius:8px;background:${sevColour[e.severity]||'#f7f7f7'};margin-bottom:6px;font-size:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:700">${sevText[e.severity]||'•'} ${e.context}</span>
+            <span style="color:#888">${new Date(e.created_at).toLocaleString('en-NZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+          </div>
+          <div style="color:#555;margin-top:2px">${e.message}</div>
+          ${e.user_id?`<div style="color:#A9B29E;margin-top:2px">User: ${e.user_id}</div>`:''}
+          <button onclick="resolveError('${e.id}')" style="margin-top:4px;padding:2px 8px;background:#354C3A;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer">Mark Resolved</button>
+        </div>`).join('');
+    }
+
+    // Feature flags
+    const flagsEl=document.getElementById('feature-flags');
+    const flags={
+      'Deals & Specials':'enableDeals',
+      'Geofence':'enableGeofence',
+      'Push Notifications':'enableNotifications',
+      'New Drink Bonus Stamp':'enableNewDrinkBonus',
+      'Double Stamp Tuesday':'enableDoubleStampTuesday',
+      'Leaderboard':'enableLeaderboard',
+      'Maintenance Mode':'maintenanceMode',
+    };
+    flagsEl.innerHTML=Object.entries(flags).map(([label,key])=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0">
+        <span style="font-size:13px">${label}</span>
+        <span style="font-size:12px;padding:2px 8px;border-radius:99px;background:${key==='maintenanceMode'?'#FEE':'#ECFDF5'};color:${key==='maintenanceMode'?'#c00':'#354C3A'};font-weight:600">${key==='maintenanceMode'?'🔴 ON (site down)':'🟢 Active'}</span>
+      </div>`).join('');
+
+  }catch(e){console.error('loadErrorLogs',e);}
+}
+
+async function resolveError(id){
+  await db.from('error_logs').update({resolved:true}).eq('id',id);
+  showToast('Error marked as resolved');
+  loadErrorLogs();
+}
 
 function showToast(msg){
   const t=document.getElementById('toast');
