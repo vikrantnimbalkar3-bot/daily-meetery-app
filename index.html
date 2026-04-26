@@ -422,6 +422,8 @@
         <div id="s-ice"></div>
         <div class="section-title">Tea</div>
         <div id="s-tea"></div>
+        <div class="section-title" id="food-section-title">🥐 Food</div>
+        <div id="s-food"><div style="color:#888;font-size:12px;padding:8px 0">Loading food menu...</div></div>
         <div id="payment-section" style="display:none">
           <div id="paid-payment">
             <div class="pay-methods">
@@ -501,6 +503,8 @@
       <div style="font-size:12px;color:#555;line-height:2">Wild Berry Frappe — R $8.00 · L $9.50<br>Spiced Pumpkin / Gingerbread — R $7.00 · L $8.30<br>Bananabread — R $7.00 · L $8.30<br>Matcha — R $7.00 · L $8.30<br>Iced Americano — R $5.90 · L $6.50<br>Chocolate / Mocha / Latte — R $6.70 · L $8.00<br>Chai Sweet or Spicy — R $6.70 · L $8.00</div>
       <div class="section-title">Tea — $5.00</div>
       <div style="font-size:12px;color:#555;line-height:2">English Breakfast · Earl Grey · Green Lime · Peppermint · Lemon Ginger Honey</div>
+      <div class="section-title" id="food-menu-title">🥐 Food</div>
+      <div id="food-menu-list" style="font-size:12px;color:#555;line-height:2">See Order tab for full food menu</div>
       <div style="font-size:11px;color:#888;margin-top:14px;padding:10px;background:#f7f7f7;border-radius:10px;line-height:1.8"><strong>Add-ons:</strong><br>Soy / Oat / Coconut / Almond / Decaf +$0.80 (iced +$1.00)<br>Caramel / Vanilla / Hazelnut syrup +$0.60<br>Make it a Frappe +$1.50 · Blend with ice cream +$4.00</div>
       <button class="main-btn" style="margin-top:14px" onclick="showTab('order')">Go to order screen</button>
       </div>
@@ -1569,14 +1573,76 @@ async function checkNewDrink(drinkName){
   }
 }
 
+
+// ---- LOAD MENU FROM SUPABASE ----
+async function loadMenuFromDB(){
+  try{
+    const{data:items,error}=await db.from('menu_items')
+      .select('*')
+      .eq('is_available',true)
+      .order('category')
+      .order('sort_order');
+
+    if(error)throw error;
+
+    if(!items||items.length===0){
+      buildSection('s-coffee',MENU.coffee);
+      buildSection('s-superfood',MENU.superfood);
+      buildSection('s-signature',MENU.signature);
+      buildSection('s-ice',MENU.ice);
+      buildSection('s-tea',MENU.tea);
+      return;
+    }
+
+    // Group items by category
+    const grouped={};
+    items.forEach(item=>{
+      if(!grouped[item.category])grouped[item.category]=[];
+      grouped[item.category].push({
+        name:item.name,
+        desc:item.description||'',
+        sizes:item.sizes,
+        isSignature:item.is_signature
+      });
+    });
+
+    // Clear and build each drink section
+    ['coffee','superfood','signature','ice','tea'].forEach(cat=>{
+      const sectionId='s-'+cat;
+      const el=document.getElementById(sectionId);
+      if(el)el.innerHTML='';
+      if(grouped[cat]&&grouped[cat].length>0){
+        buildSection(sectionId,grouped[cat]);
+      }
+    });
+
+    // Build food section
+    const foodEl=document.getElementById('s-food');
+    if(foodEl)foodEl.innerHTML='';
+    if(grouped['food']&&grouped['food'].length>0){
+      buildSection('s-food',grouped['food']);
+    } else {
+      if(foodEl)foodEl.innerHTML='<div style="color:#888;font-size:12px;padding:8px 0">No food items available</div>';
+    }
+
+  }catch(e){
+    console.log('Menu load error:',e.message);
+    // Fallback to hardcoded menu
+    buildSection('s-coffee',MENU.coffee);
+    buildSection('s-superfood',MENU.superfood);
+    buildSection('s-signature',MENU.signature);
+    buildSection('s-ice',MENU.ice);
+    buildSection('s-tea',MENU.tea);
+  }
+}
+
+
 async function init(){
   try{
     const{error}=await db.from('customers').select('id').limit(1);
     if(error)throw error;
     document.getElementById('loading-view').style.display='none';
-    buildSection('s-coffee',MENU.coffee);buildSection('s-superfood',MENU.superfood);
-    buildSection('s-signature',MENU.signature);buildSection('s-ice',MENU.ice);
-    buildSection('s-tea',MENU.tea);
+    await loadMenuFromDB();
     populatePickupTimes();
 
     // Auto-login if previously logged in — check BEFORE showing login screen
