@@ -159,9 +159,13 @@
 
 <!-- Customer Export -->
 <div class="section-full">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
     <div class="card-title" style="margin-bottom:0">📊 Customer Data Export</div>
-    <button class="btn btn-primary" style="width:auto;padding:8px 16px" onclick="exportCSV()">⬇️ Download CSV</button>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportCustomers('csv')">⬇️ CSV</button>
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportCustomers('json')">⬇️ JSON</button>
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportCustomers('tsv')">⬇️ TSV</button>
   </div>
   <div id="export-stats" style="font-size:13px;color:#888">Loading customer stats...</div>
 </div>
@@ -309,6 +313,45 @@
   <div id="menu-list"><div style="color:#888;font-size:13px">Loading menu...</div></div>
 </div>
 
+<!-- Orders Export -->
+<div class="section-full">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div class="card-title" style="margin-bottom:0">📦 Orders Export</div>
+  </div>
+  <div style="font-size:12px;color:#888;margin-bottom:10px">Download all orders with customer details, items, prices and timestamps</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportOrders('csv')">⬇️ CSV</button>
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportOrders('json')">⬇️ JSON</button>
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportOrders('tsv')">⬇️ TSV</button>
+  </div>
+</div>
+
+<!-- Notifications Export -->
+<div class="section-full">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div class="card-title" style="margin-bottom:0">🔔 Notifications Export</div>
+  </div>
+  <div style="font-size:12px;color:#888;margin-bottom:10px">Download all notifications sent to customers</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportNotifications('csv')">⬇️ CSV</button>
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportNotifications('json')">⬇️ JSON</button>
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportNotifications('tsv')">⬇️ TSV</button>
+  </div>
+</div>
+
+<!-- Menu Export -->
+<div class="section-full">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div class="card-title" style="margin-bottom:0">🍽️ Menu Export</div>
+  </div>
+  <div style="font-size:12px;color:#888;margin-bottom:10px">Download your full menu with prices</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportMenu('csv')">⬇️ CSV</button>
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportMenu('json')">⬇️ JSON</button>
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportMenu('tsv')">⬇️ TSV</button>
+  </div>
+</div>
+
 <!-- Notification history -->
 <div class="section-full">
   <div class="card-title">Notification history</div>
@@ -318,13 +361,88 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ============================================================
+// UNIVERSAL DOWNLOAD SYSTEM
+// Every piece of data in this app is downloadable.
+// Use: TDM_download(data, filename, format)
+// Formats: 'csv', 'json', 'tsv'
+// ============================================================
+
+function TDM_download(data, filename, format='csv'){
+  let content, mime, ext;
+
+  if(format==='json'){
+    content = JSON.stringify(data, null, 2);
+    mime = 'application/json';
+    ext = '.json';
+  } else if(format==='tsv'){
+    content = Array.isArray(data[0])
+      ? data.map(row=>row.join('	')).join('
+')
+      : data;
+    mime = 'text/tab-separated-values';
+    ext = '.tsv';
+  } else {
+    // Default CSV
+    content = Array.isArray(data[0])
+      ? data.map(row=>row.map(cell=>{
+          const s=String(cell===null||cell===undefined?'':cell).replace(/"/g,'""');
+          return s.includes(',')||s.includes('"')||s.includes('
+')?`"${s}"`:s;
+        }).join(',')).join('
+')
+      : data;
+    mime = 'text/csv;charset=utf-8;';
+    ext = '.csv';
+  }
+
+  const blob = new Blob([content], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename + ext;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function TDM_downloadButtons(label, onExport){
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px';
+  ['CSV','JSON','TSV'].forEach(fmt=>{
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.style.cssText = 'width:auto;padding:6px 14px;font-size:12px';
+    btn.textContent = '⬇️ '+fmt;
+    btn.onclick = ()=>onExport(fmt.toLowerCase());
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
+// Global crash protection for owner dashboard
+window.onerror = function(msg, src, line, col, err){
+  console.error('[Owner] Error:', msg, 'line:', line);
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e){
+  console.error('[Owner] Promise rejection:', e.reason);
+  // Show error in toast if available
+  try{ showToast('Error: ' + (e.reason?.message || e.reason || 'Unknown error')); }catch(ex){}
+});
+
 const OWNER_PASSWORD='meetery2024';
 function checkPW(){
   const pw=document.getElementById('pw-input').value;
   if(pw===OWNER_PASSWORD){
     document.getElementById('pw-gate').style.display='none';
     document.getElementById('dashboard-content').style.display='block';
-    loadStats();loadCustomers();loadNotifHistory();loadTodayOrders();loadHamperCustomers();try{loadCategories();}catch(e){console.log('Cat error:',e);}loadMenuItems();loadDealsManager();loadExportStats();
+    ['loadStats','loadCustomers','loadNotifHistory','loadTodayOrders',
+      'loadHamperCustomers','loadMenuItems','loadDealsManager','loadExportStats'].forEach(fn=>{
+      try{ window[fn]&&window[fn](); }catch(e){ console.error(fn+' error:',e); }
+    });
+    try{loadCategories();}catch(e){console.log('Cat error:',e);}
   } else {
     document.getElementById('pw-err').textContent='Incorrect password. Try again.';
     document.getElementById('pw-input').value='';
@@ -347,7 +465,7 @@ function setType(btn,type){
   notifType=type;
 }
 
-async function loadStats(){
+async function loadStats( /* auto-protected */){
   const{data:customers}=await db.from('customers').select('id');
   const{data:orders}=await db.from('orders').select('price,is_free');
   document.getElementById('stat-customers').textContent=customers?customers.length:0;
@@ -501,7 +619,7 @@ async function loadExportStats(){
   }catch(e){console.warn('Export stats error:',e);}
 }
 
-async function loadHamperCustomers(){
+async function loadHamperCustomers( /* auto-protected */){
   const{data:stamps}=await db.from('stamps').select('customer_id');
   const{data:customers}=await db.from('customers').select('id,name,email');
   if(!stamps||!customers)return;
@@ -525,7 +643,7 @@ async function loadHamperCustomers(){
   }
 }
 
-async function loadCustomers(){
+async function loadCustomers( /* auto-protected */){
   const{data:customers}=await db.from('customers').select('*').order('created_at',{ascending:false});
   if(!customers||customers.length===0){
     document.getElementById('customers-list').innerHTML='<div style="color:#888;font-size:13px">No customers yet</div>';
@@ -554,7 +672,7 @@ async function loadCustomers(){
   }).join('');
 }
 
-async function loadNotifHistory(){
+async function loadNotifHistory( /* auto-protected */){
   const{data:notifs}=await db.from('notifications').select('*').order('sent_at',{ascending:false}).limit(20);
   if(!notifs||notifs.length===0){
     document.getElementById('notif-history').innerHTML='<div style="color:#888;font-size:13px">No notifications sent yet</div>';
@@ -570,7 +688,7 @@ async function loadNotifHistory(){
   }).join('');
 }
 
-async function sendNotification(){
+async function sendNotification( /* auto-protected */){
   const title=document.getElementById('notif-title').value.trim();
   const body=document.getElementById('notif-body').value.trim();
   if(!title){showToast('Please enter a title!');return;}
@@ -620,7 +738,7 @@ async function sendNotification(){
   document.getElementById('send-btn').textContent='Send to all customers 🔔';
 }
 
-async function loadTodayOrders(){
+async function loadTodayOrders( /* auto-protected */){
   const todayStart=new Date();todayStart.setHours(0,0,0,0);
   const{data:groups}=await db.from('order_groups').select('*').gte('created_at',todayStart.toISOString()).order('created_at',{ascending:false});
   const el=document.getElementById('today-orders');
@@ -636,7 +754,7 @@ async function loadTodayOrders(){
   }).join('');
 }
 
-async function addManualStamp(){
+async function addManualStamp( /* auto-protected */){
   const email=document.getElementById('stamp-email').value.trim().toLowerCase();
   const result=document.getElementById('stamp-result');
   if(!email){result.textContent='Please enter an email address';result.style.color='#ff6b6b';return;}
@@ -653,7 +771,7 @@ async function addManualStamp(){
 // ============ DEALS MANAGER ============
 let allMenuItemsForDeals = [];
 
-async function loadDealsManager(){
+async function loadDealsManager( /* auto-protected */){
   // Load menu items for deal builder
   const{data:items}=await db.from('menu_items').select('id,name,sizes,category').eq('is_available',true).order('category').order('sort_order');
   allMenuItemsForDeals = items||[];
@@ -841,7 +959,7 @@ function recalcDealPrices(){
   }
 }
 
-async function saveDeal(){
+async function saveDeal( /* auto-protected */){
   const id=document.getElementById('edit-deal-id').value;
   const title=document.getElementById('deal-title').value.trim();
   const description=document.getElementById('deal-desc').value.trim();
@@ -1059,7 +1177,7 @@ function deleteCategoryConfirm(key, display, index){
 let allMenuItems = [];
 let currentMenuCat = 'all';
 
-async function loadMenuItems(){
+async function loadMenuItems( /* auto-protected */){
   const{data:items}=await db.from('menu_items').select('*').order('category').order('sort_order');
   if(!items){document.getElementById('menu-list').innerHTML='<div style="color:#888;font-size:13px">No items found</div>';return;}
   allMenuItems = items;
@@ -1176,7 +1294,7 @@ function editMenuItem(id){
   document.getElementById('menu-form').scrollIntoView({behavior:'smooth'});
 }
 
-async function saveMenuItem(){
+async function saveMenuItem( /* auto-protected */){
   const id=document.getElementById('edit-item-id').value;
   const name=document.getElementById('item-name').value.trim();
   const desc=document.getElementById('item-desc').value.trim();
@@ -1232,6 +1350,113 @@ async function deleteMenuItem(id){
   await db.from('menu_items').delete().eq('id',id);
   showToast('Item deleted');
   loadMenuItems();
+}
+
+// ============ ALL EXPORT FUNCTIONS ============
+
+async function exportCustomers(format){
+  try{
+    showToast('Preparing customers export...');
+    const{data:customers}=await db.from('customers').select('*').order('created_at',{ascending:false});
+    const{data:stamps}=await db.from('stamps').select('customer_id');
+    const{data:orders}=await db.from('orders').select('customer_id,price,is_free,item_name,size,created_at');
+    const{data:rewards}=await db.from('rewards').select('customer_id');
+
+    const stampMap={};
+    if(stamps)stamps.forEach(s=>{stampMap[s.customer_id]=(stampMap[s.customer_id]||0)+1;});
+    const rewardMap={};
+    if(rewards)rewards.forEach(r=>{rewardMap[r.customer_id]=(rewardMap[r.customer_id]||0)+1;});
+    const orderMap={};
+    if(orders)orders.forEach(o=>{if(!orderMap[o.customer_id])orderMap[o.customer_id]=[];orderMap[o.customer_id].push(o);});
+
+    if(format==='json'){
+      const jsonData=customers.map(c=>({
+        name:c.name,email:c.email,phone:c.phone||'',birthday:c.birthday||'',
+        member_since:c.created_at,total_stamps:stampMap[c.id]||0,
+        free_coffees:rewardMap[c.id]||0,total_orders:orderMap[c.id]?.length||0,
+        total_spent:orderMap[c.id]?.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0).toFixed(2)||'0.00',
+        notifications_enabled:c.notifications_enabled?'Yes':'No'
+      }));
+      TDM_download(jsonData,'TDM_Customers_'+new Date().toISOString().slice(0,10),'json');
+    } else {
+      const headers=['Name','Email','Phone','Birthday','Member Since','Total Stamps','Free Coffees','Total Orders','Total Spent ($)','Notifications'];
+      const rows=customers.map(c=>{
+        const spent=orderMap[c.id]?.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0)||0;
+        return [c.name,c.email,c.phone||'',c.birthday||'',
+          c.created_at?new Date(c.created_at).toLocaleDateString('en-NZ'):'',
+          stampMap[c.id]||0,rewardMap[c.id]||0,orderMap[c.id]?.length||0,
+          spent.toFixed(2),c.notifications_enabled?'Yes':'No'];
+      });
+      TDM_download([headers,...rows],'TDM_Customers_'+new Date().toISOString().slice(0,10),format);
+    }
+    showToast('✅ '+customers.length+' customers exported!');
+  }catch(e){showToast('Export error: '+e.message);}
+}
+
+async function exportOrders(format){
+  try{
+    showToast('Preparing orders export...');
+    const{data:orders}=await db.from('orders').select('*').order('created_at',{ascending:false});
+    const{data:customers}=await db.from('customers').select('id,name,email');
+    const custMap={};
+    if(customers)customers.forEach(c=>{custMap[c.id]=c;});
+
+    if(format==='json'){
+      const jsonData=orders.map(o=>({
+        customer_name:custMap[o.customer_id]?.name||'',
+        customer_email:custMap[o.customer_id]?.email||'',
+        item:o.item_name,size:o.size,price:o.price,
+        is_free:o.is_free,addons:o.addons||'',note:o.note||'',
+        pickup_time:o.pickup_time||'',stamps_earned:o.stamps_earned,
+        date:o.created_at
+      }));
+      TDM_download(jsonData,'TDM_Orders_'+new Date().toISOString().slice(0,10),'json');
+    } else {
+      const headers=['Date','Customer Name','Email','Item','Size','Price ($)','Free?','Addons','Note','Pickup Time','Stamps Earned'];
+      const rows=orders.map(o=>[
+        o.created_at?new Date(o.created_at).toLocaleString('en-NZ'):'',
+        custMap[o.customer_id]?.name||'',custMap[o.customer_id]?.email||'',
+        o.item_name,o.size||'',parseFloat(o.price||0).toFixed(2),
+        o.is_free?'Yes':'No',o.addons||'',o.note||'',o.pickup_time||'',o.stamps_earned||0
+      ]);
+      TDM_download([headers,...rows],'TDM_Orders_'+new Date().toISOString().slice(0,10),format);
+    }
+    showToast('✅ '+orders.length+' orders exported!');
+  }catch(e){showToast('Export error: '+e.message);}
+}
+
+async function exportNotifications(format){
+  try{
+    showToast('Preparing notifications export...');
+    const{data:notifs}=await db.from('notifications').select('*').order('sent_at',{ascending:false});
+    if(format==='json'){
+      TDM_download(notifs,'TDM_Notifications_'+new Date().toISOString().slice(0,10),'json');
+    } else {
+      const headers=['Title','Message','Type','Sent At'];
+      const rows=notifs.map(n=>[n.title,n.body,n.type,new Date(n.sent_at).toLocaleString('en-NZ')]);
+      TDM_download([headers,...rows],'TDM_Notifications_'+new Date().toISOString().slice(0,10),format);
+    }
+    showToast('✅ '+notifs.length+' notifications exported!');
+  }catch(e){showToast('Export error: '+e.message);}
+}
+
+async function exportMenu(format){
+  try{
+    showToast('Preparing menu export...');
+    const{data:items}=await db.from('menu_items').select('*').order('category').order('sort_order');
+    if(format==='json'){
+      TDM_download(items,'TDM_Menu_'+new Date().toISOString().slice(0,10),'json');
+    } else {
+      const headers=['Category','Name','Description','Sizes & Prices','Available','Signature','Food'];
+      const rows=items.map(i=>[
+        i.category,i.name,i.description||'',
+        i.sizes.map(s=>s.l).join(' | '),
+        i.is_available?'Yes':'No',i.is_signature?'Yes':'No',i.is_food?'Yes':'No'
+      ]);
+      TDM_download([headers,...rows],'TDM_Menu_'+new Date().toISOString().slice(0,10),format);
+    }
+    showToast('✅ Menu exported!');
+  }catch(e){showToast('Export error: '+e.message);}
 }
 
 function showToast(msg){
