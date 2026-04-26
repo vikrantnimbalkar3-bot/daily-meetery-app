@@ -11,1466 +11,641 @@
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 16px 20px; background: #354C3A; border-radius: 12px; }
     .header-title { font-size: 20px; font-weight: 700; color: #fff; }
     .header-sub { font-size: 12px; color: #A9B29E; margin-top: 2px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-    .card { background: #fff; border-radius: 12px; padding: 20px; }
-    .card-title { font-size: 13px; font-weight: 600; color: #A9B29E; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+    .section { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .section-title { font-size: 13px; font-weight: 600; color: #A9B29E; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
     .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
     .stat-card { background: #fff; border-radius: 12px; padding: 16px; text-align: center; }
     .stat-val { font-size: 28px; font-weight: 700; color: #354C3A; }
     .stat-lbl { font-size: 11px; color: #A9B29E; margin-top: 4px; }
-    .notif-form { display: flex; flex-direction: column; gap: 10px; }
     .field-label { font-size: 12px; color: #888; margin-bottom: 4px; }
-    input.field, textarea.field, select.field { width: 100%; padding: 10px 12px; font-size: 14px; border-radius: 8px; border: 1.5px solid #A9B29E; background: #fff; color: #292927; outline: none; font-family: inherit; }
+    input.field, textarea.field, select.field { width: 100%; padding: 10px 12px; font-size: 14px; border-radius: 8px; border: 1.5px solid #A9B29E; background: #fff; color: #292927; outline: none; font-family: inherit; margin-bottom: 10px; }
     input.field:focus, textarea.field:focus { border-color: #354C3A; }
-    textarea.field { resize: vertical; min-height: 80px; }
-    .btn { width: 100%; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
-    .btn-primary { background: #354C3A; color: #fff; }
-    .btn-primary:hover { background: #292927; }
-    .btn-accent { background: #D48631; color: #fff; }
-    .btn-accent:hover { background: #b8711f; }
-    .btn:disabled { background: #eee; color: #aaa; cursor: default; }
-    .notif-type { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-    .type-btn { padding: 6px 14px; border-radius: 99px; font-size: 12px; border: 1.5px solid #A9B29E; background: #fff; cursor: pointer; color: #554; transition: all 0.15s; }
-    .type-btn.active { border-color: #354C3A; background: #354C3A; color: #fff; font-weight: 600; }
-    .customer-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-    .customer-row:last-child { border-bottom: none; }
-    .customer-name { font-weight: 500; color: #292927; }
-    .customer-detail { font-size: 11px; color: #888; margin-top: 2px; }
-    .stamp-badge { font-size: 11px; padding: 3px 10px; border-radius: 99px; background: #FDF8EE; color: #354C3A; font-weight: 600; border: 1px solid #A9B29E; }
-    .notif-history { max-height: 300px; overflow-y: auto; }
-    .notif-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-    .notif-item:last-child { border-bottom: none; }
-    .notif-title { font-size: 13px; font-weight: 600; color: #292927; }
-    .notif-body { font-size: 12px; color: #888; margin-top: 2px; }
-    .notif-time { font-size: 11px; color: #A9B29E; margin-top: 4px; }
+    textarea.field { resize: vertical; min-height: 70px; }
+    .btn { width: 100%; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; margin-top: 4px; }
+    .btn-green { background: #354C3A; color: #fff; }
+    .btn-orange { background: #D48631; color: #fff; }
+    .btn-gray { background: #eee; color: #555; }
+    .btn-small { width: auto; padding: 6px 14px; font-size: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+    .type-btn { padding: 6px 14px; border-radius: 99px; font-size: 12px; border: 1.5px solid #A9B29E; background: #fff; cursor: pointer; color: #354C3A; }
+    .type-btn.active { border-color: #354C3A; background: #354C3A; color: #fff; }
+    .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    .row:last-child { border-bottom: none; }
+    .row-name { font-weight: 500; color: #292927; }
+    .row-detail { font-size: 11px; color: #888; margin-top: 2px; }
+    .badge { font-size: 11px; padding: 3px 10px; border-radius: 99px; background: #FDF8EE; color: #354C3A; font-weight: 600; border: 1px solid #A9B29E; }
+    .notif-type { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .form-box { background: #FDF8EE; border-radius: 10px; padding: 16px; margin-bottom: 16px; border: 1.5px solid #A9B29E; display: none; }
+    .download-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .toast { position: fixed; bottom: 20px; right: 20px; background: #354C3A; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 14px; display: none; z-index: 100; }
     .toast.show { display: block; }
-    .hamper-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .hamper-card { background: #FDF8EE; border: 1.5px solid #A9B29E; border-radius: 8px; padding: 12px; text-align: center; }
-    .hamper-num { font-size: 24px; font-weight: 700; color: #354C3A; }
-    .hamper-lbl { font-size: 11px; color: #888; margin-top: 2px; }
-    .hamper-reward { font-size: 12px; color: #D48631; font-weight: 600; margin-top: 4px; }
-    .section-full { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    /* Password gate */
+    #pw-gate { position: fixed; inset: 0; background: #292927; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; }
+    #pw-gate input { padding: 12px 20px; border-radius: 10px; border: none; font-size: 15px; width: 260px; text-align: center; outline: none; }
+    #pw-gate button { background: #D48631; color: #fff; border: none; padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    #pw-err { color: #ff6b6b; font-size: 13px; }
+    #main { display: none; }
   </style>
 </head>
 <body>
 
-<!-- Password gate -->
-<div id="pw-gate" style="position:fixed;inset:0;background:#292927;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px">
-  <div style="font-size:40px">☕</div>
+<!-- Password Gate -->
+<div id="pw-gate">
+  <div style="font-size:48px">☕</div>
   <div style="font-size:22px;font-weight:700;color:#fff">Owner Dashboard</div>
   <div style="font-size:13px;color:#A9B29E">The Daily Meetery</div>
-  <input id="pw-input" type="password" placeholder="Enter owner password" onkeydown="if(event.key==='Enter')checkPW()" style="margin-top:8px;padding:12px 20px;border-radius:10px;border:none;font-size:15px;width:260px;text-align:center;outline:none">
-  <button onclick="checkPW()" style="background:#D48631;color:#fff;border:none;padding:12px 32px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">Unlock</button>
-  <div id="pw-err" style="color:#ff6b6b;font-size:13px"></div>
+  <input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPW()">
+  <button onclick="checkPW()">Unlock</button>
+  <div id="pw-err"></div>
 </div>
 
-<div id="dashboard-content" style="display:none">
-<div class="header">
-  <div>
-    <div class="header-title">☕ The Daily Meetery</div>
-    <div class="header-sub">Owner Dashboard</div>
-  </div>
-  <div style="font-size:12px;color:#A9B29E" id="clock"></div>
-</div>
+<!-- Main Dashboard -->
+<div id="main">
 
-<!-- Stats -->
-<div class="stat-grid">
-  <div class="stat-card">
-    <div class="stat-val" id="stat-customers">—</div>
-    <div class="stat-lbl">Total customers</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-val" id="stat-orders">—</div>
-    <div class="stat-lbl">Total orders</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-val" id="stat-revenue">—</div>
-    <div class="stat-lbl">Total revenue</div>
-  </div>
-</div>
-
-<div class="grid">
-  <!-- Send notification -->
-  <div class="card">
-    <div class="card-title">Send notification to customers</div>
-    <div class="notif-form">
-      <div>
-        <div class="field-label">Type</div>
-        <div class="notif-type">
-          <button class="type-btn active" onclick="setType(this,'flash')">⚡ Flash deal</button>
-          <button class="type-btn" onclick="setType(this,'special')">🎉 Special</button>
-          <button class="type-btn" onclick="setType(this,'menu')">🆕 New item</button>
-          <button class="type-btn" onclick="setType(this,'hamper')">🎁 Gift hamper</button>
-        </div>
-      </div>
-      <div>
-        <div class="field-label">Title</div>
-        <input class="field" id="notif-title" placeholder="e.g. Flash deal — 30 mins only!">
-      </div>
-      <div>
-        <div class="field-label">Message</div>
-        <textarea class="field" id="notif-body" placeholder="e.g. Free upgrade to large on any latte. Come in now!"></textarea>
-      </div>
-      <button class="btn btn-accent" onclick="sendNotification()" id="send-btn">Send to all customers 🔔</button>
+  <div class="header">
+    <div>
+      <div class="header-title">☕ The Daily Meetery</div>
+      <div class="header-sub">Owner Dashboard</div>
     </div>
+    <div style="font-size:12px;color:#A9B29E" id="clock"></div>
   </div>
 
-  <!-- Gift hamper milestones -->
-  <div class="card">
-    <div class="card-title">Gift hamper milestones</div>
-    <div style="font-size:12px;color:#888;margin-bottom:12px">Customers automatically notified when they reach these milestones</div>
-    <div class="hamper-grid">
-      <div class="hamper-card" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;text-align:left;padding:16px">
-        <div style="font-size:40px">🎁</div>
+  <!-- Stats -->
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-val" id="stat-customers">—</div><div class="stat-lbl">Customers</div></div>
+    <div class="stat-card"><div class="stat-val" id="stat-orders">—</div><div class="stat-lbl">Orders</div></div>
+    <div class="stat-card"><div class="stat-val" id="stat-revenue">—</div><div class="stat-lbl">Revenue</div></div>
+  </div>
+
+  <!-- Today's Orders -->
+  <div class="section">
+    <div class="section-title">Today's Orders</div>
+    <div id="today-orders"><div style="color:#888;font-size:13px">Loading...</div></div>
+  </div>
+
+  <!-- Send Notification -->
+  <div class="section">
+    <div class="section-title">Send Notification</div>
+    <div class="notif-type">
+      <button class="type-btn active" onclick="setType(this,'flash')">⚡ Flash deal</button>
+      <button class="type-btn" onclick="setType(this,'special')">🎉 Special</button>
+      <button class="type-btn" onclick="setType(this,'menu')">🆕 New item</button>
+      <button class="type-btn" onclick="setType(this,'hamper')">🎁 Hamper</button>
+    </div>
+    <div class="field-label">Title</div>
+    <input class="field" id="notif-title" placeholder="e.g. Flash deal — 30 mins only!">
+    <div class="field-label">Message</div>
+    <textarea class="field" id="notif-body" placeholder="e.g. Free upgrade on any latte. Come in now!"></textarea>
+    <button class="btn btn-orange" onclick="sendNotification()" id="send-btn">Send to all customers 🔔</button>
+  </div>
+
+  <!-- Deals Manager -->
+  <div class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-title" style="margin-bottom:0">🔥 Deals & Specials</div>
+      <button class="btn-small btn-orange" onclick="toggleForm('deal-form')">+ Create Deal</button>
+    </div>
+    <div class="form-box" id="deal-form">
+      <input type="hidden" id="edit-deal-id">
+      <div class="field-label">Deal Title</div>
+      <input class="field" id="deal-title" placeholder="e.g. ⚡ Monday Morning Deal!">
+      <div class="field-label">Description</div>
+      <input class="field" id="deal-desc" placeholder="e.g. Flat White + Muffin combo">
+      <div class="field-label">Items (one per line, e.g. Flat White M)</div>
+      <textarea class="field" id="deal-items" placeholder="Flat White M&#10;Muffin"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div>
-          <div class="hamper-num">250</div>
-          <div class="hamper-lbl">coffees — Gift hamper reward</div>
-          <div class="hamper-reward" style="margin-top:6px">Customer automatically notified when they reach 250 coffees!</div>
+          <div class="field-label">Original price ($)</div>
+          <input class="field" id="deal-original" type="number" step="0.50" placeholder="Auto" style="margin-bottom:0">
+        </div>
+        <div>
+          <div class="field-label">Deal price ($)</div>
+          <input class="field" id="deal-price" type="number" step="0.50" placeholder="0.00" style="margin-bottom:0" oninput="calcSaving()">
         </div>
       </div>
-    </div>
-    <div id="hamper-customers" style="margin-top:12px"></div>
-  </div>
-</div>
-
-<!-- Customers -->
-<div class="section-full">
-  <div class="card-title">All customers</div>
-  <div id="customers-list"><div style="color:#888;font-size:13px">Loading...</div></div>
-</div>
-
-<!-- Today's orders -->
-<div class="section-full">
-  <div class="card-title">Today's orders</div>
-  <div id="today-orders"><div style="color:#888;font-size:13px">Loading...</div></div>
-</div>
-
-<!-- Manual stamp -->
-<div class="section-full">
-  <div class="card-title">Manually add stamp</div>
-  <div style="font-size:12px;color:#888;margin-bottom:12px">For customers who forgot their phone</div>
-  <div style="display:flex;gap:8px">
-    <input id="stamp-email" type="email" class="field" placeholder="Customer email address" style="flex:1">
-    <button class="btn btn-primary" style="width:auto;padding:10px 16px" onclick="addManualStamp()">+ Add Stamp</button>
-  </div>
-  <div id="stamp-result" style="font-size:13px;margin-top:10px;color:#354C3A"></div>
-</div>
-
-<!-- Customer Export -->
-<div class="section-full">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-    <div class="card-title" style="margin-bottom:0">📊 Customer Data Export</div>
-  </div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportCustomers('csv')">⬇️ CSV</button>
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportCustomers('json')">⬇️ JSON</button>
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportCustomers('tsv')">⬇️ TSV</button>
-  </div>
-  <div id="export-stats" style="font-size:13px;color:#888">Loading customer stats...</div>
-</div>
-
-<!-- Deals Manager -->
-<div class="section-full">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <div class="card-title" style="margin-bottom:0">🔥 Deals & Specials</div>
-    <button class="btn btn-accent" style="width:auto;padding:8px 16px" onclick="showDealForm()">+ Create Deal</button>
-  </div>
-
-  <!-- Deal Form -->
-  <div id="deal-form" style="display:none;background:#FDF8EE;border-radius:12px;padding:16px;margin-bottom:16px;border:1.5px solid #D48631">
-    <div style="font-size:13px;font-weight:700;color:#354C3A;margin-bottom:12px" id="deal-form-title">Create New Deal</div>
-    <input type="hidden" id="edit-deal-id">
-    
-    <div class="field-label">Deal Title</div>
-    <input class="field" id="deal-title" placeholder="e.g. ⚡ Monday Morning Deal!">
-    
-    <div class="field-label">Description</div>
-    <input class="field" id="deal-desc" placeholder="e.g. Flat White + Muffin combo">
-
-    <div class="field-label">Badge Label</div>
-    <input class="field" id="deal-badge" placeholder="e.g. DEAL, HOT, NEW, LIMITED" value="DEAL">
-
-    <div class="field-label">Items included in deal</div>
-    <div id="deal-items-container"></div>
-    <button onclick="addDealItemRow()" style="font-size:12px;color:#354C3A;background:none;border:1px dashed #A9B29E;border-radius:8px;padding:6px 14px;cursor:pointer;margin-bottom:10px;width:100%">+ Add item to deal</button>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <div>
-        <div class="field-label">Original price ($)</div>
-        <input class="field" id="deal-original-price" type="number" step="0.50" placeholder="Auto-calculated" style="margin-bottom:0;background:#f7f7f7" readonly>
+      <div id="deal-saving" style="font-size:12px;color:#354C3A;margin:8px 0;font-weight:600"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div>
+          <div class="field-label">Start time</div>
+          <input class="field" id="deal-start" type="datetime-local" style="margin-bottom:0">
+        </div>
+        <div>
+          <div class="field-label">End time</div>
+          <input class="field" id="deal-end" type="datetime-local" style="margin-bottom:0">
+        </div>
       </div>
-      <div>
-        <div class="field-label">Deal price ($)</div>
-        <input class="field" id="deal-price" type="number" step="0.50" placeholder="12.00" style="margin-bottom:0">
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-orange" onclick="saveDeal()" style="flex:1">Save Deal 🔥</button>
+        <button class="btn btn-gray" onclick="toggleForm('deal-form')" style="flex:1">Cancel</button>
       </div>
     </div>
+    <div id="deals-list"><div style="color:#888;font-size:13px">Loading deals...</div></div>
+  </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <div>
-        <div class="field-label">Start time</div>
-        <input class="field" id="deal-start" type="datetime-local" style="margin-bottom:0">
+  <!-- Menu Manager -->
+  <div class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-title" style="margin-bottom:0">Menu Manager</div>
+      <button class="btn-small btn-green" onclick="toggleForm('menu-form')">+ Add Item</button>
+    </div>
+    <div class="form-box" id="menu-form">
+      <input type="hidden" id="edit-item-id">
+      <div class="field-label">Category</div>
+      <select class="field" id="item-cat">
+        <option value="coffee">☕ Coffee</option>
+        <option value="superfood">🌿 Superfood</option>
+        <option value="signature">⭐ Signature</option>
+        <option value="ice">🧊 Ice / Frappe</option>
+        <option value="tea">🍵 Tea</option>
+        <option value="food">🥐 Food</option>
+      </select>
+      <div class="field-label">Name</div>
+      <input class="field" id="item-name" placeholder="e.g. Flat White">
+      <div class="field-label">Description (optional)</div>
+      <input class="field" id="item-desc" placeholder="e.g. Rich espresso with steamed milk">
+      <div class="field-label">Sizes & Prices (one per line, e.g. M $5.50)</div>
+      <textarea class="field" id="item-sizes" placeholder="S $5.20&#10;M $5.50&#10;L $6.50"></textarea>
+      <div style="display:flex;gap:12px;margin-bottom:10px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="item-avail" checked> Available</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="item-sig"> Signature</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="item-food"> Food item</label>
       </div>
-      <div>
-        <div class="field-label">End time</div>
-        <input class="field" id="deal-end" type="datetime-local" style="margin-bottom:0">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-green" onclick="saveMenuItem()" style="flex:1">Save Item</button>
+        <button class="btn btn-gray" onclick="toggleForm('menu-form')" style="flex:1">Cancel</button>
       </div>
     </div>
-
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="deal-active" checked> Active immediately
-      </label>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="menu-filter">
+      <button class="type-btn active" onclick="filterCat(this,'all')">All</button>
+      <button class="type-btn" onclick="filterCat(this,'coffee')">☕ Coffee</button>
+      <button class="type-btn" onclick="filterCat(this,'superfood')">🌿 Superfood</button>
+      <button class="type-btn" onclick="filterCat(this,'signature')">⭐ Signature</button>
+      <button class="type-btn" onclick="filterCat(this,'ice')">🧊 Ice</button>
+      <button class="type-btn" onclick="filterCat(this,'tea')">🍵 Tea</button>
+      <button class="type-btn" onclick="filterCat(this,'food')">🥐 Food</button>
     </div>
+    <div id="menu-list"><div style="color:#888;font-size:13px">Loading menu...</div></div>
+  </div>
 
+  <!-- Manual Stamp -->
+  <div class="section">
+    <div class="section-title">Manually Add Stamp</div>
+    <div style="font-size:12px;color:#888;margin-bottom:12px">For customers who forgot their phone</div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-accent" onclick="saveDeal()" style="flex:1">Save Deal 🔥</button>
-      <button class="btn" onclick="hideDealForm()" style="flex:1;background:#eee;color:#555">Cancel</button>
+      <input class="field" id="stamp-email" type="email" placeholder="Customer email" style="margin-bottom:0;flex:1">
+      <button class="btn-small btn-green" onclick="addStamp()">+ Add Stamp</button>
+    </div>
+    <div id="stamp-result" style="font-size:13px;margin-top:8px"></div>
+  </div>
+
+  <!-- Customers -->
+  <div class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-title" style="margin-bottom:0">All Customers</div>
+    </div>
+    <div class="download-row">
+      <button class="btn-small btn-green" onclick="exportData('customers','csv')">⬇️ CSV</button>
+      <button class="btn-small btn-green" onclick="exportData('customers','json')">⬇️ JSON</button>
+      <button class="btn-small btn-green" onclick="exportData('customers','tsv')">⬇️ TSV</button>
+    </div>
+    <div id="customers-list" style="margin-top:12px"><div style="color:#888;font-size:13px">Loading...</div></div>
+  </div>
+
+  <!-- Orders Export -->
+  <div class="section">
+    <div class="section-title">Orders Export</div>
+    <div class="download-row">
+      <button class="btn-small btn-green" onclick="exportData('orders','csv')">⬇️ CSV</button>
+      <button class="btn-small btn-green" onclick="exportData('orders','json')">⬇️ JSON</button>
+      <button class="btn-small btn-green" onclick="exportData('orders','tsv')">⬇️ TSV</button>
     </div>
   </div>
 
-  <!-- Active deals -->
-  <div style="font-size:11px;font-weight:700;color:#A9B29E;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Active & Upcoming Deals</div>
-  <div id="deals-list"><div style="color:#888;font-size:13px">Loading deals...</div></div>
-</div>
-
-<!-- Category Manager -->
-<div class="section-full">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <div class="card-title" style="margin-bottom:0">Category Manager</div>
-    <button class="btn btn-primary" style="width:auto;padding:8px 16px" onclick="showAddCategoryForm()">+ Add Category</button>
+  <!-- Notifications Export -->
+  <div class="section">
+    <div class="section-title">Notifications History & Export</div>
+    <div class="download-row">
+      <button class="btn-small btn-green" onclick="exportData('notifications','csv')">⬇️ CSV</button>
+      <button class="btn-small btn-green" onclick="exportData('notifications','json')">⬇️ JSON</button>
+      <button class="btn-small btn-green" onclick="exportData('notifications','tsv')">⬇️ TSV</button>
+    </div>
+    <div id="notif-history" style="margin-top:12px"><div style="color:#888;font-size:13px">Loading...</div></div>
   </div>
 
-  <!-- Add/Edit Category Form -->
-  <div id="cat-form" style="display:none;background:#FDF8EE;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #A9B29E">
-    <div style="font-size:13px;font-weight:700;color:#354C3A;margin-bottom:12px" id="cat-form-title">Add New Category</div>
-    <input type="hidden" id="edit-cat-key">
-    <div class="field-label">Category Key (no spaces, lowercase)</div>
-    <input class="field" id="cat-key" placeholder="e.g. smoothies" style="margin-bottom:8px">
-    <div class="field-label">Display Name</div>
-    <input class="field" id="cat-display" placeholder="e.g. 🥤 Smoothies" style="margin-bottom:8px">
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-accent" onclick="saveCategory()" style="flex:1">Save Category</button>
-      <button class="btn" onclick="hideCategoryForm()" style="flex:1;background:#eee;color:#555">Cancel</button>
+  <!-- Menu Export -->
+  <div class="section">
+    <div class="section-title">Menu Export</div>
+    <div class="download-row">
+      <button class="btn-small btn-green" onclick="exportData('menu','csv')">⬇️ CSV</button>
+      <button class="btn-small btn-green" onclick="exportData('menu','json')">⬇️ JSON</button>
+      <button class="btn-small btn-green" onclick="exportData('menu','tsv')">⬇️ TSV</button>
     </div>
   </div>
 
-  <div id="categories-list"><div style="color:#888;font-size:13px">Loading categories...</div></div>
-</div>
-
-<!-- Menu Manager -->
-<div class="section-full">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <div class="card-title" style="margin-bottom:0">Menu Manager</div>
-    <button class="btn btn-primary" style="width:auto;padding:8px 16px" onclick="showAddItemForm()">+ Add Item</button>
+  <!-- Gift Hamper -->
+  <div class="section">
+    <div class="section-title">🎁 Gift Hamper — 250 Coffees</div>
+    <div style="font-size:12px;color:#888;margin-bottom:12px">Customers eligible for hamper reward</div>
+    <div id="hamper-list"><div style="color:#888;font-size:13px">Loading...</div></div>
   </div>
 
-  <!-- Add/Edit Form -->
-  <div id="menu-form" style="display:none;background:#FDF8EE;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #A9B29E">
-    <div style="font-size:13px;font-weight:700;color:#354C3A;margin-bottom:12px" id="menu-form-title">Add New Item</div>
-    <input type="hidden" id="edit-item-id">
-    <div class="field-label">Category</div>
-    <select class="field" id="item-category" style="margin-bottom:10px">
-      <option value="coffee">Coffee</option>
-      <option value="superfood">Superfood Latte</option>
-      <option value="signature">TDM Signature</option>
-      <option value="ice">Over Ice / Frappe</option>
-      <option value="tea">Tea</option>
-      <option value="food">Food</option>
-    </select>
-    <div class="field-label">Item Name</div>
-    <input class="field" id="item-name" placeholder="e.g. Flat White">
-    <div class="field-label">Description <span style="color:#A9B29E">(optional)</span></div>
-    <input class="field" id="item-desc" placeholder="e.g. Rich espresso with steamed milk">
-    <div class="field-label">Sizes & Prices</div>
-    <div id="sizes-container"></div>
-    <button onclick="addSizeRow()" style="font-size:12px;color:#354C3A;background:none;border:1px dashed #A9B29E;border-radius:8px;padding:6px 14px;cursor:pointer;margin-bottom:10px;width:100%">+ Add size option</button>
-    <div style="display:flex;gap:8px;margin-bottom:8px">
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="item-signature"> Signature drink
-      </label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="item-available" checked> Available
-      </label>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-accent" onclick="saveMenuItem()" style="flex:1">Save Item</button>
-      <button class="btn" onclick="hideMenuForm()" style="flex:1;background:#eee;color:#555">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Category filter -->
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="cat-filter">
-    <button class="type-btn active" onclick="filterMenuCat(this,'all')">All</button>
-    <button class="type-btn" onclick="filterMenuCat(this,'coffee')">☕ Coffee</button>
-    <button class="type-btn" onclick="filterMenuCat(this,'superfood')">🌿 Superfood</button>
-    <button class="type-btn" onclick="filterMenuCat(this,'signature')">⭐ Signature</button>
-    <button class="type-btn" onclick="filterMenuCat(this,'ice')">🧊 Ice</button>
-    <button class="type-btn" onclick="filterMenuCat(this,'tea')">🍵 Tea</button>
-    <button class="type-btn" onclick="filterMenuCat(this,'food')">🥐 Food</button>
-  </div>
-
-  <div id="menu-list"><div style="color:#888;font-size:13px">Loading menu...</div></div>
-</div>
-
-<!-- Orders Export -->
-<div class="section-full">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-    <div class="card-title" style="margin-bottom:0">📦 Orders Export</div>
-  </div>
-  <div style="font-size:12px;color:#888;margin-bottom:10px">Download all orders with customer details, items, prices and timestamps</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap">
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportOrders('csv')">⬇️ CSV</button>
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportOrders('json')">⬇️ JSON</button>
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportOrders('tsv')">⬇️ TSV</button>
-  </div>
-</div>
-
-<!-- Notifications Export -->
-<div class="section-full">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-    <div class="card-title" style="margin-bottom:0">🔔 Notifications Export</div>
-  </div>
-  <div style="font-size:12px;color:#888;margin-bottom:10px">Download all notifications sent to customers</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap">
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportNotifications('csv')">⬇️ CSV</button>
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportNotifications('json')">⬇️ JSON</button>
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportNotifications('tsv')">⬇️ TSV</button>
-  </div>
-</div>
-
-<!-- Menu Export -->
-<div class="section-full">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-    <div class="card-title" style="margin-bottom:0">🍽️ Menu Export</div>
-  </div>
-  <div style="font-size:12px;color:#888;margin-bottom:10px">Download your full menu with prices</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap">
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportMenu('csv')">⬇️ CSV</button>
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportMenu('json')">⬇️ JSON</button>
-    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportMenu('tsv')">⬇️ TSV</button>
-  </div>
-</div>
-
-<!-- Notification history -->
-<div class="section-full">
-  <div class="card-title">Notification history</div>
-  <div class="notif-history" id="notif-history"><div style="color:#888;font-size:13px">Loading...</div></div>
-</div>
+</div><!-- end main -->
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ============================================================
-// UNIVERSAL DOWNLOAD SYSTEM
-// Every piece of data in this app is downloadable.
-// Use: TDM_download(data, filename, format)
-// Formats: 'csv', 'json', 'tsv'
-// ============================================================
+const PASS = 'meetery2024';
+const SURL = 'https://jxlalnsemmghxukapvxv.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
+const db = supabase.createClient(SURL, SKEY);
 
-function TDM_download(data, filename, format='csv'){
-  let content, mime, ext;
-
-  if(format==='json'){
-    content = JSON.stringify(data, null, 2);
-    mime = 'application/json';
-    ext = '.json';
-  } else if(format==='tsv'){
-    content = Array.isArray(data[0])
-      ? data.map(row=>row.join('	')).join('
-')
-      : data;
-    mime = 'text/tab-separated-values';
-    ext = '.tsv';
-  } else {
-    // Default CSV
-    content = Array.isArray(data[0])
-      ? data.map(row=>row.map(cell=>{
-          const s=String(cell===null||cell===undefined?'':cell).replace(/"/g,'""');
-          return s.includes(',')||s.includes('"')||s.includes('
-')?`"${s}"`:s;
-        }).join(',')).join('
-')
-      : data;
-    mime = 'text/csv;charset=utf-8;';
-    ext = '.csv';
-  }
-
-  const blob = new Blob([content], {type: mime});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename + ext;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function TDM_downloadButtons(label, onExport){
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px';
-  ['CSV','JSON','TSV'].forEach(fmt=>{
-    const btn = document.createElement('button');
-    btn.className = 'btn btn-primary';
-    btn.style.cssText = 'width:auto;padding:6px 14px;font-size:12px';
-    btn.textContent = '⬇️ '+fmt;
-    btn.onclick = ()=>onExport(fmt.toLowerCase());
-    wrap.appendChild(btn);
-  });
-  return wrap;
-}
-
-// Global crash protection for owner dashboard
-window.onerror = function(msg, src, line, col, err){
-  console.error('[Owner] Error:', msg, 'line:', line);
-  return false;
-};
-window.addEventListener('unhandledrejection', function(e){
-  console.error('[Owner] Promise rejection:', e.reason);
-  // Show error in toast if available
-  try{ showToast('Error: ' + (e.reason?.message || e.reason || 'Unknown error')); }catch(ex){}
-});
-
-const OWNER_PASSWORD='meetery2024';
-function checkPW(){
-  const pw=document.getElementById('pw-input').value;
-  if(pw===OWNER_PASSWORD){
-    document.getElementById('pw-gate').style.display='none';
-    document.getElementById('dashboard-content').style.display='block';
-    try{loadStats();}catch(e){console.error('loadStats:',e);}
-    try{loadCustomers();}catch(e){console.error('loadCustomers:',e);}
-    try{loadNotifHistory();}catch(e){console.error('loadNotifHistory:',e);}
-    try{loadTodayOrders();}catch(e){console.error('loadTodayOrders:',e);}
-    try{loadHamperCustomers();}catch(e){console.error('loadHamperCustomers:',e);}
-    try{loadCategories();}catch(e){console.error('loadCategories:',e);}
-    try{loadMenuItems();}catch(e){console.error('loadMenuItems:',e);}
-    try{loadDealsManager();}catch(e){console.error('loadDealsManager:',e);}
-    try{loadExportStats();}catch(e){console.error('loadExportStats:',e);}
-  } else {
-    document.getElementById('pw-err').textContent='Incorrect password. Try again.';
-    document.getElementById('pw-input').value='';
-  }
-}
-
-const SURL='https://jxlalnsemmghxukapvxv.supabase.co';
-const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
-const db=supabase.createClient(SURL,SKEY);
-let notifType='flash';
+let notifType = 'flash';
+let menuCat = 'all';
+let allMenuItems = [];
 
 // Clock
 setInterval(()=>{
-  document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const el = document.getElementById('clock');
+  if(el) el.textContent = new Date().toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 },1000);
 
+// Password
+function checkPW(){
+  const pw = document.getElementById('pw-input').value;
+  if(pw === PASS){
+    document.getElementById('pw-gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    loadAll();
+  } else {
+    document.getElementById('pw-err').textContent = 'Incorrect password';
+    document.getElementById('pw-input').value = '';
+  }
+}
+
+function loadAll(){
+  loadStats();
+  loadTodayOrders();
+  loadCustomers();
+  loadMenuItems();
+  loadDeals();
+  loadNotifHistory();
+  loadHampers();
+}
+
+// ---- STATS ----
+async function loadStats(){
+  try{
+    const {data:c} = await db.from('customers').select('id');
+    const {data:o} = await db.from('orders').select('price,is_free');
+    document.getElementById('stat-customers').textContent = c?c.length:0;
+    document.getElementById('stat-orders').textContent = o?o.length:0;
+    const rev = o?o.filter(x=>!x.is_free).reduce((s,x)=>s+parseFloat(x.price||0),0):0;
+    document.getElementById('stat-revenue').textContent = '$'+rev.toFixed(2);
+  }catch(e){console.error('loadStats',e);}
+}
+
+// ---- TODAY'S ORDERS ----
+async function loadTodayOrders(){
+  try{
+    const start = new Date(); start.setHours(0,0,0,0);
+    const {data:g} = await db.from('order_groups').select('*').gte('created_at',start.toISOString()).order('created_at',{ascending:false});
+    const el = document.getElementById('today-orders');
+    if(!g||!g.length){el.innerHTML='<div style="color:#888;font-size:13px">No orders today yet</div>';return;}
+    const total = g.reduce((s,x)=>s+parseFloat(x.total||0),0);
+    el.innerHTML = `<div style="font-size:13px;color:#354C3A;font-weight:600;margin-bottom:10px">${g.length} orders · $${total.toFixed(2)} revenue</div>`+
+      g.map(x=>`<div class="row"><div><div class="row-name">${x.customer_name}</div><div class="row-detail">${new Date(x.created_at).toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'})} · ${x.payment_method==='counter'?'Pay at counter':'Paid online'}</div></div><div class="badge">$${parseFloat(x.total).toFixed(2)}</div></div>`).join('');
+  }catch(e){console.error('loadTodayOrders',e);}
+}
+
+// ---- NOTIFICATIONS ----
 function setType(btn,type){
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   notifType=type;
 }
 
-async function loadStats( /* auto-protected */){
-  const{data:customers}=await db.from('customers').select('id');
-  const{data:orders}=await db.from('orders').select('price,is_free');
-  document.getElementById('stat-customers').textContent=customers?customers.length:0;
-  document.getElementById('stat-orders').textContent=orders?orders.length:0;
-  const revenue=orders?orders.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0):0;
-  document.getElementById('stat-revenue').textContent='$'+revenue.toFixed(2);
-}
-
-// ============ CUSTOMER EXPORT ============
-async function exportCSV(){
-  try{
-    showToast('Preparing export...');
-
-    // Get all customers
-    const{data:customers}=await db.from('customers').select('*').order('created_at',{ascending:false});
-    if(!customers||!customers.length){showToast('No customers found!');return;}
-
-    // Get all stamps
-    const{data:stamps}=await db.from('stamps').select('customer_id,stamped_at');
-
-    // Get all orders
-    const{data:orders}=await db.from('orders').select('customer_id,item_name,size,price,is_free,stamps_earned,created_at,addons,note');
-
-    // Get all rewards
-    const{data:rewards}=await db.from('rewards').select('customer_id,redeemed_at');
-
-    // Build lookup maps
-    const stampMap={};
-    if(stamps)stamps.forEach(s=>{
-      if(!stampMap[s.customer_id])stampMap[s.customer_id]=[];
-      stampMap[s.customer_id].push(s.stamped_at);
-    });
-
-    const orderMap={};
-    if(orders)orders.forEach(o=>{
-      if(!orderMap[o.customer_id])orderMap[o.customer_id]=[];
-      orderMap[o.customer_id].push(o);
-    });
-
-    const rewardMap={};
-    if(rewards)rewards.forEach(r=>{
-      if(!rewardMap[r.customer_id])rewardMap[r.customer_id]=0;
-      rewardMap[r.customer_id]++;
-    });
-
-    // Build CSV rows
-    const headers=[
-      'Name','Email','Phone','Birthday','Member Since',
-      'Total Stamps','Current Stamps','Free Coffees Earned',
-      'Total Orders','Total Spent ($)','Last Order Date',
-      'Favourite Drink','VIP Tier','Notifications Enabled'
-    ];
-
-    const rows=customers.map(c=>{
-      const custStamps=stampMap[c.id]||[];
-      const custOrders=orderMap[c.id]||[];
-      const custRewards=rewardMap[c.id]||0;
-      const totalStamps=custStamps.length;
-      const currentStamps=totalStamps-(custRewards*10);
-      const totalSpent=custOrders.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0);
-      const lastOrder=custOrders.length?custOrders.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0].created_at:'—';
-      
-      // Find favourite drink
-      const drinkCounts={};
-      custOrders.filter(o=>!o.is_free).forEach(o=>{
-        const key=o.item_name+(o.size?' ('+o.size+')':'');
-        drinkCounts[key]=(drinkCounts[key]||0)+1;
-      });
-      const favDrink=Object.entries(drinkCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
-
-      // VIP tier
-      const vip=totalStamps>=200?'Platinum':totalStamps>=100?'Gold':totalStamps>=50?'Silver':totalStamps>=25?'Bronze':'—';
-
-      const joined=c.created_at?new Date(c.created_at).toLocaleDateString('en-NZ'):'—';
-      const lastOrderDate=lastOrder!=='—'?new Date(lastOrder).toLocaleDateString('en-NZ'):'—';
-      const birthday=c.birthday?new Date(c.birthday).toLocaleDateString('en-NZ'):'—';
-
-      return [
-        c.name||'',
-        c.email||'',
-        c.phone||'',
-        birthday,
-        joined,
-        totalStamps,
-        Math.max(0,currentStamps),
-        custRewards,
-        custOrders.length,
-        totalSpent.toFixed(2),
-        lastOrderDate,
-        favDrink,
-        vip,
-        c.notifications_enabled?'Yes':'No'
-      ];
-    });
-
-    // Convert to CSV
-    const csvContent=[headers,...rows]
-      .map(row=>row.map(cell=>{
-        const str=String(cell).replace(/"/g,'""');
-        return str.includes(',')||str.includes('"')||str.includes('
-')?`"${str}"`:str;
-      }).join(','))
-      .join('
-');
-
-    // Download
-    const blob=new Blob([csvContent],{type:'text/csv;charset=utf-8;'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download='TDM_Customers_'+new Date().toISOString().slice(0,10)+'.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-
-    showToast('✅ Downloaded '+customers.length+' customers!');
-    updateExportStats(customers.length, orders?.length||0, stamps?.length||0);
-
-  }catch(e){
-    showToast('Export error: '+e.message);
-    console.error(e);
-  }
-}
-
-function updateExportStats(custCount, orderCount, stampCount){
-  const el=document.getElementById('export-stats');
-  if(el)el.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
-      <div style="background:#FDF8EE;border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:22px;font-weight:700;color:#354C3A">${custCount}</div>
-        <div style="font-size:11px;color:#888">Total customers</div>
-      </div>
-      <div style="background:#FDF8EE;border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:22px;font-weight:700;color:#354C3A">${orderCount}</div>
-        <div style="font-size:11px;color:#888">Total orders</div>
-      </div>
-      <div style="background:#FDF8EE;border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:22px;font-weight:700;color:#354C3A">${stampCount}</div>
-        <div style="font-size:11px;color:#888">Total stamps</div>
-      </div>
-    </div>
-    <div style="margin-top:8px;font-size:12px;color:#A9B29E">CSV includes: name, email, phone, birthday, stamps, orders, spending, favourite drink, VIP tier</div>
-  `;
-}
-
-async function loadExportStats(){
-  try{
-    const{data:customers}=await db.from('customers').select('id');
-    const{data:orders}=await db.from('orders').select('id');
-    const{data:stamps}=await db.from('stamps').select('id');
-    updateExportStats(customers?.length||0, orders?.length||0, stamps?.length||0);
-  }catch(e){console.warn('Export stats error:',e);}
-}
-
-async function loadHamperCustomers( /* auto-protected */){
-  const{data:stamps}=await db.from('stamps').select('customer_id');
-  const{data:customers}=await db.from('customers').select('id,name,email');
-  if(!stamps||!customers)return;
-  
-  const counts={};
-  stamps.forEach(s=>{counts[s.customer_id]=(counts[s.customer_id]||0)+1;});
-  
-  // Find customers who have reached 250
-  const winners=customers.filter(c=>counts[c.id]>=250);
-  const el=document.getElementById('hamper-customers');
-  if(!el)return;
-  
-  if(winners.length===0){
-    el.innerHTML='<div style="font-size:12px;color:#888">No customers have reached 250 coffees yet</div>';
-  } else {
-    el.innerHTML='<div style="font-size:12px;font-weight:600;color:#354C3A;margin-bottom:8px">🎁 Customers eligible for hamper:</div>'+
-    winners.map(c=>`<div class="customer-row">
-      <div class="customer-name">${c.name}</div>
-      <div class="stamp-badge">${counts[c.id]} coffees ✅</div>
-    </div>`).join('');
-  }
-}
-
-async function loadCustomers( /* auto-protected */){
-  const{data:customers}=await db.from('customers').select('*').order('created_at',{ascending:false});
-  if(!customers||customers.length===0){
-    document.getElementById('customers-list').innerHTML='<div style="color:#888;font-size:13px">No customers yet</div>';
-    return;
-  }
-
-  // Get stamp counts
-  const{data:stamps}=await db.from('stamps').select('customer_id');
-  const stampCounts={};
-  if(stamps)stamps.forEach(s=>{stampCounts[s.customer_id]=(stampCounts[s.customer_id]||0)+1;});
-
-  document.getElementById('customers-list').innerHTML=customers.map(c=>{
-    const total=stampCounts[c.id]||0;
-    const current=total%10||0;
-    const joined=new Date(c.created_at).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'});
-    return `<div class="customer-row">
-      <div>
-        <div class="customer-name">${c.name}</div>
-        <div class="customer-detail">${c.email}${c.phone?' · '+c.phone:''} · Joined ${joined}</div>
-      </div>
-      <div style="text-align:right">
-        <div class="stamp-badge">${current}/10 stamps</div>
-        <div style="font-size:11px;color:#888;margin-top:3px">${total} total coffees</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function loadNotifHistory( /* auto-protected */){
-  const{data:notifs}=await db.from('notifications').select('*').order('sent_at',{ascending:false}).limit(20);
-  if(!notifs||notifs.length===0){
-    document.getElementById('notif-history').innerHTML='<div style="color:#888;font-size:13px">No notifications sent yet</div>';
-    return;
-  }
-  document.getElementById('notif-history').innerHTML=notifs.map(n=>{
-    const time=new Date(n.sent_at).toLocaleString('en-NZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-    return `<div class="notif-item">
-      <div class="notif-title">${n.title}</div>
-      <div class="notif-body">${n.body}</div>
-      <div class="notif-time">${time} · ${n.type}</div>
-    </div>`;
-  }).join('');
-}
-
-async function sendNotification( /* auto-protected */){
-  const title=document.getElementById('notif-title').value.trim();
-  const body=document.getElementById('notif-body').value.trim();
-  if(!title){showToast('Please enter a title!');return;}
-  if(!body){showToast('Please enter a message!');return;}
-
+async function sendNotification(){
+  const title = document.getElementById('notif-title').value.trim();
+  const body = document.getElementById('notif-body').value.trim();
+  if(!title||!body){showToast('Please fill in title and message');return;}
   document.getElementById('send-btn').disabled=true;
   document.getElementById('send-btn').textContent='Sending...';
-
   try{
-    // Save to notifications table
     await db.from('notifications').insert({title,body,type:notifType});
-
-    // Get all customers with FCM tokens
-    const{data:customers}=await db.from('customers').select('fcm_token').not('fcm_token','is',null);
-
-    if(!customers||customers.length===0){
-      showToast('Saved! No customers have enabled notifications yet.');
-    } else {
-      const tokens=customers.map(c=>c.fcm_token).filter(Boolean);
-      try{
-        const res=await fetch('https://daily-meetery-app.vercel.app/api/send-notification',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({tokens,title,body,type:notifType})
-        });
-        const data=await res.json();
-        if(res.ok){
-          showToast('Sent to '+data.success+' customer'+(data.success!==1?'s':'')+'! 🔔');
-        } else {
-          // API not set up yet - notification saved to DB, customers see it when they open app
-          showToast('✅ Notification saved! Customers will see it next time they open the app.');
-        }
-      }catch(e){
-        // Fallback - notification is saved in DB, customers will see it when app polls
-        showToast('✅ Notification saved! Customers will see it next time they open the app.');
-      }
-    }
-
+    showToast('✅ Notification saved! Customers will see it within 20 seconds.');
     document.getElementById('notif-title').value='';
     document.getElementById('notif-body').value='';
     loadNotifHistory();
-  }catch(e){
-    showToast('Error: '+e.message);
-  }
-
+  }catch(e){showToast('Error: '+e.message);}
   document.getElementById('send-btn').disabled=false;
   document.getElementById('send-btn').textContent='Send to all customers 🔔';
 }
 
-async function loadTodayOrders( /* auto-protected */){
-  const todayStart=new Date();todayStart.setHours(0,0,0,0);
-  const{data:groups}=await db.from('order_groups').select('*').gte('created_at',todayStart.toISOString()).order('created_at',{ascending:false});
-  const el=document.getElementById('today-orders');
-  if(!groups||groups.length===0){el.innerHTML='<div style="color:#888;font-size:13px">No orders today yet</div>';return;}
-  const total=groups.reduce((s,g)=>s+parseFloat(g.total||0),0);
-  el.innerHTML=`<div style="font-size:13px;color:#354C3A;font-weight:600;margin-bottom:10px">${groups.length} order${groups.length!==1?'s':''} today · $${total.toFixed(2)} revenue</div>`+
-  groups.map(g=>{
-    const time=new Date(g.created_at).toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'});
-    return `<div class="customer-row">
-      <div><div class="customer-name">${g.customer_name}</div><div class="customer-detail">${time} · ${g.payment_method==='counter'?'Pay at counter':'Paid online'}</div></div>
-      <div class="stamp-badge">$${parseFloat(g.total).toFixed(2)}</div>
-    </div>`;
-  }).join('');
-}
-
-async function addManualStamp( /* auto-protected */){
-  const email=document.getElementById('stamp-email').value.trim().toLowerCase();
-  const result=document.getElementById('stamp-result');
-  if(!email){result.textContent='Please enter an email address';result.style.color='#ff6b6b';return;}
-  const{data:customer}=await db.from('customers').select('id,name').eq('email',email).limit(1);
-  if(!customer||customer.length===0){result.textContent='Customer not found with that email';result.style.color='#ff6b6b';return;}
-  await db.from('stamps').insert({customer_id:customer[0].id});
-  result.textContent='✅ Stamp added for '+customer[0].name+'!';
-  result.style.color='#354C3A';
-  document.getElementById('stamp-email').value='';
-  loadCustomers();
-  setTimeout(()=>result.textContent='',3000);
-}
-
-// ============ DEALS MANAGER ============
-let allMenuItemsForDeals = [];
-
-async function loadDealsManager( /* auto-protected */){
-  // Load menu items for deal builder
-  const{data:items}=await db.from('menu_items').select('id,name,sizes,category').eq('is_available',true).order('category').order('sort_order');
-  allMenuItemsForDeals = items||[];
-
-  // Load all deals
-  const{data:deals}=await db.from('deals').select('*').order('start_time',{ascending:false});
-  const el=document.getElementById('deals-list');
-  if(!el)return;
-
-  if(!deals||deals.length===0){
-    el.innerHTML='<div style="color:#888;font-size:13px">No deals created yet</div>';
-    return;
-  }
-
-  const now=new Date();
-  el.innerHTML=deals.map(deal=>{
-    const start=new Date(deal.start_time);
-    const end=new Date(deal.end_time);
-    const isLive=deal.is_active&&now>=start&&now<=end;
-    const isUpcoming=deal.is_active&&now<start;
-    const isExpired=now>end||!deal.is_active;
-    const status=isLive?'🟢 LIVE':isUpcoming?'🕐 Upcoming':'🔴 Expired';
-    const items=deal.items.map(i=>i.name+(i.size?' ('+i.size+')':'')).join(' + ');
-    return `<div class="customer-row" style="flex-wrap:wrap;gap:6px;align-items:flex-start">
-      <div style="flex:1">
-        <div class="customer-name">${deal.title} <span style="font-size:10px;padding:2px 6px;border-radius:99px;background:${isLive?'#ECFDF5':isUpcoming?'#FFF3DC':'#fee'};color:${isLive?'#354C3A':isUpcoming?'#D48631':'#c00'}">${status}</span></div>
-        <div class="customer-detail">${items}</div>
-        <div class="customer-detail" style="color:#D48631">
-          <s style="color:#aaa">$${parseFloat(deal.original_price).toFixed(2)}</s> → $${parseFloat(deal.deal_price).toFixed(2)} · 
-          ${start.toLocaleString('en-NZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} – ${end.toLocaleString('en-NZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
-        </div>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button onclick="editDeal('${deal.id}')" style="padding:5px 10px;border-radius:8px;border:1px solid #A9B29E;background:#fff;font-size:12px;cursor:pointer;color:#354C3A">Edit</button>
-        <button onclick="toggleDeal('${deal.id}',${deal.is_active})" style="padding:5px 10px;border-radius:8px;border:1px solid ${deal.is_active?'#D48631':'#354C3A'};background:#fff;font-size:12px;cursor:pointer;color:${deal.is_active?'#D48631':'#354C3A'}">${deal.is_active?'Pause':'Resume'}</button>
-        <button onclick="deleteDeal('${deal.id}')" style="padding:5px 10px;border-radius:8px;border:1px solid #fee;background:#fff;font-size:12px;cursor:pointer;color:#c00">Delete</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function showDealForm(){
-  document.getElementById('edit-deal-id').value='';
-  document.getElementById('deal-form-title').textContent='Create New Deal';
-  document.getElementById('deal-title').value='';
-  document.getElementById('deal-desc').value='';
-  document.getElementById('deal-badge').value='DEAL';
-  document.getElementById('deal-original-price').value='';
-  document.getElementById('deal-price').value='';
-  document.getElementById('deal-active').checked=true;
-  document.getElementById('deal-items-container').innerHTML='';
-  // Set default start = now, end = midnight
-  const now=new Date();
-  const midnight=new Date();midnight.setHours(23,59,0,0);
-  document.getElementById('deal-start').value=toLocalInput(now);
-  document.getElementById('deal-end').value=toLocalInput(midnight);
-  addDealItemRow();
-  document.getElementById('deal-price').oninput=recalcDealPrices;
-  document.getElementById('deal-form').style.display='block';
-  document.getElementById('deal-form').scrollIntoView({behavior:'smooth'});
-}
-
-function hideDealForm(){
-  document.getElementById('deal-form').style.display='none';
-}
-
-function toLocalInput(date){
-  const d=new Date(date);
-  d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
-  return d.toISOString().slice(0,16);
-}
-
-function addDealItemRow(name='',size='',customPrice=''){
-  const div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap';
-  
-  // Item select — shows name + sizes
-  const sel=document.createElement('select');
-  sel.className='field';
-  sel.style.cssText='flex:2;margin-bottom:0;font-size:12px';
-  sel.innerHTML='<option value="">Select item...</option>'+
-    allMenuItemsForDeals.map(item=>
-      `<option value="${item.name}" data-sizes='${JSON.stringify(item.sizes)}' ${item.name===name?'selected':''}>${item.name}</option>`
-    ).join('');
-
-  // Size select — auto-populated from menu
-  const sizeIn=document.createElement('select');
-  sizeIn.className='field';
-  sizeIn.style.cssText='flex:1;margin-bottom:0;font-size:12px';
-  sizeIn.innerHTML='<option value="">Size...</option>';
-  if(size)sizeIn.innerHTML+=`<option value="${size}" selected>${size}</option>`;
-
-  // Price display (auto-calculated, read-only)
-  const priceIn=document.createElement('input');
-  priceIn.className='field';
-  priceIn.type='number';
-  priceIn.step='0.50';
-  priceIn.style.cssText='flex:1;margin-bottom:0;font-size:12px;background:#f7f7f7';
-  priceIn.placeholder='Auto price';
-  priceIn.readOnly=true;
-  if(customPrice)priceIn.value=customPrice;
-
-  // When item selected — populate sizes
-  sel.onchange=()=>{
-    const opt=sel.options[sel.selectedIndex];
-    const sizes=opt.dataset.sizes?JSON.parse(opt.dataset.sizes):[];
-    sizeIn.innerHTML='<option value="">Size...</option>'+
-      sizes.map(s=>`<option value="${s.l}" data-price="${s.p}">${s.l}</option>`).join('');
-    if(sizes.length===1){
-      sizeIn.selectedIndex=1;
-      priceIn.value=sizes[0].p;
-    } else {
-      priceIn.value='';
-    }
-    recalcDealPrices();
-  };
-
-  // When size selected — update price
-  sizeIn.onchange=()=>{
-    const opt=sizeIn.options[sizeIn.selectedIndex];
-    if(opt&&opt.dataset.price){
-      priceIn.value=opt.dataset.price;
-    }
-    recalcDealPrices();
-  };
-
-  // If editing - pre-populate sizes from item
-  if(name){
-    const item=allMenuItemsForDeals.find(i=>i.name===name);
-    if(item){
-      sizeIn.innerHTML='<option value="">Size...</option>'+
-        item.sizes.map(s=>`<option value="${s.l}" data-price="${s.p}" ${s.l===size?'selected':''}>${s.l}</option>`).join('');
-      if(size){
-        const found=item.sizes.find(s=>s.l===size);
-        if(found)priceIn.value=customPrice||found.p;
-      }
-    }
-  }
-
-  const removeBtn=document.createElement('button');
-  removeBtn.textContent='×';
-  removeBtn.style.cssText='background:none;border:none;color:#c00;font-size:18px;cursor:pointer;padding:0 4px';
-  removeBtn.onclick=()=>div.remove();
-
-  div.appendChild(sel);
-  div.appendChild(sizeIn);
-  div.appendChild(priceIn);
-  div.appendChild(removeBtn);
-  document.getElementById('deal-items-container').appendChild(div);
-}
-
-function recalcDealPrices(){
-  // Sum up all item prices from the rows
-  let total=0;
-  const rows=document.getElementById('deal-items-container').querySelectorAll('div');
-  rows.forEach(row=>{
-    const priceInput=row.querySelectorAll('input[type="number"]')[0];
-    if(priceInput&&priceInput.value){
-      total+=parseFloat(priceInput.value)||0;
-    }
-  });
-
-  if(total>0){
-    // Auto-set original price
-    document.getElementById('deal-original-price').value=total.toFixed(2);
-    
-    // If deal price is empty, suggest 10% off
-    const dealPriceEl=document.getElementById('deal-price');
-    if(!dealPriceEl.value){
-      dealPriceEl.value=(total*0.9).toFixed(2);
-    }
-
-    // Show savings preview
-    const dealPrice=parseFloat(dealPriceEl.value)||total;
-    const saving=(total-dealPrice).toFixed(2);
-    let preview=document.getElementById('deal-price-preview');
-    if(!preview){
-      preview=document.createElement('div');
-      preview.id='deal-price-preview';
-      preview.style.cssText='font-size:12px;color:#354C3A;font-weight:600;margin-top:4px;padding:6px 10px;background:#FDF8EE;border-radius:8px;';
-      document.getElementById('deal-price').parentElement.appendChild(preview);
-    }
-    const pct=total>0?Math.round((1-dealPrice/total)*100):0;
-    preview.textContent=saving>0?`💰 Customer saves $${saving} (${pct}% off)`:'Set a deal price below the original to show savings';
-  }
-}
-
-async function saveDeal( /* auto-protected */){
-  const id=document.getElementById('edit-deal-id').value;
-  const title=document.getElementById('deal-title').value.trim();
-  const description=document.getElementById('deal-desc').value.trim();
-  const badge=document.getElementById('deal-badge').value.trim()||'DEAL';
-  const original_price=parseFloat(document.getElementById('deal-original-price').value);
-  const deal_price=parseFloat(document.getElementById('deal-price').value);
-  const start_time=document.getElementById('deal-start').value;
-  const end_time=document.getElementById('deal-end').value;
-  const is_active=document.getElementById('deal-active').checked;
-
-  if(!title){showToast('Please enter a deal title!');return;}
-  if(isNaN(deal_price)){showToast('Please enter a deal price!');return;}
-  if(!start_time||!end_time){showToast('Please set start and end times!');return;}
-
-  // Build items array
-  const rows=document.getElementById('deal-items-container').querySelectorAll('div');
-  const items=[];
-  rows.forEach(row=>{
-    const sel=row.querySelector('select');
-    const inputs=row.querySelectorAll('input');
-    if(sel&&sel.value){
-      items.push({
-        name:sel.value,
-        size:inputs[0]?inputs[0].value:'',
-        customPrice:inputs[1]&&inputs[1].value?parseFloat(inputs[1].value):null
-      });
-    }
-  });
-
-  if(!items.length){showToast('Please add at least one item!');return;}
-
-  const data={
-    title,description,badge,items,
-    deal_price,
-    original_price:isNaN(original_price)?deal_price:original_price,
-    start_time:new Date(start_time).toISOString(),
-    end_time:new Date(end_time).toISOString(),
-    is_active
-  };
-
+async function loadNotifHistory(){
   try{
-    if(id){
-      await db.from('deals').update(data).eq('id',id);
-      showToast('✅ Deal updated!');
-    } else {
-      await db.from('deals').insert(data);
-      showToast('✅ Deal created! 🔥');
-    }
-    hideDealForm();
-    loadDealsManager();
-  }catch(e){
-    showToast('Error: '+e.message);
+    const {data:n} = await db.from('notifications').select('*').order('sent_at',{ascending:false}).limit(20);
+    const el = document.getElementById('notif-history');
+    if(!n||!n.length){el.innerHTML='<div style="color:#888;font-size:13px">No notifications sent yet</div>';return;}
+    el.innerHTML = n.map(x=>`<div class="row"><div><div class="row-name">${x.title}</div><div class="row-detail">${x.body}</div><div class="row-detail">${new Date(x.sent_at).toLocaleString('en-NZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} · ${x.type}</div></div></div>`).join('');
+  }catch(e){console.error('loadNotifHistory',e);}
+}
+
+// ---- DEALS ----
+function toggleForm(id){
+  const el = document.getElementById(id);
+  el.style.display = el.style.display==='block'?'none':'block';
+}
+
+function calcSaving(){
+  const orig = parseFloat(document.getElementById('deal-original').value)||0;
+  const deal = parseFloat(document.getElementById('deal-price').value)||0;
+  const el = document.getElementById('deal-saving');
+  if(orig>0&&deal>0&&deal<orig){
+    const save=(orig-deal).toFixed(2);
+    const pct=Math.round((1-deal/orig)*100);
+    el.textContent='💰 Customer saves $'+save+' ('+pct+'% off)';
+  } else {
+    el.textContent='';
   }
+}
+
+async function saveDeal(){
+  const id = document.getElementById('edit-deal-id').value;
+  const title = document.getElementById('deal-title').value.trim();
+  const description = document.getElementById('deal-desc').value.trim();
+  const itemsText = document.getElementById('deal-items').value.trim();
+  const deal_price = parseFloat(document.getElementById('deal-price').value);
+  const original_price = parseFloat(document.getElementById('deal-original').value)||deal_price;
+  const start_time = document.getElementById('deal-start').value;
+  const end_time = document.getElementById('deal-end').value;
+  if(!title){showToast('Please enter a title');return;}
+  if(isNaN(deal_price)){showToast('Please enter a deal price');return;}
+  if(!start_time||!end_time){showToast('Please set start and end times');return;}
+  const items = itemsText.split('\n').filter(Boolean).map(l=>({name:l.trim(),size:'',customPrice:null}));
+  const data={title,description,items,deal_price,original_price,
+    start_time:new Date(start_time).toISOString(),
+    end_time:new Date(end_time).toISOString(),is_active:true,badge:'DEAL'};
+  try{
+    if(id) await db.from('deals').update(data).eq('id',id);
+    else await db.from('deals').insert(data);
+    showToast('✅ Deal saved!');
+    document.getElementById('edit-deal-id').value='';
+    toggleForm('deal-form');
+    loadDeals();
+  }catch(e){showToast('Error: '+e.message);}
+}
+
+async function loadDeals(){
+  try{
+    const {data:deals} = await db.from('deals').select('*').order('start_time',{ascending:false});
+    const el = document.getElementById('deals-list');
+    if(!deals||!deals.length){el.innerHTML='<div style="color:#888;font-size:13px">No deals yet</div>';return;}
+    const now=new Date();
+    el.innerHTML=deals.map(d=>{
+      const start=new Date(d.start_time),end=new Date(d.end_time);
+      const status=!d.is_active?'🔴 Paused':now>=start&&now<=end?'🟢 LIVE':now<start?'🕐 Upcoming':'🔴 Expired';
+      return `<div class="row"><div style="flex:1"><div class="row-name">${d.title} <span style="font-size:10px">${status}</span></div><div class="row-detail">$${parseFloat(d.deal_price).toFixed(2)} · ends ${new Date(d.end_time).toLocaleString('en-NZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div><div style="display:flex;gap:4px"><button class="btn-small btn-green" onclick="editDeal('${d.id}')">Edit</button><button class="btn-small" style="background:${d.is_active?'#FFF3DC':'#ECFDF5'};color:${d.is_active?'#D48631':'#354C3A'};border:none" onclick="toggleDeal('${d.id}',${d.is_active})">${d.is_active?'Pause':'Resume'}</button><button class="btn-small" style="background:#FEE;color:#c00;border:none" onclick="deleteDeal('${d.id}')">Del</button></div></div>`;
+    }).join('');
+  }catch(e){console.error('loadDeals',e);}
 }
 
 async function editDeal(id){
-  const{data:deals}=await db.from('deals').select('*').eq('id',id).limit(1);
-  if(!deals||!deals.length)return;
-  const deal=deals[0];
-  
+  const {data:d}=await db.from('deals').select('*').eq('id',id).limit(1);
+  if(!d||!d.length)return;
+  const deal=d[0];
   document.getElementById('edit-deal-id').value=id;
-  document.getElementById('deal-form-title').textContent='Edit Deal';
   document.getElementById('deal-title').value=deal.title;
   document.getElementById('deal-desc').value=deal.description||'';
-  document.getElementById('deal-badge').value=deal.badge||'DEAL';
-  document.getElementById('deal-original-price').value=deal.original_price;
+  document.getElementById('deal-items').value=deal.items.map(i=>i.name+(i.size?' '+i.size:'')).join('\n');
+  document.getElementById('deal-original').value=deal.original_price;
   document.getElementById('deal-price').value=deal.deal_price;
-  // Add onchange to deal price for live savings preview
-  document.getElementById('deal-price').oninput=recalcDealPrices;
-  document.getElementById('deal-start').value=toLocalInput(deal.start_time);
-  document.getElementById('deal-end').value=toLocalInput(deal.end_time);
-  document.getElementById('deal-active').checked=deal.is_active;
-  
-  document.getElementById('deal-items-container').innerHTML='';
-  deal.items.forEach(i=>addDealItemRow(i.name,i.size,i.customPrice));
-  
+  const toLocal=dt=>{const d=new Date(dt);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
+  document.getElementById('deal-start').value=toLocal(deal.start_time);
+  document.getElementById('deal-end').value=toLocal(deal.end_time);
   document.getElementById('deal-form').style.display='block';
-  document.getElementById('deal-form').scrollIntoView({behavior:'smooth'});
+  calcSaving();
 }
 
 async function toggleDeal(id,current){
   await db.from('deals').update({is_active:!current}).eq('id',id);
   showToast(current?'Deal paused':'Deal resumed!');
-  loadDealsManager();
+  loadDeals();
 }
 
 async function deleteDeal(id){
   if(!confirm('Delete this deal?'))return;
   await db.from('deals').delete().eq('id',id);
   showToast('Deal deleted');
-  loadDealsManager();
+  loadDeals();
 }
 
-// ============ CATEGORY MANAGER ============
-// Default categories stored in localStorage (can be customised)
-const DEFAULT_CATEGORIES = [
-  {key:'coffee', display:'☕ Coffee'},
-  {key:'superfood', display:'🌿 Superfood Latte'},
-  {key:'signature', display:'⭐ TDM Signature'},
-  {key:'ice', display:'🧊 Over Ice / Frappe'},
-  {key:'tea', display:'🍵 Tea'},
-  {key:'food', display:'🥐 Food'},
-];
-
-function getCategories(){
+// ---- MENU ----
+async function loadMenuItems(){
   try{
-    const saved=localStorage.getItem('tdm_categories');
-    return saved?JSON.parse(saved):DEFAULT_CATEGORIES;
-  }catch(e){return DEFAULT_CATEGORIES;}
+    const {data:items}=await db.from('menu_items').select('*').order('category').order('sort_order');
+    allMenuItems=items||[];
+    renderMenu();
+  }catch(e){console.error('loadMenuItems',e);}
 }
 
-function saveCategories(cats){
-  localStorage.setItem('tdm_categories',JSON.stringify(cats));
-}
-
-function loadCategories(){
-  const cats=getCategories();
-  const el=document.getElementById('categories-list');
-  if(!el)return;
-  
-  el.innerHTML=cats.map((cat,i)=>`
-    <div class="customer-row" style="flex-wrap:wrap;gap:6px">
-      <div style="flex:1">
-        <div class="customer-name">${cat.display}</div>
-        <div class="customer-detail">Key: ${cat.key}</div>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button onclick="editCategory(${i})" style="padding:5px 12px;border-radius:8px;border:1px solid #A9B29E;background:#fff;font-size:12px;cursor:pointer;color:#354C3A">Rename</button>
-        <button onclick="deleteCategoryConfirm('${cat.key}','${cat.display}',${i})" style="padding:5px 12px;border-radius:8px;border:1px solid #fee;background:#fff;font-size:12px;cursor:pointer;color:#c00">Delete</button>
-      </div>
-    </div>`).join('');
-
-  // Also update the category filter buttons in menu manager
-  updateMenuCatFilter(cats);
-}
-
-function updateMenuCatFilter(cats){
-  const filter=document.getElementById('cat-filter');
-  if(!filter)return;
-  filter.innerHTML=`<button class="type-btn active" onclick="filterMenuCat(this,'all')">All</button>`+
-    cats.map(c=>`<button class="type-btn" onclick="filterMenuCat(this,'${c.key}')">${c.display}</button>`).join('');
-  
-  // Also update category dropdown in menu form
-  const sel=document.getElementById('item-category');
-  if(sel){
-    sel.innerHTML=cats.map(c=>`<option value="${c.key}">${c.display}</option>`).join('');
-  }
-}
-
-function showAddCategoryForm(){
-  document.getElementById('edit-cat-key').value='';
-  document.getElementById('cat-form-title').textContent='Add New Category';
-  document.getElementById('cat-key').value='';
-  document.getElementById('cat-key').disabled=false;
-  document.getElementById('cat-display').value='';
-  document.getElementById('cat-form').style.display='block';
-  document.getElementById('cat-form').scrollIntoView({behavior:'smooth'});
-}
-
-function hideCategoryForm(){
-  document.getElementById('cat-form').style.display='none';
-}
-
-function editCategory(index){
-  const cats=getCategories();
-  const cat=cats[index];
-  document.getElementById('edit-cat-key').value=index;
-  document.getElementById('cat-form-title').textContent='Rename Category';
-  document.getElementById('cat-key').value=cat.key;
-  document.getElementById('cat-key').disabled=true; // Can't change key, only display name
-  document.getElementById('cat-display').value=cat.display;
-  document.getElementById('cat-form').style.display='block';
-  document.getElementById('cat-form').scrollIntoView({behavior:'smooth'});
-}
-
-function saveCategory(){
-  const editIndex=document.getElementById('edit-cat-key').value;
-  const key=document.getElementById('cat-key').value.trim().toLowerCase().replace(/\s+/g,'-');
-  const display=document.getElementById('cat-display').value.trim();
-  
-  if(!key){showToast('Please enter a category key!');return;}
-  if(!display){showToast('Please enter a display name!');return;}
-  
-  const cats=getCategories();
-  
-  if(editIndex!==''){
-    // Editing existing
-    cats[parseInt(editIndex)].display=display;
-    showToast('✅ Category renamed to "'+display+'"!');
-  } else {
-    // Check for duplicate key
-    if(cats.find(c=>c.key===key)){showToast('A category with that key already exists!');return;}
-    cats.push({key,display});
-    showToast('✅ Category "'+display+'" added!');
-  }
-  
-  saveCategories(cats);
-  hideCategoryForm();
-  loadCategories();
-  loadMenuItems();
-}
-
-function deleteCategoryConfirm(key, display, index){
-  if(!confirm('Delete "'+display+'"? Items in this category will NOT be deleted.')){return;}
-  
-  const cats=getCategories();
-  cats.splice(index,1);
-  saveCategories(cats);
-  showToast('Category "'+display+'" deleted!');
-  loadCategories();
-  loadMenuItems();
-}
-
-// ============ MENU MANAGER ============
-let allMenuItems = [];
-let currentMenuCat = 'all';
-
-async function loadMenuItems( /* auto-protected */){
-  const{data:items}=await db.from('menu_items').select('*').order('category').order('sort_order');
-  if(!items){document.getElementById('menu-list').innerHTML='<div style="color:#888;font-size:13px">No items found</div>';return;}
-  allMenuItems = items;
-  renderMenuList();
-}
-
-function filterMenuCat(btn, cat){
-  document.querySelectorAll('#cat-filter .type-btn').forEach(b=>b.classList.remove('active'));
+function filterCat(btn,cat){
+  document.querySelectorAll('#menu-filter .type-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  currentMenuCat = cat;
-  renderMenuList();
+  menuCat=cat;
+  renderMenu();
 }
 
-function renderMenuList(){
-  const items = currentMenuCat==='all' ? allMenuItems : allMenuItems.filter(i=>i.category===currentMenuCat);
-  if(!items.length){document.getElementById('menu-list').innerHTML='<div style="color:#888;font-size:13px">No items in this category</div>';return;}
-  
-  const catLabels={coffee:'☕ Coffee',superfood:'🌿 Superfood Latte',signature:'⭐ TDM Signature',ice:'🧊 Over Ice / Frappe',tea:'🍵 Tea',food:'🥐 Food'};
-  
-  let html='';
-  let lastCat='';
-  items.forEach(item=>{
-    if(item.category!==lastCat){
-      html+=`<div style="font-size:11px;font-weight:700;color:#A9B29E;text-transform:uppercase;letter-spacing:1px;margin:12px 0 6px">${catLabels[item.category]||item.category}</div>`;
-      lastCat=item.category;
-    }
-    const sizes=item.sizes.map(s=>s.l).join(' · ');
-    html+=`<div class="customer-row" style="flex-wrap:wrap;gap:6px">
-      <div style="flex:1">
-        <div class="customer-name" style="display:flex;align-items:center;gap:6px">
-          ${item.name}
-          ${!item.is_available?'<span style="font-size:10px;background:#fee;color:#c00;padding:2px 6px;border-radius:99px">Unavailable</span>':''}
-          ${item.is_signature?'<span style="font-size:10px;background:#FEE2E2;color:#991B1B;padding:2px 6px;border-radius:99px">Signature</span>':''}
-        </div>
-        <div class="customer-detail">${sizes}${item.description?' · '+item.description:''}</div>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button onclick="editMenuItem('${item.id}')" style="padding:5px 12px;border-radius:8px;border:1px solid #A9B29E;background:#fff;font-size:12px;cursor:pointer;color:#354C3A">Edit</button>
-        <button onclick="toggleAvailable('${item.id}',${item.is_available})" style="padding:5px 12px;border-radius:8px;border:1px solid ${item.is_available?'#D48631':'#354C3A'};background:#fff;font-size:12px;cursor:pointer;color:${item.is_available?'#D48631':'#354C3A'}">${item.is_available?'Mark sold out':'Mark available'}</button>
-        <button onclick="deleteMenuItem('${item.id}')" style="padding:5px 12px;border-radius:8px;border:1px solid #fee;background:#fff;font-size:12px;cursor:pointer;color:#c00">Delete</button>
-      </div>
-    </div>`;
+function renderMenu(){
+  const items=menuCat==='all'?allMenuItems:allMenuItems.filter(i=>i.category===menuCat);
+  const el=document.getElementById('menu-list');
+  if(!items.length){el.innerHTML='<div style="color:#888;font-size:13px">No items</div>';return;}
+  el.innerHTML=items.map(i=>{
+    const sizes=i.sizes.map(s=>s.l).join(' · ');
+    return `<div class="row"><div style="flex:1"><div class="row-name">${i.name}${!i.is_available?' <span style="font-size:10px;color:#c00">[Unavailable]</span>':''}</div><div class="row-detail">${sizes}${i.description?' · '+i.description:''}</div></div><div style="display:flex;gap:4px"><button class="btn-small btn-green" onclick="editMenuItem('${i.id}')">Edit</button><button class="btn-small" style="background:${i.is_available?'#FFF3DC':'#ECFDF5'};color:${i.is_available?'#D48631':'#354C3A'};border:none" onclick="toggleItem('${i.id}',${i.is_available})">${i.is_available?'Sold out':'Available'}</button><button class="btn-small" style="background:#FEE;color:#c00;border:none" onclick="deleteItem('${i.id}')">Del</button></div></div>`;
+  }).join('');
+}
+
+async function saveMenuItem(){
+  const id=document.getElementById('edit-item-id').value;
+  const name=document.getElementById('item-name').value.trim();
+  const description=document.getElementById('item-desc').value.trim();
+  const category=document.getElementById('item-cat').value;
+  const is_available=document.getElementById('item-avail').checked;
+  const is_signature=document.getElementById('item-sig').checked;
+  const is_food=document.getElementById('item-food').checked;
+  if(!name){showToast('Please enter item name');return;}
+  // Parse sizes from textarea
+  const sizesText=document.getElementById('item-sizes').value.trim();
+  const sizes=sizesText.split('\n').filter(Boolean).map(line=>{
+    const m=line.match(/\$([0-9.]+)/);
+    const p=m?parseFloat(m[1]):0;
+    return {l:line.trim(),p};
   });
-  document.getElementById('menu-list').innerHTML=html;
+  if(!sizes.length){showToast('Please add at least one size/price');return;}
+  const data={name,description:description||null,category,sizes,is_available,is_signature,is_food};
+  try{
+    if(id) await db.from('menu_items').update(data).eq('id',id);
+    else await db.from('menu_items').insert(data);
+    showToast('✅ '+name+' saved!');
+    document.getElementById('edit-item-id').value='';
+    document.getElementById('item-name').value='';
+    document.getElementById('item-desc').value='';
+    document.getElementById('item-sizes').value='';
+    document.getElementById('item-avail').checked=true;
+    document.getElementById('item-sig').checked=false;
+    document.getElementById('item-food').checked=false;
+    toggleForm('menu-form');
+    loadMenuItems();
+  }catch(e){showToast('Error: '+e.message);}
 }
 
-function showAddItemForm(){
-  document.getElementById('edit-item-id').value='';
-  document.getElementById('menu-form-title').textContent='Add New Item';
-  document.getElementById('item-name').value='';
-  document.getElementById('item-desc').value='';
-  document.getElementById('item-category').value='coffee';
-  document.getElementById('item-signature').checked=false;
-  document.getElementById('item-available').checked=true;
-  document.getElementById('sizes-container').innerHTML='';
-  addSizeRow();
-  document.getElementById('menu-form').style.display='block';
-  document.getElementById('menu-form').scrollIntoView({behavior:'smooth'});
-}
-
-function hideMenuForm(){
-  document.getElementById('menu-form').style.display='none';
-}
-
-function addSizeRow(label='', price=''){
-  const div=document.createElement('div');
-  div.style.cssText='display:flex;gap:8px;margin-bottom:8px;align-items:center';
-  const labelIn=document.createElement('input');
-  labelIn.className='field';
-  labelIn.placeholder='Label e.g. M $5.50';
-  labelIn.style.cssText='flex:1;margin-bottom:0';
-  labelIn.value=label;
-
-  const priceIn=document.createElement('input');
-  priceIn.className='field';
-  priceIn.type='number';
-  priceIn.step='0.10';
-  priceIn.placeholder='Price';
-  priceIn.style.cssText='flex:1;margin-bottom:0';
-  priceIn.value=price;
-
-  // Auto-extract price from label if typed like "M $5.50"
-  labelIn.oninput=()=>{
-    const match=labelIn.value.match(/\$([0-9]+\.?[0-9]*)/);
-    if(match&&!priceIn.value){
-      priceIn.value=parseFloat(match[1]).toFixed(2);
-    }
-  };
-
-  const removeBtn=document.createElement('button');
-  removeBtn.textContent='×';
-  removeBtn.style.cssText='background:none;border:none;color:#c00;font-size:18px;cursor:pointer;padding:0 4px';
-  removeBtn.onclick=()=>div.remove();
-
-  div.appendChild(labelIn);
-  div.appendChild(priceIn);
-  div.appendChild(removeBtn);
-  document.getElementById('sizes-container').appendChild(div);
-}
-
-function editMenuItem(id){
+async function editMenuItem(id){
   const item=allMenuItems.find(i=>i.id===id);
   if(!item)return;
   document.getElementById('edit-item-id').value=id;
-  document.getElementById('menu-form-title').textContent='Edit Item';
   document.getElementById('item-name').value=item.name;
   document.getElementById('item-desc').value=item.description||'';
-  document.getElementById('item-category').value=item.category;
-  document.getElementById('item-signature').checked=item.is_signature;
-  document.getElementById('item-available').checked=item.is_available;
-  document.getElementById('sizes-container').innerHTML='';
-  item.sizes.forEach(s=>addSizeRow(s.l,s.p));
+  document.getElementById('item-cat').value=item.category;
+  document.getElementById('item-sizes').value=item.sizes.map(s=>s.l).join('\n');
+  document.getElementById('item-avail').checked=item.is_available;
+  document.getElementById('item-sig').checked=item.is_signature;
+  document.getElementById('item-food').checked=item.is_food;
   document.getElementById('menu-form').style.display='block';
-  document.getElementById('menu-form').scrollIntoView({behavior:'smooth'});
 }
 
-async function saveMenuItem( /* auto-protected */){
-  const id=document.getElementById('edit-item-id').value;
-  const name=document.getElementById('item-name').value.trim();
-  const desc=document.getElementById('item-desc').value.trim();
-  const category=document.getElementById('item-category').value;
-  const is_signature=document.getElementById('item-signature').checked;
-  const is_available=document.getElementById('item-available').checked;
-  const is_food=category==='food';
-
-  if(!name){showToast('Please enter item name!');return;}
-
-  // Build sizes array
-  const sizeRows=document.getElementById('sizes-container').querySelectorAll('div');
-  const sizes=[];
-  sizeRows.forEach(row=>{
-    const inputs=row.querySelectorAll('input');
-    if(inputs.length>=2){
-      const l=inputs[0].value.trim();
-      const p=parseFloat(inputs[1].value);
-      // Auto-generate label with price if not already included
-      const finalLabel=l.includes('$')?l:l+' $'+p.toFixed(2);
-      if(l&&!isNaN(p))sizes.push({l:finalLabel,p});
-    }
-  });
-
-  if(!sizes.length){showToast('Please add at least one size/price!');return;}
-
-  const data={name,description:desc||null,category,sizes,is_signature,is_available,is_food};
-
-  try{
-    if(id){
-      await db.from('menu_items').update(data).eq('id',id);
-      showToast('✅ '+name+' updated!');
-    } else {
-      await db.from('menu_items').insert(data);
-      showToast('✅ '+name+' added to menu!');
-    }
-    hideMenuForm();
-    loadMenuItems();
-  }catch(e){
-    showToast('Error: '+e.message);
-  }
-}
-
-async function toggleAvailable(id, current){
+async function toggleItem(id,current){
   await db.from('menu_items').update({is_available:!current}).eq('id',id);
   showToast(current?'Item marked as sold out':'Item marked as available');
   loadMenuItems();
 }
 
-async function deleteMenuItem(id){
-  const item=allMenuItems.find(i=>i.id===id);
-  if(!confirm('Delete '+item.name+'? This cannot be undone.'))return;
+async function deleteItem(id){
+  if(!confirm('Delete this item?'))return;
   await db.from('menu_items').delete().eq('id',id);
   showToast('Item deleted');
   loadMenuItems();
 }
 
-// ============ ALL EXPORT FUNCTIONS ============
+// ---- MANUAL STAMP ----
+async function addStamp(){
+  const email=document.getElementById('stamp-email').value.trim().toLowerCase();
+  const result=document.getElementById('stamp-result');
+  if(!email){result.textContent='Please enter email';result.style.color='#c00';return;}
+  const {data:c}=await db.from('customers').select('id,name').eq('email',email).limit(1);
+  if(!c||!c.length){result.textContent='Customer not found';result.style.color='#c00';return;}
+  await db.from('stamps').insert({customer_id:c[0].id});
+  result.textContent='✅ Stamp added for '+c[0].name+'!';
+  result.style.color='#354C3A';
+  document.getElementById('stamp-email').value='';
+  setTimeout(()=>result.textContent='',3000);
+}
 
-async function exportCustomers(format){
+// ---- CUSTOMERS ----
+async function loadCustomers(){
   try{
-    showToast('Preparing customers export...');
-    const{data:customers}=await db.from('customers').select('*').order('created_at',{ascending:false});
-    const{data:stamps}=await db.from('stamps').select('customer_id');
-    const{data:orders}=await db.from('orders').select('customer_id,price,is_free,item_name,size,created_at');
-    const{data:rewards}=await db.from('rewards').select('customer_id');
-
+    const {data:customers}=await db.from('customers').select('*').order('created_at',{ascending:false});
+    const {data:stamps}=await db.from('stamps').select('customer_id');
     const stampMap={};
     if(stamps)stamps.forEach(s=>{stampMap[s.customer_id]=(stampMap[s.customer_id]||0)+1;});
-    const rewardMap={};
-    if(rewards)rewards.forEach(r=>{rewardMap[r.customer_id]=(rewardMap[r.customer_id]||0)+1;});
-    const orderMap={};
-    if(orders)orders.forEach(o=>{if(!orderMap[o.customer_id])orderMap[o.customer_id]=[];orderMap[o.customer_id].push(o);});
-
-    if(format==='json'){
-      const jsonData=customers.map(c=>({
-        name:c.name,email:c.email,phone:c.phone||'',birthday:c.birthday||'',
-        member_since:c.created_at,total_stamps:stampMap[c.id]||0,
-        free_coffees:rewardMap[c.id]||0,total_orders:orderMap[c.id]?.length||0,
-        total_spent:orderMap[c.id]?.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0).toFixed(2)||'0.00',
-        notifications_enabled:c.notifications_enabled?'Yes':'No'
-      }));
-      TDM_download(jsonData,'TDM_Customers_'+new Date().toISOString().slice(0,10),'json');
-    } else {
-      const headers=['Name','Email','Phone','Birthday','Member Since','Total Stamps','Free Coffees','Total Orders','Total Spent ($)','Notifications'];
-      const rows=customers.map(c=>{
-        const spent=orderMap[c.id]?.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0)||0;
-        return [c.name,c.email,c.phone||'',c.birthday||'',
-          c.created_at?new Date(c.created_at).toLocaleDateString('en-NZ'):'',
-          stampMap[c.id]||0,rewardMap[c.id]||0,orderMap[c.id]?.length||0,
-          spent.toFixed(2),c.notifications_enabled?'Yes':'No'];
-      });
-      TDM_download([headers,...rows],'TDM_Customers_'+new Date().toISOString().slice(0,10),format);
-    }
-    showToast('✅ '+customers.length+' customers exported!');
-  }catch(e){showToast('Export error: '+e.message);}
+    const el=document.getElementById('customers-list');
+    if(!customers||!customers.length){el.innerHTML='<div style="color:#888;font-size:13px">No customers yet</div>';return;}
+    el.innerHTML=customers.map(c=>{
+      const total=stampMap[c.id]||0;
+      const current=total%10||0;
+      return `<div class="row"><div><div class="row-name">${c.name}</div><div class="row-detail">${c.email}${c.phone?' · '+c.phone:''} · Joined ${new Date(c.created_at).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'})}</div></div><div style="text-align:right"><div class="badge">${current}/10 stamps</div><div style="font-size:11px;color:#888;margin-top:3px">${total} total</div></div></div>`;
+    }).join('');
+  }catch(e){console.error('loadCustomers',e);}
 }
 
-async function exportOrders(format){
+// ---- HAMPERS ----
+async function loadHampers(){
   try{
-    showToast('Preparing orders export...');
-    const{data:orders}=await db.from('orders').select('*').order('created_at',{ascending:false});
-    const{data:customers}=await db.from('customers').select('id,name,email');
-    const custMap={};
-    if(customers)customers.forEach(c=>{custMap[c.id]=c;});
-
-    if(format==='json'){
-      const jsonData=orders.map(o=>({
-        customer_name:custMap[o.customer_id]?.name||'',
-        customer_email:custMap[o.customer_id]?.email||'',
-        item:o.item_name,size:o.size,price:o.price,
-        is_free:o.is_free,addons:o.addons||'',note:o.note||'',
-        pickup_time:o.pickup_time||'',stamps_earned:o.stamps_earned,
-        date:o.created_at
-      }));
-      TDM_download(jsonData,'TDM_Orders_'+new Date().toISOString().slice(0,10),'json');
-    } else {
-      const headers=['Date','Customer Name','Email','Item','Size','Price ($)','Free?','Addons','Note','Pickup Time','Stamps Earned'];
-      const rows=orders.map(o=>[
-        o.created_at?new Date(o.created_at).toLocaleString('en-NZ'):'',
-        custMap[o.customer_id]?.name||'',custMap[o.customer_id]?.email||'',
-        o.item_name,o.size||'',parseFloat(o.price||0).toFixed(2),
-        o.is_free?'Yes':'No',o.addons||'',o.note||'',o.pickup_time||'',o.stamps_earned||0
-      ]);
-      TDM_download([headers,...rows],'TDM_Orders_'+new Date().toISOString().slice(0,10),format);
-    }
-    showToast('✅ '+orders.length+' orders exported!');
-  }catch(e){showToast('Export error: '+e.message);}
+    const {data:stamps}=await db.from('stamps').select('customer_id');
+    const {data:customers}=await db.from('customers').select('id,name,email');
+    const counts={};
+    if(stamps)stamps.forEach(s=>{counts[s.customer_id]=(counts[s.customer_id]||0)+1;});
+    const winners=(customers||[]).filter(c=>counts[c.id]>=250);
+    const el=document.getElementById('hamper-list');
+    if(!winners.length){el.innerHTML='<div style="color:#888;font-size:13px">No customers have reached 250 coffees yet</div>';return;}
+    el.innerHTML=winners.map(c=>`<div class="row"><div class="row-name">${c.name}</div><div class="badge">${counts[c.id]} coffees ✅</div></div>`).join('');
+  }catch(e){console.error('loadHampers',e);}
 }
 
-async function exportNotifications(format){
+// ---- EXPORT ----
+function TDM_download(rows, filename, format){
+  let content, mime, ext;
+  if(format==='json'){
+    content=JSON.stringify(rows,null,2); mime='application/json'; ext='.json';
+  } else if(format==='tsv'){
+    content=rows.map(r=>r.join('\t')).join('\n'); mime='text/tab-separated-values'; ext='.tsv';
+  } else {
+    content=rows.map(r=>r.map(c=>{const s=String(c===null||c===undefined?'':c).replace(/"/g,'""');return s.includes(',')||s.includes('"')?`"${s}"`:s;}).join(',')).join('\n');
+    mime='text/csv;charset=utf-8;'; ext='.csv';
+  }
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename+ext;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+async function exportData(type, format){
   try{
-    showToast('Preparing notifications export...');
-    const{data:notifs}=await db.from('notifications').select('*').order('sent_at',{ascending:false});
-    if(format==='json'){
-      TDM_download(notifs,'TDM_Notifications_'+new Date().toISOString().slice(0,10),'json');
-    } else {
+    showToast('Preparing export...');
+    if(type==='customers'){
+      const {data:c}=await db.from('customers').select('*').order('created_at',{ascending:false});
+      const {data:s}=await db.from('stamps').select('customer_id');
+      const {data:o}=await db.from('orders').select('customer_id,price,is_free');
+      const smap={};if(s)s.forEach(x=>{smap[x.customer_id]=(smap[x.customer_id]||0)+1;});
+      const omap={};if(o)o.forEach(x=>{if(!omap[x.customer_id])omap[x.customer_id]=[];omap[x.customer_id].push(x);});
+      if(format==='json'){TDM_download(c,'TDM_Customers_'+today(),format);return;}
+      const headers=['Name','Email','Phone','Birthday','Member Since','Total Stamps','Total Orders','Total Spent'];
+      const rows=(c||[]).map(x=>[x.name,x.email,x.phone||'',x.birthday||'',
+        new Date(x.created_at).toLocaleDateString('en-NZ'),smap[x.id]||0,
+        omap[x.id]?.length||0,
+        (omap[x.id]?.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0)||0).toFixed(2)]);
+      TDM_download([headers,...rows],'TDM_Customers_'+today(),format);
+      showToast('✅ '+c.length+' customers exported!');
+    } else if(type==='orders'){
+      const {data:o}=await db.from('orders').select('*').order('created_at',{ascending:false});
+      const {data:c}=await db.from('customers').select('id,name,email');
+      const cmap={};if(c)c.forEach(x=>{cmap[x.id]=x;});
+      if(format==='json'){TDM_download(o,'TDM_Orders_'+today(),format);return;}
+      const headers=['Date','Customer','Email','Item','Size','Price','Free?','Addons','Note','Stamps'];
+      const rows=(o||[]).map(x=>[new Date(x.created_at).toLocaleString('en-NZ'),
+        cmap[x.customer_id]?.name||'',cmap[x.customer_id]?.email||'',
+        x.item_name,x.size||'',parseFloat(x.price||0).toFixed(2),
+        x.is_free?'Yes':'No',x.addons||'',x.note||'',x.stamps_earned||0]);
+      TDM_download([headers,...rows],'TDM_Orders_'+today(),format);
+      showToast('✅ '+o.length+' orders exported!');
+    } else if(type==='notifications'){
+      const {data:n}=await db.from('notifications').select('*').order('sent_at',{ascending:false});
+      if(format==='json'){TDM_download(n,'TDM_Notifications_'+today(),format);return;}
       const headers=['Title','Message','Type','Sent At'];
-      const rows=notifs.map(n=>[n.title,n.body,n.type,new Date(n.sent_at).toLocaleString('en-NZ')]);
-      TDM_download([headers,...rows],'TDM_Notifications_'+new Date().toISOString().slice(0,10),format);
+      const rows=(n||[]).map(x=>[x.title,x.body,x.type,new Date(x.sent_at).toLocaleString('en-NZ')]);
+      TDM_download([headers,...rows],'TDM_Notifications_'+today(),format);
+      showToast('✅ Notifications exported!');
+    } else if(type==='menu'){
+      const {data:m}=await db.from('menu_items').select('*').order('category').order('sort_order');
+      if(format==='json'){TDM_download(m,'TDM_Menu_'+today(),format);return;}
+      const headers=['Category','Name','Description','Sizes','Available','Signature','Food'];
+      const rows=(m||[]).map(x=>[x.category,x.name,x.description||'',
+        x.sizes.map(s=>s.l).join(' | '),
+        x.is_available?'Yes':'No',x.is_signature?'Yes':'No',x.is_food?'Yes':'No']);
+      TDM_download([headers,...rows],'TDM_Menu_'+today(),format);
+      showToast('✅ Menu exported!');
     }
-    showToast('✅ '+notifs.length+' notifications exported!');
   }catch(e){showToast('Export error: '+e.message);}
 }
 
-async function exportMenu(format){
-  try{
-    showToast('Preparing menu export...');
-    const{data:items}=await db.from('menu_items').select('*').order('category').order('sort_order');
-    if(format==='json'){
-      TDM_download(items,'TDM_Menu_'+new Date().toISOString().slice(0,10),'json');
-    } else {
-      const headers=['Category','Name','Description','Sizes & Prices','Available','Signature','Food'];
-      const rows=items.map(i=>[
-        i.category,i.name,i.description||'',
-        i.sizes.map(s=>s.l).join(' | '),
-        i.is_available?'Yes':'No',i.is_signature?'Yes':'No',i.is_food?'Yes':'No'
-      ]);
-      TDM_download([headers,...rows],'TDM_Menu_'+new Date().toISOString().slice(0,10),format);
-    }
-    showToast('✅ Menu exported!');
-  }catch(e){showToast('Export error: '+e.message);}
-}
+function today(){return new Date().toISOString().slice(0,10);}
 
 function showToast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
+  t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),4000);
 }
-
-// Loaded after password check
 </script>
-</div>
+
 </body>
 </html>
