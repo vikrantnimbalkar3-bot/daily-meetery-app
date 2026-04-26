@@ -157,6 +157,30 @@
   <div id="stamp-result" style="font-size:13px;margin-top:10px;color:#354C3A"></div>
 </div>
 
+<!-- Category Manager -->
+<div class="section-full">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div class="card-title" style="margin-bottom:0">Category Manager</div>
+    <button class="btn btn-primary" style="width:auto;padding:8px 16px" onclick="showAddCategoryForm()">+ Add Category</button>
+  </div>
+
+  <!-- Add/Edit Category Form -->
+  <div id="cat-form" style="display:none;background:#FDF8EE;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #A9B29E">
+    <div style="font-size:13px;font-weight:700;color:#354C3A;margin-bottom:12px" id="cat-form-title">Add New Category</div>
+    <input type="hidden" id="edit-cat-key">
+    <div class="field-label">Category Key (no spaces, lowercase)</div>
+    <input class="field" id="cat-key" placeholder="e.g. smoothies" style="margin-bottom:8px">
+    <div class="field-label">Display Name</div>
+    <input class="field" id="cat-display" placeholder="e.g. 🥤 Smoothies" style="margin-bottom:8px">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-accent" onclick="saveCategory()" style="flex:1">Save Category</button>
+      <button class="btn" onclick="hideCategoryForm()" style="flex:1;background:#eee;color:#555">Cancel</button>
+    </div>
+  </div>
+
+  <div id="categories-list"><div style="color:#888;font-size:13px">Loading categories...</div></div>
+</div>
+
 <!-- Menu Manager -->
 <div class="section-full">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -227,7 +251,7 @@ function checkPW(){
   if(pw===OWNER_PASSWORD){
     document.getElementById('pw-gate').style.display='none';
     document.getElementById('dashboard-content').style.display='block';
-    loadStats();loadCustomers();loadNotifHistory();loadTodayOrders();loadHamperCustomers();loadMenuItems();
+    loadStats();loadCustomers();loadNotifHistory();loadTodayOrders();loadHamperCustomers();loadCategories();loadMenuItems();
   } else {
     document.getElementById('pw-err').textContent='Incorrect password. Try again.';
     document.getElementById('pw-input').value='';
@@ -406,6 +430,128 @@ async function addManualStamp(){
   document.getElementById('stamp-email').value='';
   loadCustomers();
   setTimeout(()=>result.textContent='',3000);
+}
+
+// ============ CATEGORY MANAGER ============
+// Default categories stored in localStorage (can be customised)
+const DEFAULT_CATEGORIES = [
+  {key:'coffee', display:'☕ Coffee'},
+  {key:'superfood', display:'🌿 Superfood Latte'},
+  {key:'signature', display:'⭐ TDM Signature'},
+  {key:'ice', display:'🧊 Over Ice / Frappe'},
+  {key:'tea', display:'🍵 Tea'},
+  {key:'food', display:'🥐 Food'},
+];
+
+function getCategories(){
+  try{
+    const saved=localStorage.getItem('tdm_categories');
+    return saved?JSON.parse(saved):DEFAULT_CATEGORIES;
+  }catch(e){return DEFAULT_CATEGORIES;}
+}
+
+function saveCategories(cats){
+  localStorage.setItem('tdm_categories',JSON.stringify(cats));
+}
+
+function loadCategories(){
+  const cats=getCategories();
+  const el=document.getElementById('categories-list');
+  if(!el)return;
+  
+  el.innerHTML=cats.map((cat,i)=>`
+    <div class="customer-row" style="flex-wrap:wrap;gap:6px">
+      <div style="flex:1">
+        <div class="customer-name">${cat.display}</div>
+        <div class="customer-detail">Key: ${cat.key}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="editCategory(${i})" style="padding:5px 12px;border-radius:8px;border:1px solid #A9B29E;background:#fff;font-size:12px;cursor:pointer;color:#354C3A">Rename</button>
+        <button onclick="deleteCategoryConfirm('${cat.key}','${cat.display}',${i})" style="padding:5px 12px;border-radius:8px;border:1px solid #fee;background:#fff;font-size:12px;cursor:pointer;color:#c00">Delete</button>
+      </div>
+    </div>`).join('');
+
+  // Also update the category filter buttons in menu manager
+  updateMenuCatFilter(cats);
+}
+
+function updateMenuCatFilter(cats){
+  const filter=document.getElementById('cat-filter');
+  if(!filter)return;
+  filter.innerHTML=`<button class="type-btn active" onclick="filterMenuCat(this,'all')">All</button>`+
+    cats.map(c=>`<button class="type-btn" onclick="filterMenuCat(this,'${c.key}')">${c.display}</button>`).join('');
+  
+  // Also update category dropdown in menu form
+  const sel=document.getElementById('item-category');
+  if(sel){
+    sel.innerHTML=cats.map(c=>`<option value="${c.key}">${c.display}</option>`).join('');
+  }
+}
+
+function showAddCategoryForm(){
+  document.getElementById('edit-cat-key').value='';
+  document.getElementById('cat-form-title').textContent='Add New Category';
+  document.getElementById('cat-key').value='';
+  document.getElementById('cat-key').disabled=false;
+  document.getElementById('cat-display').value='';
+  document.getElementById('cat-form').style.display='block';
+  document.getElementById('cat-form').scrollIntoView({behavior:'smooth'});
+}
+
+function hideCategoryForm(){
+  document.getElementById('cat-form').style.display='none';
+}
+
+function editCategory(index){
+  const cats=getCategories();
+  const cat=cats[index];
+  document.getElementById('edit-cat-key').value=index;
+  document.getElementById('cat-form-title').textContent='Rename Category';
+  document.getElementById('cat-key').value=cat.key;
+  document.getElementById('cat-key').disabled=true; // Can't change key, only display name
+  document.getElementById('cat-display').value=cat.display;
+  document.getElementById('cat-form').style.display='block';
+  document.getElementById('cat-form').scrollIntoView({behavior:'smooth'});
+}
+
+function saveCategory(){
+  const editIndex=document.getElementById('edit-cat-key').value;
+  const key=document.getElementById('cat-key').value.trim().toLowerCase().replace(/\s+/g,'-');
+  const display=document.getElementById('cat-display').value.trim();
+  
+  if(!key){showToast('Please enter a category key!');return;}
+  if(!display){showToast('Please enter a display name!');return;}
+  
+  const cats=getCategories();
+  
+  if(editIndex!==''){
+    // Editing existing
+    cats[parseInt(editIndex)].display=display;
+    showToast('✅ Category renamed to "'+display+'"!');
+  } else {
+    // Check for duplicate key
+    if(cats.find(c=>c.key===key)){showToast('A category with that key already exists!');return;}
+    cats.push({key,display});
+    showToast('✅ Category "'+display+'" added!');
+  }
+  
+  saveCategories(cats);
+  hideCategoryForm();
+  loadCategories();
+  loadMenuItems();
+}
+
+function deleteCategoryConfirm(key, display, index){
+  if(!confirm('Delete category "'+display+'"?
+
+Note: Menu items in this category will NOT be deleted — they will just not appear in this category filter anymore.')){return;}
+  
+  const cats=getCategories();
+  cats.splice(index,1);
+  saveCategories(cats);
+  showToast('Category "'+display+'" deleted!');
+  loadCategories();
+  loadMenuItems();
 }
 
 // ============ MENU MANAGER ============
