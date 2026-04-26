@@ -159,12 +159,7 @@
     .vip-silver { background:#E8E8E8;color:#666; }
     .vip-gold { background:#FFF3C4;color:#B8860B; }
     .vip-platinum { background:#E8F4FD;color:#1565C0; }
-    /* Daily special banner */
-    .daily-special { background:linear-gradient(135deg,#354C3A,#D48631);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:10px; }
-    .daily-special-icon { font-size:24px;flex-shrink:0; }
-    .daily-special-title { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#A9B29E; }
-    .daily-special-name { font-size:14px;font-weight:700;color:#fff; }
-    .daily-special-price { font-size:12px;color:#FDF8EE;margin-top:1px; }
+    
     /* Streak badge */
     .streak-banner { background:#FFF3DC;border:1px solid #D48631;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px; }
     .streak-fire { font-size:20px; }
@@ -314,11 +309,7 @@
       <img src="DSC04927%20(1).jpg" alt="The Daily Meetery" style="width:100%;height:130px;object-fit:cover;object-position:center 20%;display:block;">
       <div class="phone-body">
       <div class="toast" id="toast"></div>
-<div>
-          <div class="daily-special-title">Today's Special</div>
-          <div class="daily-special-name" id="special-name">—</div>
-          <div class="daily-special-price" id="special-price">—</div>
-        </div>
+
       </div>
       <!-- Streak -->
       <div class="streak-banner" id="streak-banner" style="display:none">
@@ -540,6 +531,78 @@
 </div>
 
 <script>
+// ============================================================
+// PERMANENT CRASH PROTECTION SYSTEM
+// This runs FIRST before anything else.
+// Protects ALL current AND future features automatically.
+// DO NOT REMOVE OR MODIFY THIS BLOCK.
+// ============================================================
+
+// Core recovery function — always brings app to a usable state
+function TDM_recover(source, error){
+  console.error('[TDM] Crash caught from:', source, '|', error);
+  
+  // 1. Always dismiss splash
+  const splash = document.getElementById('splash-screen');
+  if(splash){ splash.style.opacity='0'; setTimeout(()=>{try{splash.remove();}catch(e){}}, 500); }
+  
+  // 2. Always show something useful to the user
+  setTimeout(()=>{
+    const main = document.getElementById('main-view');
+    const login = document.getElementById('login-view');
+    const loading = document.getElementById('loading-view');
+    try{
+      if(loading && loading.style.display !== 'none') loading.style.display = 'none';
+      if(main && main.style.display === 'none' && login && login.style.display === 'none'){
+        login.style.display = 'block';
+      }
+    }catch(e){}
+  }, 500);
+}
+
+// Catch ALL JS errors — current and future
+window.onerror = function(msg, src, line, col, err){
+  TDM_recover('JS Error: '+msg+' line '+line, err);
+  return false;
+};
+
+// Catch ALL unhandled promise rejections — current and future
+window.addEventListener('unhandledrejection', function(e){
+  TDM_recover('Promise rejection', e.reason);
+});
+
+// ---- SAFE HELPERS (use these throughout the app) ----
+
+// Safe getElementById — returns a dummy object if element missing
+// Use: safeGet('my-id').textContent = 'hello' — never crashes
+function safeGet(id){
+  return document.getElementById(id) || {
+    style:{display:'',opacity:'',background:'',color:''},
+    textContent:'', innerHTML:'', value:'',
+    classList:{add:()=>{},remove:()=>{},toggle:()=>{},contains:()=>false},
+    dataset:{}, after:()=>{}, appendChild:()=>{},
+    querySelectorAll:()=>[]
+  };
+}
+
+// Safe async function wrapper — wraps ANY async function with try-catch
+// Use: const result = await safeTry(myAsyncFn, arg1, arg2)
+async function safeTry(fn, ...args){
+  try{ return await fn(...args); }
+  catch(e){ console.warn('[TDM] safeTry caught:', e.message); return null; }
+}
+
+// Safe function call — wraps ANY sync function with try-catch
+// Use: safeRun(myFunction, arg1, arg2)
+function safeRun(fn, ...args){
+  try{ if(typeof fn==='function') return fn(...args); }
+  catch(e){ console.warn('[TDM] safeRun caught:', e.message); }
+}
+
+// ============================================================
+// END CRASH PROTECTION — app code below
+// ============================================================
+
 const SURL='https://jxlalnsemmghxukapvxv.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
 const STRIPE_PK='pk_test_51TGz94Pik0Ketj6i4Vtm2XFC3p6woiSfTfzrPhTwwDEgEYGpbXhznj3LRwH3OalhjBUfZVv3XeV8GRJ9XCIHbV7400MkQ0jJOL';
@@ -818,6 +881,7 @@ async function handleOrder(){
 }
 
 async function processOrder(freeItems,paidItems,msg){
+  try {
   const now=new Date().toISOString();
   const allItems=[...paidItems,...freeItems];
   const total=allItems.reduce((s,i)=>s+i.price,0);
@@ -861,7 +925,7 @@ async function processOrder(freeItems,paidItems,msg){
   stamps=totalStamps%TOTAL;
   playStampSound();
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
-  checkMilestones(totalStamps,document.getElementById('cname').textContent);
+  safeRun(checkMilestones, totalStamps, document.getElementById('cname')?.textContent||'');
   // Check new drink bonus for each unique item
   const drinkOrderItems=allItems.filter(i=>!i.isFood).map(i=>i.name);
   const uniqueDrinks=[...new Set(drinkOrderItems)];
@@ -962,8 +1026,8 @@ function showTab(tab){
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
   if(tab==='order'){renderCart();loadDeals();}
-  if(tab==='history')loadHistory();
-  if(tab==='food')renderFoodMenuTab();
+  if(tab==='history')safeTry(loadHistory);
+  if(tab==='food')safeTry(renderFoodMenuTab);
   
 }
 
@@ -1419,7 +1483,7 @@ async function loadLeaderboard(){
 }
 
 // ============ LOAD ALL CARD FEATURES ============
-async function loadCardFeatures(custId,name,email){
+async function loadCardFeatures(custId,name,email){ try {
   
   checkStreak(custId);
   loadFavouriteDrink(custId);
@@ -1434,7 +1498,7 @@ async function loadCardFeatures(custId,name,email){
   const tier=getVIPTier(totalStamps);
   if(tier){
     const nameEl=document.getElementById('cname');
-    if(!document.getElementById('vip-badge')){
+    if(nameEl&&!document.getElementById('vip-badge')){
       const badge=document.createElement('span');
       badge.id='vip-badge';
       badge.className='vip-badge '+tier.class;
@@ -1442,6 +1506,7 @@ async function loadCardFeatures(custId,name,email){
       nameEl.parentElement.appendChild(badge);
     }
   }
+  }catch(e){console.error('loadCardFeatures error:',e);}
 }
 
 // ============ ANIMATED STAMPS ============
@@ -1734,7 +1799,7 @@ async function loadWeeklySummary(){
 }
 
 // ---- NEW DRINK BONUS ----
-async function checkNewDrink(drinkName){
+async function checkNewDrink(drinkName){ try {
   if(!customerId)return;
   const{data:prev}=await db.from('orders').select('item_name').eq('customer_id',customerId).eq('item_name',drinkName);
   if(prev&&prev.length===1){
@@ -1742,6 +1807,7 @@ async function checkNewDrink(drinkName){
     await db.from('stamps').insert({customer_id:customerId});
     totalStamps++;
   }
+  }catch(e){console.warn('checkNewDrink error:',e.message);}
 }
 
 
@@ -1850,11 +1916,19 @@ async function init(){
   }
 }
 
-// Safety net: always remove splash after 4 seconds no matter what
+// Safety net: always remove splash after 3 seconds no matter what
 setTimeout(()=>{
   const splash=document.getElementById('splash-screen');
   if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
-},4000);
+  // Also show login if nothing else showing
+  setTimeout(()=>{
+    const main=document.getElementById('main-view');
+    const login=document.getElementById('login-view');
+    const loading=document.getElementById('loading-view');
+    if(loading&&loading.style.display!=='none'){loading.style.display='none';}
+    if(main&&main.style.display==='none'&&login&&login.style.display==='none'){login.style.display='block';}
+  },600);
+},3000);
 
 async function loginOrRegister(){
   const name=document.getElementById('inp-name').value.trim();
@@ -1867,7 +1941,7 @@ async function loginOrRegister(){
   err.textContent='Finding your card...';
   try{
     const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',email).limit(1);
-    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);}
+    if(ex&&ex.length>0){customerId=ex[0].id;try{await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);}catch(e){console.error('loadCard error:',e);}}
     else{const insertData={name,email};if(phone)insertData.phone=phone;if(birthday)insertData.birthday=birthday;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email,birthday);}
     err.textContent='';
   }catch(e){err.textContent='Error: '+e.message;}
@@ -1890,19 +1964,19 @@ async function loadCard(name,createdAt,phone,email,birthday){
   document.getElementById('login-view').style.display='none';
   document.getElementById('main-view').style.display='block';
   setTimeout(()=>requestNotificationPermission(customerId),2000);
-  startNotificationPoller();
-  loadDeals();
-  setInterval(loadDeals,60000); // refresh deals every minute
-  if(birthday)checkBirthday(birthday,name);
-  loadWeeklySummary();
-  loadCardFeatures(customerId,name,email||'');
+  safeRun(startNotificationPoller);
+  safeTry(loadDeals);
+  setInterval(()=>safeTry(loadDeals),60000); // refresh deals every minute
+  if(birthday)safeRun(checkBirthday, birthday, name);
+  safeTry(loadWeeklySummary);
+  safeTry(loadCardFeatures, customerId, name, email||'');
   document.getElementById('customer-row').style.display='flex';
   document.getElementById('avatar').textContent=name.charAt(0).toUpperCase();
   document.getElementById('cname').textContent=name;
   // Update greeting with time of day
   document.getElementById('greeting-text').textContent=getGreeting(name);
   // Check if near café
-  setTimeout(()=>checkGeofence(name),1000);
+  setTimeout(()=>safeRun(checkGeofence, name),1000);
   document.getElementById('csince').dataset.phone=phone||'';
   const joined=new Date(createdAt);
   document.getElementById('csince').textContent='Member since '+joined.toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
@@ -1922,7 +1996,7 @@ function logout(){
   document.getElementById('inp-phone').value='';
 }
 
-function renderCard(){
+function renderCard(){ try {
   const grid=document.getElementById('stamp-grid');
   grid.innerHTML='';
   const displayStamps=stamps>TOTAL?TOTAL:stamps;
@@ -1971,9 +2045,20 @@ function renderCard(){
     document.getElementById('redeem-btn').style.display='none';
   }
 
+  // Fav drink quick order
+  const fav=getFavDrink();
+  let favEl=document.getElementById('fav-drink-btn');
+  if(!favEl&&fav){
+    favEl=document.createElement('button');
+    favEl.id='fav-drink-btn';
+    favEl.className='fav-btn';
+    favEl.onclick=()=>{showTab('order');setTimeout(()=>showToast('Add your fave: '+fav.name+' ('+fav.size+')'),300);};
+    const statsRow=document.getElementById('stats-row-el');
+    if(statsRow)statsRow.after(favEl);
+  }
+  if(favEl&&fav)favEl.innerHTML='⭐ Quick order: '+fav.name+' ('+fav.size+') — $'+fav.price.toFixed(2);
 
-
-
+  }catch(e){console.error('renderCard error:',e);}
 }
 
 function showToast(msg){
