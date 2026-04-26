@@ -1944,7 +1944,18 @@ async function loginOrRegister(){
   err.textContent='Finding your card...';
   try{
     const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',email).limit(1);
-    if(ex&&ex.length>0){customerId=ex[0].id;try{await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);}catch(e){console.error('loadCard error:',e);}}
+    if(ex&&ex.length>0){
+        customerId=ex[0].id;
+        // Update any missing info (phone/birthday) if provided now
+        const updates={};
+        if(phone&&!ex[0].phone)updates.phone=phone;
+        if(birthday&&!ex[0].birthday)updates.birthday=birthday;
+        if(Object.keys(updates).length>0){
+          await db.from('customers').update(updates).eq('id',customerId);
+        }
+        try{await loadCard(ex[0].name,ex[0].created_at,ex[0].phone||phone,ex[0].email,ex[0].birthday||birthday);}
+        catch(e){console.error('loadCard error:',e);}
+      }
     else{const insertData={name,email};if(phone)insertData.phone=phone;if(birthday)insertData.birthday=birthday;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email,birthday);}
     err.textContent='';
   }catch(e){err.textContent='Error: '+e.message;}
