@@ -1574,11 +1574,33 @@ async function init(){
     const{error}=await db.from('customers').select('id').limit(1);
     if(error)throw error;
     document.getElementById('loading-view').style.display='none';
-    document.getElementById('login-view').style.display='block';
     buildSection('s-coffee',MENU.coffee);buildSection('s-superfood',MENU.superfood);
     buildSection('s-signature',MENU.signature);buildSection('s-ice',MENU.ice);
     buildSection('s-tea',MENU.tea);
     populatePickupTimes();
+
+    // Auto-login if previously logged in — check BEFORE showing login screen
+    const savedEmail=localStorage.getItem('tdm_customer_email');
+    if(savedEmail){
+      try{
+        const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',savedEmail).limit(1);
+        if(ex&&ex.length>0){
+          customerId=ex[0].id;
+          await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);
+        } else {
+          // Saved email not found in DB — show login
+          localStorage.removeItem('tdm_customer_email');
+          document.getElementById('login-view').style.display='block';
+        }
+      }catch(e){
+        console.log('Auto-login failed:',e.message);
+        document.getElementById('login-view').style.display='block';
+      }
+    } else {
+      // No saved email — show login screen
+      document.getElementById('login-view').style.display='block';
+    }
+
     // Dismiss splash screen
     setTimeout(()=>{
       const splash=document.getElementById('splash-screen');
@@ -1607,7 +1629,7 @@ async function loginOrRegister(){
   if(!email.includes('@')){err.textContent='Please enter a valid email.';return;}
   err.textContent='Finding your card...';
   try{
-    const{data:ex}=await db.from('customers').select('id,name,created_at,phone,birthday').eq('email',email).limit(1);
+    const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',email).limit(1);
     if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);}
     else{const insertData={name,email};if(phone)insertData.phone=phone;if(birthday)insertData.birthday=birthday;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email,birthday);}
     err.textContent='';
@@ -1625,7 +1647,9 @@ async function loadCard(name,createdAt,phone,email,birthday){
   const stampsAfterRewards=totalStamps-(rewardsEarned*TOTAL);
   stamps=stampsAfterRewards<0?0:stampsAfterRewards%TOTAL;
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
-  // Check new drink bonus for each unique item
+  // Save login to localStorage so user stays logged in on refresh
+  localStorage.setItem('tdm_customer_email', email||'');
+  localStorage.setItem('tdm_customer_name', name);
   document.getElementById('login-view').style.display='none';
   document.getElementById('main-view').style.display='block';
   setTimeout(()=>requestNotificationPermission(customerId),2000);
@@ -1648,10 +1672,15 @@ async function loadCard(name,createdAt,phone,email,birthday){
 
 function logout(){
   customerId=null;stamps=0;totalStamps=0;rewardsEarned=0;
+  localStorage.removeItem('tdm_customer_email');
+  localStorage.removeItem('tdm_customer_name');
+  if(notifPollInterval){clearInterval(notifPollInterval);notifPollInterval=null;}
   document.getElementById('login-view').style.display='block';
   document.getElementById('main-view').style.display='none';
   document.getElementById('customer-row').style.display='none';
-  document.getElementById('inp-name').value='';document.getElementById('inp-email').value='';document.getElementById('inp-phone').value='';if(document.getElementById('inp-birthday'))document.getElementById('inp-birthday').value='';
+  document.getElementById('inp-name').value='';
+  document.getElementById('inp-email').value='';
+  document.getElementById('inp-phone').value='';
 }
 
 function renderCard(){
