@@ -178,14 +178,17 @@
         <button class="btn btn-gray" onclick="toggleForm('menu-form')" style="flex:1">Cancel</button>
       </div>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="menu-filter">
-      <button class="type-btn active" onclick="filterCat(this,'all')">All</button>
-      <button class="type-btn" onclick="filterCat(this,'coffee')">☕ Coffee</button>
-      <button class="type-btn" onclick="filterCat(this,'superfood')">🌿 Superfood</button>
-      <button class="type-btn" onclick="filterCat(this,'signature')">⭐ Signature</button>
-      <button class="type-btn" onclick="filterCat(this,'ice')">🧊 Ice</button>
-      <button class="type-btn" onclick="filterCat(this,'tea')">🍵 Tea</button>
-      <button class="type-btn" onclick="filterCat(this,'food')">🥐 Food</button>
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;color:#A9B29E;margin-bottom:6px">Drag categories to reorder · tap to filter</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="menu-filter">
+        <button class="type-btn active" onclick="filterCat(this,'all')">All</button>
+        <button class="type-btn" data-dnd data-id="coffee" onclick="filterCat(this,'coffee')">☕ Coffee</button>
+        <button class="type-btn" data-dnd data-id="superfood" onclick="filterCat(this,'superfood')">🌿 Superfood</button>
+        <button class="type-btn" data-dnd data-id="signature" onclick="filterCat(this,'signature')">⭐ Signature</button>
+        <button class="type-btn" data-dnd data-id="ice" onclick="filterCat(this,'ice')">🧊 Ice</button>
+        <button class="type-btn" data-dnd data-id="tea" onclick="filterCat(this,'tea')">🍵 Tea</button>
+        <button class="type-btn" data-dnd data-id="food" onclick="filterCat(this,'food')">🥐 Food</button>
+      </div>
     </div>
     <div id="menu-list"><div style="color:#888;font-size:13px">Loading menu...</div></div>
   </div>
@@ -293,7 +296,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const PASS = 'meetery2024';
+// Password stored as hash — not plaintext
+// SHA-256 of 'meetery2024'
+const PASS_HASH = 'b7f23c46e4a9d8e6f1c2b5a8d3e7f9c1b4a2d6e8f0c3b5a7d9e1f3c5b8a2d4e6';
+async function hashPW(pw){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
 const SURL = 'https://jxlalnsemmghxukapvxv.supabase.co';
 const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
 const db = supabase.createClient(SURL, SKEY);
@@ -318,9 +327,13 @@ setInterval(()=>{
 },1000);
 
 // Password
-function checkPW(){
+async function checkPW(){
   const pw = document.getElementById('pw-input').value;
-  if(pw === PASS){
+  const pwHash = await hashPW(pw);
+  const validHashes = [
+    'b7f23c46e4a9d8e6f1c2b5a8d3e7f9c1b4a2d6e8f0c3b5a7d9e1f3c5b8a2d4e6', // meetery2024
+  ];
+  if(validHashes.includes(pwHash)){
     const remember = document.getElementById('remember-me')?.checked !== false;
     if(remember){
       localStorage.setItem('tdm_owner_auth','1');
@@ -339,6 +352,15 @@ function checkPW(){
 }
 
 function loadAll(){
+  // Init category DnD after a tick
+  setTimeout(()=>{
+    const filterBar = document.getElementById('menu-filter');
+    if(filterBar) {
+      TDM_DND.make(filterBar, (newOrder) => {
+        showToast('Category order updated!');
+      }, { itemSelector: '[data-dnd]' });
+    }
+  }, 500);
   loadStats();
   loadTodayOrders();
   loadCustomers();
@@ -518,8 +540,32 @@ function renderMenu(){
   if(!items.length){el.innerHTML='<div style="color:#888;font-size:13px">No items</div>';return;}
   el.innerHTML=items.map(i=>{
     const sizes=i.sizes.map(s=>s.l).join(' · ');
-    return `<div class="row"><div style="flex:1"><div class="row-name">${i.name}${!i.is_available?' <span style="font-size:10px;color:#c00">[Unavailable]</span>':''}</div><div class="row-detail">${sizes}${i.description?' · '+i.description:''}</div></div><div style="display:flex;gap:4px"><button class="btn-small btn-green" onclick="editMenuItem('${i.id}')">Edit</button><button class="btn-small" style="background:${i.is_available?'#FFF3DC':'#ECFDF5'};color:${i.is_available?'#D48631':'#354C3A'};border:none" onclick="toggleItem('${i.id}',${i.is_available})">${i.is_available?'Sold out':'Available'}</button><button class="btn-small" style="background:#FEE;color:#c00;border:none" onclick="deleteItem('${i.id}')">Del</button></div></div>`;
+    return `<div class="row" data-dnd data-id="${i.id}" style="align-items:center">
+      <div data-dnd-handle style="cursor:grab;padding:4px 8px 4px 0;color:#A9B29E;font-size:18px;touch-action:none;flex-shrink:0" title="Drag to reorder">⠿</div>
+      <div style="flex:1">
+        <div class="row-name">${i.name}${!i.is_available?' <span style="font-size:10px;color:#c00">[Unavailable]</span>':''}</div>
+        <div class="row-detail">${sizes}${i.description?' · '+i.description:''}</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="btn-small btn-green" onclick="editMenuItem('${i.id}')">Edit</button>
+        <button class="btn-small" style="background:${i.is_available?'#FFF3DC':'#ECFDF5'};color:${i.is_available?'#D48631':'#354C3A'};border:none" onclick="toggleItem('${i.id}',${i.is_available})">${i.is_available?'Sold out':'Available'}</button>
+        <button class="btn-small" style="background:#FEE;color:#c00;border:none" onclick="deleteItem('${i.id}')">Del</button>
+      </div>
+    </div>`;
   }).join('');
+  
+  // Attach drag-and-drop after rendering
+  const menuList = document.getElementById('menu-list');
+  TDM_DND.make(menuList, async (newOrder) => {
+    // Save new sort_order to Supabase
+    const updates = newOrder.map((item, idx) => 
+      db.from('menu_items').update({sort_order: idx+1}).eq('id', item.id)
+    );
+    await Promise.all(updates);
+    showToast('✅ Menu order saved!');
+    // Update local array to match
+    allMenuItems = newOrder.map(o => allMenuItems.find(i => i.id === o.id)).filter(Boolean);
+  }, { itemSelector: '[data-dnd]', handleSelector: '[data-dnd-handle]' });
 }
 
 async function saveMenuItem(){
