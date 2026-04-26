@@ -12,7 +12,7 @@
     .header-left { display: flex; align-items: center; gap: 10px; }
     .cafe-name { font-size: 18px; font-weight: 700; color: #fff; }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #D48631; animation: pulse 1.5s infinite; }
-    .status-dot.connected { background: #6EE7A0; }
+    .status-dot.connected { background: #A9B29E; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .status-text { font-size: 12px; color: #A9B29E; }
     .time { font-size: 13px; color: #A9B29E; }
@@ -83,7 +83,7 @@
   <input class="settings-input" id="printer-ip" value="192.168.68.56" placeholder="Printer IP address">
   <button class="settings-btn" onclick="testPrint()">🖨 Test print</button>
   <button class="settings-btn secondary" onclick="loadOrders()">🔄 Refresh</button>
-  <span style="color:#A9B29E;font-size:12px">Auto-refreshes every 5 seconds</span>
+  <span style="color:#A9B29E;font-size:12px">Auto-refreshes every 5 seconds · <strong>Drag orders to prioritise</strong></span>
 </div>
 
 <div class="section-label">Pending orders <span class="badge-count" id="pending-count">0</span></div>
@@ -112,6 +112,53 @@ function updateClock(){
 setInterval(updateClock,1000);
 updateClock();
 
+
+// ---- KITCHEN DRAG & DROP ----
+// Barista can drag urgent orders to front of queue
+const KITCHEN_DND = {
+  init(container) {
+    let dragging=null, placeholder=null, offsetY=0;
+    const getItems=()=>[...container.querySelectorAll('.order-card')];
+    const getPos=(e)=>e.touches?e.touches[0].clientY:e.clientY;
+    const ph=(el)=>{const p=document.createElement('div');p.style.cssText=`height:${el.offsetHeight}px;background:rgba(53,76,58,0.1);border:2px dashed #354C3A;border-radius:12px;margin-bottom:12px;`;return p;};
+    const start=(e,el)=>{
+      dragging=el;
+      const rect=el.getBoundingClientRect();
+      offsetY=getPos(e)-rect.top;
+      placeholder=ph(el);
+      el.after(placeholder);
+      Object.assign(el.style,{position:'fixed',top:rect.top+'px',left:rect.left+'px',width:rect.width+'px',zIndex:'999',opacity:'0.96',boxShadow:'0 12px 40px rgba(0,0,0,0.4)',transform:'scale(1.02)',pointerEvents:'none',transition:'box-shadow 0.1s,transform 0.1s'});
+      document.body.style.userSelect='none';
+    };
+    const move=(e)=>{
+      if(!dragging)return;e.preventDefault();
+      dragging.style.top=(getPos(e)-offsetY)+'px';
+      const items=getItems().filter(i=>i!==dragging);
+      let ins=null;
+      for(const item of items){const r=item.getBoundingClientRect();if(getPos(e)<r.top+r.height/2){ins=item;break;}}
+      ins?container.insertBefore(placeholder,ins):container.appendChild(placeholder);
+    };
+    const end=()=>{
+      if(!dragging)return;
+      ['position','top','left','width','zIndex','opacity','boxShadow','transform','pointerEvents','transition'].forEach(p=>dragging.style[p]='');
+      placeholder.before(dragging);placeholder.remove();
+      document.body.style.userSelect='';
+      dragging=null;placeholder=null;
+      showToast('Order prioritised! ✅');
+    };
+    const attach=(el)=>{
+      // Only drag from the order header
+      const header=el.querySelector('.order-header')||el;
+      header.style.cursor='grab';
+      header.title='Drag to prioritise this order';
+      header.addEventListener('mousedown',(e)=>{start(e,el);const up=()=>{end();window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);});
+      header.addEventListener('touchstart',(e)=>{start(e,el);const te=()=>{end();window.removeEventListener('touchmove',move);window.removeEventListener('touchend',te);};window.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',te);},{passive:true});
+    };
+    return { attach, refresh:()=>getItems().forEach(attach) };
+  }
+};
+
+let kitchenDND = null;
 async function loadOrders(){
   try{
     // Fetch unprinted order groups with their items
@@ -161,6 +208,15 @@ async function loadOrders(){
       const{data:items}=await db.from('orders').select('*').eq('order_group_id',group.id).order('created_at',{ascending:true});
       grid.appendChild(buildCard(group,items||[]));
     }
+
+    // Init/refresh drag-and-drop after cards render
+    if(!kitchenDND){
+      kitchenDND = KITCHEN_DND.init(grid);
+    } else {
+      kitchenDND.refresh();
+    }
+    // Attach to newly added cards
+    [...grid.querySelectorAll('.order-card')].forEach(card => kitchenDND.attach(card));
 
   }catch(e){
     setConnected(false);
