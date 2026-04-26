@@ -157,6 +157,15 @@
   <div id="stamp-result" style="font-size:13px;margin-top:10px;color:#354C3A"></div>
 </div>
 
+<!-- Customer Export -->
+<div class="section-full">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div class="card-title" style="margin-bottom:0">📊 Customer Data Export</div>
+    <button class="btn btn-primary" style="width:auto;padding:8px 16px" onclick="exportCSV()">⬇️ Download CSV</button>
+  </div>
+  <div id="export-stats" style="font-size:13px;color:#888">Loading customer stats...</div>
+</div>
+
 <!-- Deals Manager -->
 <div class="section-full">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -315,7 +324,7 @@ function checkPW(){
   if(pw===OWNER_PASSWORD){
     document.getElementById('pw-gate').style.display='none';
     document.getElementById('dashboard-content').style.display='block';
-    loadStats();loadCustomers();loadNotifHistory();loadTodayOrders();loadHamperCustomers();try{loadCategories();}catch(e){console.log('Cat error:',e);}loadMenuItems();loadDealsManager();
+    loadStats();loadCustomers();loadNotifHistory();loadTodayOrders();loadHamperCustomers();try{loadCategories();}catch(e){console.log('Cat error:',e);}loadMenuItems();loadDealsManager();loadExportStats();
   } else {
     document.getElementById('pw-err').textContent='Incorrect password. Try again.';
     document.getElementById('pw-input').value='';
@@ -345,6 +354,151 @@ async function loadStats(){
   document.getElementById('stat-orders').textContent=orders?orders.length:0;
   const revenue=orders?orders.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0):0;
   document.getElementById('stat-revenue').textContent='$'+revenue.toFixed(2);
+}
+
+// ============ CUSTOMER EXPORT ============
+async function exportCSV(){
+  try{
+    showToast('Preparing export...');
+
+    // Get all customers
+    const{data:customers}=await db.from('customers').select('*').order('created_at',{ascending:false});
+    if(!customers||!customers.length){showToast('No customers found!');return;}
+
+    // Get all stamps
+    const{data:stamps}=await db.from('stamps').select('customer_id,stamped_at');
+
+    // Get all orders
+    const{data:orders}=await db.from('orders').select('customer_id,item_name,size,price,is_free,stamps_earned,created_at,addons,note');
+
+    // Get all rewards
+    const{data:rewards}=await db.from('rewards').select('customer_id,redeemed_at');
+
+    // Build lookup maps
+    const stampMap={};
+    if(stamps)stamps.forEach(s=>{
+      if(!stampMap[s.customer_id])stampMap[s.customer_id]=[];
+      stampMap[s.customer_id].push(s.stamped_at);
+    });
+
+    const orderMap={};
+    if(orders)orders.forEach(o=>{
+      if(!orderMap[o.customer_id])orderMap[o.customer_id]=[];
+      orderMap[o.customer_id].push(o);
+    });
+
+    const rewardMap={};
+    if(rewards)rewards.forEach(r=>{
+      if(!rewardMap[r.customer_id])rewardMap[r.customer_id]=0;
+      rewardMap[r.customer_id]++;
+    });
+
+    // Build CSV rows
+    const headers=[
+      'Name','Email','Phone','Birthday','Member Since',
+      'Total Stamps','Current Stamps','Free Coffees Earned',
+      'Total Orders','Total Spent ($)','Last Order Date',
+      'Favourite Drink','VIP Tier','Notifications Enabled'
+    ];
+
+    const rows=customers.map(c=>{
+      const custStamps=stampMap[c.id]||[];
+      const custOrders=orderMap[c.id]||[];
+      const custRewards=rewardMap[c.id]||0;
+      const totalStamps=custStamps.length;
+      const currentStamps=totalStamps-(custRewards*10);
+      const totalSpent=custOrders.filter(o=>!o.is_free).reduce((s,o)=>s+parseFloat(o.price||0),0);
+      const lastOrder=custOrders.length?custOrders.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0].created_at:'—';
+      
+      // Find favourite drink
+      const drinkCounts={};
+      custOrders.filter(o=>!o.is_free).forEach(o=>{
+        const key=o.item_name+(o.size?' ('+o.size+')':'');
+        drinkCounts[key]=(drinkCounts[key]||0)+1;
+      });
+      const favDrink=Object.entries(drinkCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+
+      // VIP tier
+      const vip=totalStamps>=200?'Platinum':totalStamps>=100?'Gold':totalStamps>=50?'Silver':totalStamps>=25?'Bronze':'—';
+
+      const joined=c.created_at?new Date(c.created_at).toLocaleDateString('en-NZ'):'—';
+      const lastOrderDate=lastOrder!=='—'?new Date(lastOrder).toLocaleDateString('en-NZ'):'—';
+      const birthday=c.birthday?new Date(c.birthday).toLocaleDateString('en-NZ'):'—';
+
+      return [
+        c.name||'',
+        c.email||'',
+        c.phone||'',
+        birthday,
+        joined,
+        totalStamps,
+        Math.max(0,currentStamps),
+        custRewards,
+        custOrders.length,
+        totalSpent.toFixed(2),
+        lastOrderDate,
+        favDrink,
+        vip,
+        c.notifications_enabled?'Yes':'No'
+      ];
+    });
+
+    // Convert to CSV
+    const csvContent=[headers,...rows]
+      .map(row=>row.map(cell=>{
+        const str=String(cell).replace(/"/g,'""');
+        return str.includes(',')||str.includes('"')||str.includes('
+')?`"${str}"`:str;
+      }).join(','))
+      .join('
+');
+
+    // Download
+    const blob=new Blob([csvContent],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='TDM_Customers_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showToast('✅ Downloaded '+customers.length+' customers!');
+    updateExportStats(customers.length, orders?.length||0, stamps?.length||0);
+
+  }catch(e){
+    showToast('Export error: '+e.message);
+    console.error(e);
+  }
+}
+
+function updateExportStats(custCount, orderCount, stampCount){
+  const el=document.getElementById('export-stats');
+  if(el)el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+      <div style="background:#FDF8EE;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:#354C3A">${custCount}</div>
+        <div style="font-size:11px;color:#888">Total customers</div>
+      </div>
+      <div style="background:#FDF8EE;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:#354C3A">${orderCount}</div>
+        <div style="font-size:11px;color:#888">Total orders</div>
+      </div>
+      <div style="background:#FDF8EE;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:#354C3A">${stampCount}</div>
+        <div style="font-size:11px;color:#888">Total stamps</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:#A9B29E">CSV includes: name, email, phone, birthday, stamps, orders, spending, favourite drink, VIP tier</div>
+  `;
+}
+
+async function loadExportStats(){
+  try{
+    const{data:customers}=await db.from('customers').select('id');
+    const{data:orders}=await db.from('orders').select('id');
+    const{data:stamps}=await db.from('stamps').select('id');
+    updateExportStats(customers?.length||0, orders?.length||0, stamps?.length||0);
+  }catch(e){console.warn('Export stats error:',e);}
 }
 
 async function loadHamperCustomers(){
