@@ -215,6 +215,22 @@
     .popup-rule { background: #FFF3DC; border: 1px solid #D48631; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #D48631; margin-bottom: 16px; text-align: left; line-height: 1.7; }
     .popup-btn { width: 100%; padding: 11px; border-radius: 10px; background: #354C3A; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; }
     @keyframes slideUp { from{transform:translateX(-50%) translateY(20px);opacity:0} to{transform:translateX(-50%) translateY(0);opacity:1} }
+    /* Deals banner */
+    .deals-section { margin-bottom:14px; }
+    .deal-card { border-radius:12px; padding:14px 16px; margin-bottom:8px; cursor:pointer; position:relative; overflow:hidden; transition:transform 0.15s; border:2px solid transparent; }
+    .deal-card:active { transform:scale(0.98); }
+    .deal-card-bg { background:linear-gradient(135deg,#354C3A,#D48631); color:#fff; }
+    .deal-badge { display:inline-block;font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:#fff;color:#D48631;margin-bottom:8px;letter-spacing:1px; }
+    .deal-title { font-size:15px;font-weight:700;color:#fff;margin-bottom:4px; }
+    .deal-desc { font-size:12px;color:rgba(255,255,255,0.85);margin-bottom:8px; }
+    .deal-price-row { display:flex;align-items:center;gap:8px; }
+    .deal-original { font-size:13px;color:rgba(255,255,255,0.6);text-decoration:line-through; }
+    .deal-new-price { font-size:20px;font-weight:800;color:#fff; }
+    .deal-saving { font-size:11px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;color:#fff; }
+    .deal-tap { position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:24px;opacity:0.8; }
+    .deal-timer { font-size:11px;color:rgba(255,255,255,0.7);margin-top:6px; }
+    @keyframes dealPulse { 0%,100%{box-shadow:0 0 0 0 rgba(212,134,49,0.4)} 50%{box-shadow:0 0 0 8px rgba(212,134,49,0)} }
+    .deal-card-bg { animation:dealPulse 2s infinite; }
     .leaderboard-item { display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0; }
     .leaderboard-item:last-child { border-bottom:none; }
     .leaderboard-rank { font-size:20px;width:30px;text-align:center; }
@@ -314,6 +330,9 @@
         <div class="streak-fire">🔥</div>
         <div class="streak-text" id="streak-text">You're on a streak!</div>
       </div>
+      <!-- Deals Banner -->
+      <div class="deals-section" id="deals-banner" style="display:none"></div>
+
       <!-- Favourite drink -->
       <div class="fave-drink" id="fave-drink" style="display:none">
         <div>
@@ -375,6 +394,8 @@
       </div>
       <div class="phone-body">
       <div id="order-form">
+        <!-- Active deals at top of order tab -->
+        <div id="deals-banner-order" style="margin-bottom:8px"></div>
         <div id="free-banner" class="free-coffee-banner" style="display:none"></div>
         <div class="cart-section">
           <div class="cart-title">
@@ -945,7 +966,7 @@ function showTab(tab){
     document.getElementById('tab-'+t+'-view').style.display=t===tab?'block':'none';
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
-  if(tab==='order')renderCart();
+  if(tab==='order'){renderCart();loadDeals();}
   if(tab==='history')loadHistory();
   if(tab==='food')renderFoodMenuTab();
   
@@ -1597,6 +1618,99 @@ function showNotificationBanner(title, body, type){
   },8000);
 }
 
+
+// ---- DEALS BANNER ----
+let dealTimers = {};
+
+async function loadDeals(){
+  try{
+    const now=new Date().toISOString();
+    const{data:deals}=await db.from('deals')
+      .select('*')
+      .eq('is_active',true)
+      .lte('start_time',now)
+      .gte('end_time',now)
+      .order('created_at',{ascending:false});
+
+    const el=document.getElementById('deals-banner');
+    if(!el)return;
+
+    if(!deals||deals.length===0){
+      el.innerHTML='';
+      el.style.display='none';
+      return;
+    }
+
+    el.style.display='block';
+    el.innerHTML=deals.map(deal=>{
+      const saving=(parseFloat(deal.original_price)-parseFloat(deal.deal_price)).toFixed(2);
+      const endTime=new Date(deal.end_time);
+      const items=deal.items.map(i=>i.name+(i.size?' ('+i.size+')':'')).join(' + ');
+      return `<div class="deal-card deal-card-bg" onclick="addDealToCart(${JSON.stringify(deal).replace(/"/g,'&quot;')})">
+        <div class="deal-badge">${deal.badge||'DEAL'}</div>
+        <div class="deal-title">${deal.title}</div>
+        <div class="deal-desc">${deal.description||items}</div>
+        <div class="deal-price-row">
+          <span class="deal-original">$${parseFloat(deal.original_price).toFixed(2)}</span>
+          <span class="deal-new-price">$${parseFloat(deal.deal_price).toFixed(2)}</span>
+          <span class="deal-saving">Save $${saving}</span>
+        </div>
+        <div class="deal-timer" id="deal-timer-${deal.id}">⏰ Ends ${endTime.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="deal-tap">🛒</div>
+      </div>`;
+    }).join('');
+
+    // Countdown timers
+    deals.forEach(deal=>{
+      if(dealTimers[deal.id])clearInterval(dealTimers[deal.id]);
+      dealTimers[deal.id]=setInterval(()=>{
+        const el=document.getElementById('deal-timer-'+deal.id);
+        if(!el){clearInterval(dealTimers[deal.id]);return;}
+        const remaining=new Date(deal.end_time)-new Date();
+        if(remaining<=0){clearInterval(dealTimers[deal.id]);loadDeals();return;}
+        const h=Math.floor(remaining/3600000);
+        const m=Math.floor((remaining%3600000)/60000);
+        const s=Math.floor((remaining%60000)/1000);
+        el.textContent='⏰ Ends in '+(h>0?h+'h ':'')+m+'m '+s+'s';
+      },1000);
+    });
+
+  }catch(e){
+    console.log('Deals load error:',e.message);
+  }
+}
+
+function addDealToCart(deal){
+  // Add all deal items to cart at deal price split evenly
+  const items=deal.items;
+  const priceEach=parseFloat(deal.deal_price)/items.length;
+  
+  items.forEach(item=>{
+    cart.push({
+      name:item.name,
+      basePrice:item.customPrice||priceEach,
+      size:item.size||'Deal',
+      addons:'',
+      note:'Part of: '+deal.title,
+      isFood:false,
+      isDeal:true,
+      id:Date.now()+Math.random()
+    });
+  });
+
+  recalcCart();
+  
+  // Flash cart green
+  const cartSection=document.querySelector('.cart-section');
+  if(cartSection){
+    cartSection.style.background='#ECFDF5';
+    setTimeout(()=>{cartSection.style.background='#f7f7f7';},600);
+  }
+  
+  showToast('🔥 '+deal.title+' added to cart!');
+  showTab('order');
+}
+
 // ---- STAMP SOUND ----
 function playStampSound(){
   try{
@@ -1803,6 +1917,8 @@ async function loadCard(name,createdAt,phone,email,birthday){
   document.getElementById('main-view').style.display='block';
   setTimeout(()=>requestNotificationPermission(customerId),2000);
   startNotificationPoller();
+  loadDeals();
+  setInterval(loadDeals,60000); // refresh deals every minute
   if(birthday)checkBirthday(birthday,name);
   loadWeeklySummary();
   loadCardFeatures(customerId,name,email||'');
