@@ -289,6 +289,10 @@
       <input class="field" id="inp-phone" placeholder="e.g. 021 123 4567" type="tel">
       <div class="field-label">Birthday <span style="color:#A9B29E">(optional — free coffee on your birthday!)</span></div>
       <input class="field" id="inp-birthday" type="date" style="margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#888;margin-bottom:10px;cursor:pointer">
+        <input type="checkbox" id="remember-me" checked style="width:16px;height:16px;cursor:pointer;accent-color:#354C3A">
+        <span>Remember me on this device</span>
+      </label>
       <button class="main-btn" onclick="loginOrRegister()">Get my stamp card</button>
       <div class="err" id="login-err"></div>
       <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">By signing up you agree to receive offers from The Daily Meetery</div>
@@ -2065,7 +2069,7 @@ async function init(){
     populatePickupTimes();
 
     // Auto-login if previously logged in — check BEFORE showing login screen
-    const savedEmail=localStorage.getItem('tdm_customer_email');
+    const savedEmail=localStorage.getItem('tdm_customer_email')||sessionStorage.getItem('tdm_customer_email');
     if(savedEmail){
       try{
         const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',savedEmail).limit(1);
@@ -2154,9 +2158,17 @@ async function loadCard(name,createdAt,phone,email,birthday){
   const stampsAfterRewards=totalStamps-(rewardsEarned*TOTAL);
   stamps=stampsAfterRewards<0?0:stampsAfterRewards%TOTAL;
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
-  // Save login to localStorage so user stays logged in on refresh
-  localStorage.setItem('tdm_customer_email', email||'');
-  localStorage.setItem('tdm_customer_name', name);
+  // Save login — respect remember me preference
+  const rememberMe = document.getElementById('remember-me')?.checked !== false;
+  if(rememberMe){
+    localStorage.setItem('tdm_customer_email', email||'');
+    localStorage.setItem('tdm_customer_name', name);
+    sessionStorage.removeItem('tdm_customer_email');
+  } else {
+    sessionStorage.setItem('tdm_customer_email', email||'');
+    localStorage.removeItem('tdm_customer_email');
+    localStorage.removeItem('tdm_customer_name');
+  }
   document.getElementById('login-view').style.display='none';
   document.getElementById('main-view').style.display='block';
   setTimeout(()=>requestNotificationPermission(customerId),2000);
@@ -2183,6 +2195,7 @@ function logout(){
   customerId=null;stamps=0;totalStamps=0;rewardsEarned=0;
   localStorage.removeItem('tdm_customer_email');
   localStorage.removeItem('tdm_customer_name');
+  sessionStorage.removeItem('tdm_customer_email');
   if(notifPollInterval){clearInterval(notifPollInterval);notifPollInterval=null;}
   document.getElementById('login-view').style.display='block';
   document.getElementById('main-view').style.display='none';
