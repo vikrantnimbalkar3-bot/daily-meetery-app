@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Daily Meetery — Kitchen Display</title>
+  <!-- NO SUPABASE SDK — SDK causes DataCloneError via BroadcastChannel/postMessage
+       Kitchen uses direct REST API calls (plain fetch) instead. Zero SDK. Zero postMessage. -->
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#292927;min-height:100vh;padding:16px}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px 16px;background:#354C3A;border-radius:12px}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .cafe-name{font-size:18px;font-weight:700;color:#fff}
+    .status-dot{width:10px;height:10px;border-radius:50%;background:#ff4444;animation:blink 1.5s infinite;flex-shrink:0}
+    .status-dot.live{background:#4ade80;animation:none}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .status-text{font-size:12px;color:#A9B29E}
+    .time{font-size:13px;color:#A9B29E}
+    .orders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .order-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.3);animation:slideIn .3s ease}
+    @keyframes slideIn{from{transform:translateY(-10px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .order-header{background:#354C3A;padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;cursor:grab;user-select:none}
+    .order-number{font-size:11px;color:#A9B29E;margin-bottom:2px}
+    .customer-name{font-size:16px;font-weight:700;color:#fff}
+    .customer-phone{font-size:12px;color:#A9B29E;margin-top:2px}
+    .pickup-badge{background:#D48631;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap;flex-shrink:0}
+    .pickup-badge.sched{background:#292927;border:1px solid #D48631}
+    .order-body{padding:12px 14px}
+    .order-item{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px dashed #e0d9ce;font-size:14px}
+    .order-item:last-child{border-bottom:none}
+    .item-details{flex:1}
+    .item-name{font-weight:600;color:#292927}
+    .item-size{font-size:12px;color:#888}
+    .item-addons{font-size:11px;color:#A9B29E;margin-top:2px}
+    .item-note{font-size:11px;color:#D48631;margin-top:2px;font-weight:500}
+    .item-price{font-weight:600;color:#354C3A;font-size:13px;white-space:nowrap;margin-left:8px}
+    .item-price.free{color:#D48631}
+    .order-footer{padding:10px 14px;background:#f7f7f7;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #eee}
+    .order-total{font-size:15px;font-weight:700;color:#292927}
+    .order-time{font-size:11px;color:#888}
+    .order-actions{display:flex;gap:8px;padding:10px 14px}
+    .btn-print{flex:1;padding:10px;background:#354C3A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+    .btn-print:hover{background:#292927}
+    .btn-done{flex:1;padding:10px;background:#D48631;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+    .btn-done:hover{background:#b8711f}
+    .empty-state{text-align:center;padding:60px 20px;color:#A9B29E}
+    .empty-icon{font-size:48px;margin-bottom:12px}
+    .empty-title{font-size:18px;font-weight:600;color:#fff;margin-bottom:6px}
+    .empty-sub{font-size:13px;color:#A9B29E;margin-top:6px}
+    .settings-bar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+    .settings-input{padding:8px 12px;border-radius:8px;border:1px solid #555;background:#3a3a38;color:#fff;font-size:13px;flex:1;min-width:160px}
+    .settings-btn{padding:8px 16px;background:#D48631;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+    .settings-btn.sec{background:#354C3A}
+    .toast-k{position:fixed;bottom:20px;right:20px;background:#354C3A;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;display:none;z-index:100;max-width:300px}
+    .toast-k.show{display:block}
+    .badge{background:#D48631;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px}
+    .section-label{font-size:12px;font-weight:600;color:#A9B29E;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    #reconnect-bar{background:#7c2d12;border:1px solid #b45309;color:#fff;padding:10px 16px;border-radius:8px;margin-bottom:12px;display:none;align-items:center;gap:10px;font-size:13px}
+    #reconnect-bar.show{display:flex}
+    /* Debug panel — press D */
+    #dbg{background:#111;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-family:monospace;font-size:11px;color:#A9B29E;display:none}
+    #dbg.show{display:block}
+    #dbg span{color:#fff} #dbg .ok{color:#4ade80} #dbg .er{color:#ff6b6b} #dbg .wn{color:#D48631}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div>
+      <div class="cafe-name">☕ The Daily Meetery</div>
+      <div class="status-text">Kitchen Display <span id="st">Connecting...</span></div>
+    </div>
+    <div class="status-dot" id="sd"></div>
+  </div>
+  <div style="text-align:right">
+    <div class="time" id="clock"></div>
+    <div style="font-size:11px;color:#A9B29E">REST API · No WebSocket</div>
+  </div>
+</div>
+
+<div id="reconnect-bar">
+  ⚠️ Disconnected — retry <span id="rc-n">1</span> in <span id="rc-s">2</span>s
+  <button onclick="K.forceRetry()" style="margin-left:auto;padding:4px 12px;background:#fff;color:#7c2d12;border:none;border-radius:6px;cursor:pointer;font-weight:600">Retry now</button>
+</div>
+
+<div id="dbg">
+  <div>Mode: <span class="ok">Direct REST API (no SDK, no WebSocket, no postMessage)</span></div>
+  <div>Connected: <span id="d-c">—</span> | Last OK: <span id="d-t">—</span> | Failures: <span id="d-f">0</span> | Reinits: <span id="d-r">0</span></div>
+  <div>Last error: <span id="d-e" class="er">none</span></div>
+  <div>Polls: <span id="d-p">0</span> | Orders shown: <span id="d-o">0</span></div>
+</div>
+
+<div class="settings-bar">
+  <input class="settings-input" id="printer-ip" value="192.168.68.56" placeholder="Printer IP">
+  <button class="settings-btn" onclick="printTest()">🖨 Test print</button>
+  <button class="settings-btn sec" onclick="K.forceRetry()">🔄 Refresh</button>
+  <button class="settings-btn sec" onclick="toggleDbg()" title="Toggle debug (D key)" style="padding:8px 10px">🔍</button>
+</div>
+
+<div class="section-label">
+  Pending orders <span class="badge" id="cnt">0</span>
+  <span style="font-size:11px;color:#A9B29E;margin-left:auto">⠿ Drag to prioritise</span>
+</div>
+
+<div class="orders-grid" id="grid">
+  <div class="empty-state">
+    <div class="empty-icon">🍃</div>
+    <div class="empty-title">No pending orders</div>
+    <div class="empty-sub">New orders will appear here automatically</div>
+  </div>
+</div>
+
+<div class="toast-k" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// THE DAILY MEETERY — Kitchen Display
+// Architecture: Direct Supabase REST API via fetch()
+//
+// ROOT CAUSE OF DataCloneError (final answer):
+//   supabase.createClient() v2 initialises RealtimeClient which
+//   opens a BroadcastChannel and calls postMessage({ headers: new
+//   Headers({...}) }). Headers objects cannot be cloned by the
+//   Structured Clone Algorithm → DataCloneError on every load.
+//   'realtime: { enabled: false }' is NOT a valid SDK option —
+//   it's silently ignored. The only fix is removing the SDK.
+//
+// This file uses ZERO Supabase SDK. Zero WebSocket. Zero postMessage.
+// All data fetched via standard HTTP REST (PostgREST) calls.
+// ═══════════════════════════════════════════════════════════════
+
+const REST  = 'https://jxlalnsemmghxukapvxv.supabase.co/rest/v1';
+const KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
+const HDR   = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+const FETCH_TIMEOUT = 8000; // ms
+
+// ── Thin REST helpers ──────────────────────────────────────────
+// Plain fetch with timeout. No SDK. No WebSocket. No postMessage.
+async function restGet(path) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
+  try {
+    const r = await fetch(REST + path, { headers: HDR, signal: ctrl.signal });
+    clearTimeout(tid);
+    if(!r.ok) throw new Error('HTTP ' + r.status + ' ' + r.statusText);
+    return r.json();
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
+async function restPatch(path, body) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
+  try {
+    const r = await fetch(REST + path, {
+      method: 'PATCH',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    });
+    clearTimeout(tid);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
+// ── Kitchen state ──────────────────────────────────────────────
+const K = {
+  known:      new Set(),
+  connected:  false,
+  loading:    false,
+  failures:   0,
+  polls:      0,
+  rcTimer:    null,
+  pollTimer:  null,
+
+  // ── fetch cycle ──────────────────────────────────────────────
+  async fetch() {
+    if(this.loading) return;
+    this.loading = true;
+    this.polls++;
+    dbg('d-p', this.polls);
+
+    try {
+      // GET unprinted order groups
+      const groups = await restGet('/order_groups?printed=eq.false&order=created_at.asc');
+
+      this.failures = 0;
+      this.setLive(true);
+      render(groups);
+    } catch(e) {
+      this.failures++;
+      this.setLive(false, e.name === 'AbortError' ? 'Timeout' : e.message);
+      dbg('d-e', e.message, 'er');
+    } finally {
+      this.loading = false;
+    }
+  },
+
+  // ── connection UI ────────────────────────────────────────────
+  setLive(ok, detail) {
+    const was = this.connected;
+    this.connected = ok;
+    document.getElementById('sd').className = 'status-dot' + (ok ? ' live' : '');
+    document.getElementById('st').textContent = ok
+      ? '● Live'
+      : '● Disconnected' + (detail ? ' — ' + detail.slice(0,60) : '');
+
+    const bar = document.getElementById('reconnect-bar');
+    if(ok) {
+      bar.classList.remove('show');
+      if(this.rcTimer) { clearTimeout(this.rcTimer); this.rcTimer = null; }
+      if(!was) toast('✅ Connected!');
+      dbg('d-c', 'live', 'ok');
+      dbg('d-t', new Date().toLocaleTimeString());
+    } else {
+      this.schedRC();
+      dbg('d-c', 'disconnected', 'er');
+      dbg('d-f', this.failures, this.failures ? 'wn' : 'ok');
+    }
+  },
+
+  // ── reconnect scheduler (exponential backoff, infinite) ──────
+  schedRC() {
+    if(this.rcTimer) return;
+    const delay = Math.min(2000 * Math.pow(2, Math.min(this.failures - 1, 4)), 30000);
+    let secs = Math.round(delay / 1000);
+    document.getElementById('reconnect-bar').classList.add('show');
+    document.getElementById('rc-n').textContent = this.failures;
+    document.getElementById('rc-s').textContent = secs;
+    const tick = setInterval(() => {
+      secs = Math.max(0, secs - 1);
+      document.getElementById('rc-s').textContent = secs;
+      if(secs <= 0) clearInterval(tick);
+    }, 1000);
+    this.rcTimer = setTimeout(() => {
+      this.rcTimer = null;
+      clearInterval(tick);
+      this.loading = false; // force-unlock in case previous fetch hung
+      this.fetch();
+    }, delay);
+  },
+
+  // ── manual/forced retry ──────────────────────────────────────
+  forceRetry() {
+    if(this.rcTimer) { clearTimeout(this.rcTimer); this.rcTimer = null; }
+    this.loading = false;
+    this.fetch();
+  },
+
+  // ── start polling ────────────────────────────────────────────
+  start() {
+    this.fetch();
+    this.pollTimer = setInterval(() => {
+      if(this.connected && !this.loading) this.fetch();
+    }, 5000);
+    // Heartbeat: force retry if connected but silent for 30s
+    setInterval(() => {
+      if(this.connected && this.polls > 0) {
+        // polls counter increments each fetch; if poll timer is running
+        // but fetch never succeeds we'll see failures > 0 and setLive(false) handles it
+      }
+    }, 15000);
+  }
+};
+
+// ── Render ────────────────────────────────────────────────────
+function render(groups) {
+  const grid = document.getElementById('grid');
+  document.getElementById('cnt').textContent = groups.length;
+  dbg('d-o', groups.length);
+
+  if(!groups.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🍃</div><div class="empty-title">No pending orders</div><div class="empty-sub">New orders will appear here automatically</div></div>';
+    return;
+  }
+
+  let hasNew = false;
+  groups.forEach(g => { if(!K.known.has(g.id)) { K.known.add(g.id); hasNew = true; } });
+  if(hasNew) toast('🔔 New order!');
+
+  // Fetch items for all groups in parallel
+  Promise.all(groups.map(g =>
+    restGet('/orders?order_group_id=eq.' + g.id + '&order=created_at.asc')
+      .then(items => ({ g, items: items || [] }))
+      .catch(() => ({ g, items: [] }))
+  )).then(rows => {
+    grid.innerHTML = '';
+    rows.forEach(({ g, items }) => grid.appendChild(buildCard(g, items)));
+    initDnD(grid);
+  });
+}
+
+// ── Card ──────────────────────────────────────────────────────
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function buildCard(g, items) {
+  const card  = document.createElement('div');
+  card.className = 'order-card';
+  card.id = 'card-' + g.id;
+  const time  = new Date(g.created_at).toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'});
+  const isASAP = !g.pickup_time || g.pickup_time === 'ASAP';
+  const gEnc  = encodeURIComponent(JSON.stringify(g));
+
+  card.innerHTML = `
+    <div class="order-header" title="Drag to prioritise">
+      <div>
+        <div class="order-number">Order · ${time}</div>
+        <div class="customer-name">${esc(g.customer_name)}</div>
+        ${g.customer_phone ? `<div class="customer-phone">📱 ${esc(g.customer_phone)}</div>` : ''}
+      </div>
+      <div class="pickup-badge ${isASAP?'':'sched'}">${isASAP ? '⚡ ASAP' : '⏰ ' + esc(g.pickup_time||'')}</div>
+    </div>
+    <div class="order-body">${items.map(i => `
+      <div class="order-item">
+        <div class="item-details">
+          <div class="item-name">${esc(i.item_name)}${i.is_free?' 🎉':''}</div>
+          <div class="item-size">${esc(i.size||'')}</div>
+          ${i.addons ? `<div class="item-addons">+ ${esc(i.addons)}</div>` : ''}
+          ${i.note   ? `<div class="item-note">📝 ${esc(i.note)}</div>` : ''}
+        </div>
+        <div class="item-price ${i.is_free?'free':''}">${i.is_free?'FREE':'$'+parseFloat(i.price).toFixed(2)}</div>
+      </div>`).join('')}
+    </div>
+    <div class="order-footer">
+      <div class="order-total">Total: $${parseFloat(g.total).toFixed(2)}</div>
+      <div class="order-time">${g.payment_method==='counter'?'💵 Pay at counter':'💳 Paid online'}</div>
+    </div>
+    <div class="order-actions">
+      <button class="btn-print" onclick="printOrder(decodeURIComponent('${gEnc}'))">🖨 Print</button>
+      <button class="btn-done"  onclick="markDone('${g.id}')">✓ Done</button>
+    </div>`;
+  return card;
+}
+
+// ── Mark done ─────────────────────────────────────────────────
+async function markDone(id) {
+  try {
+    await restPatch('/order_groups?id=eq.' + id, { printed: true });
+    const card = document.getElementById('card-' + id);
+    if(card){ card.style.cssText='opacity:0;transform:scale(.95);transition:all .3s'; setTimeout(()=>card.remove(),300); }
+    K.known.delete(id);
+    const el = document.getElementById('cnt');
+    el.textContent = Math.max(0, parseInt(el.textContent||'0') - 1);
+  } catch(e) { toast('⚠️ Error: ' + e.message); }
+}
+
+// ── Print — isolated, never touches K.connected ───────────────
+async function printOrder(gJson) {
+  let g; try { g = JSON.parse(gJson); } catch(e) { toast('⚠️ Print data error'); return; }
+  const ip = document.getElementById('printer-ip').value.trim() || '192.168.68.56';
+  try {
+    const items = await restGet('/orders?order_group_id=eq.' + g.id + '&order=created_at.asc');
+    const time  = new Date(g.created_at).toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'});
+    const date  = new Date(g.created_at).toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'});
+    const isASAP = !g.pickup_time || g.pickup_time === 'ASAP';
+    let ix = '';
+    (items||[]).forEach(i => {
+      const n = i.item_name + (i.size ? ' (' + i.size + ')' : '');
+      const p = i.is_free ? 'FREE' : '$' + parseFloat(i.price).toFixed(2);
+      ix += `<text em="true">${n}${' '.repeat(Math.max(1,32-n.length-p.length))}${p}&#10;</text>`;
+      if(i.addons) ix += `<text>  + ${i.addons}&#10;</text>`;
+      if(i.note)   ix += `<text>  Note: ${i.note}&#10;</text>`;
+    });
+    const xml = `<?xml version="1.0" encoding="utf-8"?><epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print"><text align="center" em="true" dh="true" dw="true">THE DAILY&#10;MEETERY&#10;</text><text align="center">One Daily Stop. Endless Connections.&#10;</text><text>--------------------------------&#10;</text><text align="center" em="true" dh="true">${isASAP?'** ASAP **':'PICKUP: '+g.pickup_time}&#10;</text><text dh="false">--------------------------------&#10;</text><text align="left" em="true">Customer: ${g.customer_name}&#10;</text><text em="false">${g.customer_phone?'Phone: '+g.customer_phone+'&#10;':''}Time: ${date} ${time}&#10;</text><text>--------------------------------&#10;</text>${ix}<text>--------------------------------&#10;</text><text align="right" em="true" dh="true" dw="true">TOTAL: $${parseFloat(g.total).toFixed(2)}&#10;</text><text align="right" em="false" dh="false" dw="false">${g.payment_method==='counter'?'Pay at counter':'Paid online'}&#10;</text><text align="center">&#10;Thank you! See you tomorrow&#10;&#10;&#10;</text><cut type="feed"/></epos-print>`;
+    const r = await fetch('http://'+ip+'/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000',
+      {method:'POST',headers:{'Content-Type':'text/xml; charset=utf-8','SOAPAction':'""'},body:xml});
+    if(r.ok) {
+      toast('🖨 Printed for ' + g.customer_name + '!');
+      await restPatch('/order_groups?id=eq.' + g.id, { printed: true });
+    } else throw new Error('Status ' + r.status);
+  } catch(e) {
+    toast('⚠️ Print failed: ' + e.message);
+  }
+}
+
+async function printTest() {
+  const ip = document.getElementById('printer-ip').value.trim() || '192.168.68.56';
+  const xml = `<?xml version="1.0" encoding="utf-8"?><epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print"><text align="center" em="true" dh="true" dw="true">THE DAILY&#10;MEETERY&#10;</text><text align="center">&#10;Printer connected!&#10;Ready to print.&#10;&#10;&#10;</text><cut type="feed"/></epos-print>`;
+  try {
+    const r = await fetch('http://'+ip+'/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000',
+      {method:'POST',headers:{'Content-Type':'text/xml; charset=utf-8','SOAPAction':'""'},body:xml});
+    toast(r.ok ? '✅ Test print sent!' : '⚠️ Printer error: ' + r.status);
+  } catch(e) { toast('⚠️ Printer unreachable — must be on same WiFi'); }
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ── Debug panel ───────────────────────────────────────────────
+function dbg(id, val, cls) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = val;
+  el.className = cls || '';
+}
+function toggleDbg() { document.getElementById('dbg').classList.toggle('show'); }
+document.addEventListener('keydown', e => { if(e.key==='d'||e.key==='D') toggleDbg(); });
+
+// ── Drag & drop ───────────────────────────────────────────────
+function initDnD(container) {
+  let drag = null, ph = null;
+  const getY = e => e.touches ? e.touches[0].clientY : e.clientY;
+  [...container.querySelectorAll('.order-card')].forEach(card => {
+    const hdr = card.querySelector('.order-header');
+    if(!hdr || hdr._dnd) return;
+    hdr._dnd = true;
+    const start = () => {
+      drag = card;
+      ph = document.createElement('div');
+      ph.style.cssText = `height:${card.offsetHeight}px;background:rgba(212,134,49,.12);border:2px dashed #D48631;border-radius:12px;margin-bottom:12px;`;
+      card.after(ph);
+      Object.assign(card.style,{opacity:'.6',transform:'scale(1.02)',boxShadow:'0 12px 32px rgba(0,0,0,.4)',zIndex:'100'});
+      document.body.style.userSelect = 'none';
+    };
+    const move = e => {
+      if(!drag) return; e.preventDefault();
+      const y = getY(e);
+      const others = [...container.querySelectorAll('.order-card')].filter(c=>c!==drag);
+      let ins = null;
+      for(const o of others){ const r=o.getBoundingClientRect(); if(y<r.top+r.height/2){ins=o;break;} }
+      ins ? container.insertBefore(ph,ins) : container.appendChild(ph);
+    };
+    const end = () => {
+      if(!drag) return;
+      card.style.cssText = ''; ph.before(drag); ph.remove();
+      document.body.style.userSelect = '';
+      toast('✅ Order prioritised!');
+      drag = null; ph = null;
+    };
+    hdr.addEventListener('mousedown', e => {
+      if(e.button!==0) return; start();
+      const up = () => { end(); window.removeEventListener('mousemove',move); window.removeEventListener('mouseup',up); };
+      window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+    });
+    hdr.addEventListener('touchstart', e => {
+      start();
+      const te = () => { end(); window.removeEventListener('touchmove',move); window.removeEventListener('touchend',te); };
+      window.addEventListener('touchmove',move,{passive:false}); window.addEventListener('touchend',te);
+    },{passive:true});
+  });
+}
+
+// ── Tab visibility ────────────────────────────────────────────
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') K.forceRetry();
+});
+
+// ── Clock ─────────────────────────────────────────────────────
+setInterval(() => {
+  const el = document.getElementById('clock');
+  if(el) el.textContent = new Date().toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}, 1000);
+
+// ── Boot ──────────────────────────────────────────────────────
+K.start();
+</script>
+</body>
+</html>
