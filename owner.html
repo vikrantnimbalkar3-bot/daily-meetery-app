@@ -452,10 +452,19 @@ async function signIn() {
   btn.textContent = 'Sign in';
 
   if(error) {
-    errEl.textContent = error.message === 'Invalid login credentials'
-      ? 'Incorrect email or password.'
-      : error.message;
+    // Map Supabase error messages to clear, actionable owner-facing text
+    const msg = error.message || '';
+    if(msg.includes('Invalid login credentials')) {
+      errEl.textContent = 'Incorrect email or password. If you used the invite link, please set your password first via the link in your email.';
+    } else if(msg.includes('Email not confirmed')) {
+      errEl.textContent = 'Please check your email and click the invite link first to confirm your account.';
+    } else if(msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      errEl.textContent = 'Network error — check your internet connection and try again.';
+    } else {
+      errEl.textContent = msg;
+    }
     document.getElementById('login-pw').value = '';
+    console.error('[Auth] signIn error:', error);
   }
   // On success, onAuthStateChange fires and shows the dashboard
 }
