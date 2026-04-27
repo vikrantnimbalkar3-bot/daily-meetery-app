@@ -38,28 +38,92 @@
     .download-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .toast { position: fixed; bottom: 20px; right: 20px; background: #354C3A; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 14px; display: none; z-index: 100; }
     .toast.show { display: block; }
-    /* Password gate */
-    #pw-gate { position: fixed; inset: 0; background: #292927; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; }
-    #pw-gate input { padding: 12px 20px; border-radius: 10px; border: none; font-size: 15px; width: 260px; text-align: center; outline: none; }
-    #pw-gate button { background: #D48631; color: #fff; border: none; padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
-    #pw-err { color: #ff6b6b; font-size: 13px; }
+    /* Auth gate */
+    #pw-gate { position:fixed;inset:0;background:#292927;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:0;padding:24px; }
+    .auth-card { background:#1e1e1c;border-radius:16px;padding:32px 28px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px; }
+    .auth-logo { text-align:center;margin-bottom:4px; }
+    .auth-logo .icon { font-size:44px; }
+    .auth-logo .name { font-size:20px;font-weight:700;color:#fff;margin-top:6px; }
+    .auth-logo .sub  { font-size:13px;color:#A9B29E; }
+    .auth-field { display:flex;flex-direction:column;gap:6px; }
+    .auth-field label { font-size:12px;font-weight:600;color:#A9B29E;text-transform:uppercase;letter-spacing:.5px; }
+    .auth-field .input-wrap { position:relative; }
+    .auth-field input { width:100%;padding:11px 40px 11px 14px;border-radius:8px;border:1px solid #3a3a38;background:#292927;color:#fff;font-size:15px;outline:none;transition:border .2s; }
+    .auth-field input:focus { border-color:#D48631; }
+    .auth-field .eye { position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#A9B29E;cursor:pointer;font-size:16px;padding:0; }
+    .auth-btn { background:#D48631;color:#fff;border:none;padding:13px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s; }
+    .auth-btn:hover { background:#b8711f; }
+    .auth-btn:disabled { background:#555;cursor:not-allowed; }
+    .auth-btn.sec { background:#354C3A; }
+    .auth-btn.sec:hover { background:#292927; }
+    .auth-err  { color:#ff6b6b;font-size:13px;min-height:18px;text-align:center; }
+    .auth-msg  { color:#4ade80;font-size:13px;min-height:18px;text-align:center; }
+    .auth-link { background:none;border:none;color:#D48631;font-size:13px;cursor:pointer;text-decoration:underline;padding:0;align-self:center; }
+    .auth-divider { border:none;border-top:1px solid #3a3a38;margin:2px 0; }
+    /* Strength meter */
+    .strength-bar { height:4px;border-radius:2px;background:#3a3a38;margin-top:4px;overflow:hidden; }
+    .strength-fill { height:100%;border-radius:2px;transition:width .3s,background .3s; }
+    .strength-label { font-size:11px;color:#A9B29E;margin-top:2px; }
     #main { display: none; }
   </style>
 </head>
 <body>
 
-<!-- Password Gate -->
+<!-- Auth Gate — Supabase Auth (email + password) -->
 <div id="pw-gate">
-  <div style="font-size:48px">☕</div>
-  <div style="font-size:22px;font-weight:700;color:#fff">Owner Dashboard</div>
-  <div style="font-size:13px;color:#A9B29E">The Daily Meetery</div>
-  <input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPW()">
-  <label style="display:flex;align-items:center;gap:8px;color:#A9B29E;font-size:13px;cursor:pointer">
-    <input type="checkbox" id="remember-me" checked style="width:16px;height:16px;cursor:pointer">
-    Remember me on this device
-  </label>
-  <button onclick="checkPW()">Unlock</button>
-  <div id="pw-err"></div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="icon">☕</div>
+      <div class="name">Owner Dashboard</div>
+      <div class="sub">The Daily Meetery</div>
+    </div>
+
+    <!-- Sign In view -->
+    <div id="auth-login">
+      <div class="auth-field">
+        <label>Email</label>
+        <div class="input-wrap">
+          <input type="email" id="login-email" placeholder="your@email.com"
+            onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
+        </div>
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="login-pw" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter')signIn()">
+          <button class="eye" onclick="toggleEye('login-pw',this)">👁</button>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;color:#A9B29E;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="remember-me" checked style="width:15px;height:15px;cursor:pointer;accent-color:#D48631">
+        Remember me on this device
+      </label>
+      <button class="auth-btn" id="signin-btn" onclick="signIn()">Sign in</button>
+      <div class="auth-err" id="login-err"></div>
+      <hr class="auth-divider">
+      <button class="auth-link" onclick="showView('forgot')">Forgot password?</button>
+    </div>
+
+    <!-- Forgot Password view -->
+    <div id="auth-forgot" style="display:none">
+      <p style="color:#A9B29E;font-size:13px;text-align:center;margin:0">
+        Enter your email and we'll send a reset link.
+      </p>
+      <div class="auth-field">
+        <label>Email</label>
+        <div class="input-wrap">
+          <input type="email" id="reset-email" placeholder="your@email.com"
+            onkeydown="if(event.key==='Enter')sendReset()">
+        </div>
+      </div>
+      <button class="auth-btn" id="reset-btn" onclick="sendReset()">Send reset link</button>
+      <div class="auth-err" id="reset-err"></div>
+      <div class="auth-msg" id="reset-msg"></div>
+      <hr class="auth-divider">
+      <button class="auth-link" onclick="showView('login')">← Back to sign in</button>
+    </div>
+  </div>
 </div>
 
 <!-- Main Dashboard -->
@@ -217,6 +281,30 @@
     <div id="customers-list" style="margin-top:12px"><div style="color:#888;font-size:13px">Loading...</div></div>
   </div>
 
+  <!-- Change Password -->
+  <div class="section">
+    <div class="section-title">🔑 Change Password</div>
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
+      <div style="position:relative">
+        <input type="password" id="cp-current" placeholder="Current password" style="width:100%;padding:10px 40px 10px 12px;border-radius:8px;border:1px solid #3a3a38;background:#292927;color:#fff;font-size:14px;outline:none">
+        <button onclick="toggleEye('cp-current',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#A9B29E;cursor:pointer">👁</button>
+      </div>
+      <div style="position:relative">
+        <input type="password" id="cp-new" placeholder="New password" oninput="checkStrength(this.value)" style="width:100%;padding:10px 40px 10px 12px;border-radius:8px;border:1px solid #3a3a38;background:#292927;color:#fff;font-size:14px;outline:none">
+        <button onclick="toggleEye('cp-new',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#A9B29E;cursor:pointer">👁</button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="strength-fill" style="width:0%"></div></div>
+      <div class="strength-label" id="strength-label"></div>
+      <div style="position:relative">
+        <input type="password" id="cp-confirm" placeholder="Confirm new password" style="width:100%;padding:10px 40px 10px 12px;border-radius:8px;border:1px solid #3a3a38;background:#292927;color:#fff;font-size:14px;outline:none">
+        <button onclick="toggleEye('cp-confirm',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#A9B29E;cursor:pointer">👁</button>
+      </div>
+      <button onclick="changePassword()" style="background:#354C3A;color:#fff;border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Update password</button>
+      <div id="cp-err" style="color:#ff6b6b;font-size:13px;min-height:16px"></div>
+      <div id="cp-ok"  style="color:#4ade80;font-size:13px;min-height:16px"></div>
+    </div>
+  </div>
+
   <!-- Logout -->
   <div style="text-align:center;padding:8px 0 16px">
     <button onclick="ownerLogout()" style="background:none;border:1px solid #555;color:#A9B29E;padding:8px 24px;border-radius:8px;font-size:13px;cursor:pointer">Sign out of dashboard</button>
@@ -296,13 +384,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// Password stored as hash — not plaintext
-// SHA-256 of 'meetery2024'
-const PASS_HASH = 'b7f23c46e4a9d8e6f1c2b5a8d3e7f9c1b4a2d6e8f0c3b5a7d9e1f3c5b8a2d4e6';
-async function hashPW(pw){
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+// ── Supabase Auth — replaces old SHA-256 hash approach ─────────
+// Old approach stored 'tdm_owner_auth:1' in localStorage — trivially
+// bypassable via devtools. Supabase Auth uses real JWT sessions.
 const SURL = 'https://jxlalnsemmghxukapvxv.supabase.co';
 const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
 const db = supabase.createClient(SURL, SKEY);
@@ -311,45 +395,227 @@ let notifType = 'flash';
 let menuCat = 'all';
 let allMenuItems = [];
 
-// Auto-login if previously authenticated
-window.addEventListener('DOMContentLoaded', ()=>{
-  if(localStorage.getItem('tdm_owner_auth')==='1' || sessionStorage.getItem('tdm_owner_auth')==='1'){
-    document.getElementById('pw-gate').style.display='none';
-    document.getElementById('main').style.display='block';
-    loadAll();
+// ── Auth state listener — single source of truth ───────────────
+// _dashboardReady prevents loadAll() firing on TOKEN_REFRESHED and on
+// the re-auth inside changePassword() (which triggers another SIGNED_IN).
+// Resets to false on sign-out so next real login reloads fresh.
+let _dashboardReady = false;
+
+db.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    document.getElementById('pw-gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    if (!_dashboardReady && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+      _dashboardReady = true;
+      loadAll();
+    }
+  } else {
+    _dashboardReady = false;
+    document.getElementById('pw-gate').style.display = 'flex';
+    document.getElementById('main').style.display = 'none';
   }
 });
 
-// Clock
+// ── Auth view switcher ─────────────────────────────────────────
+function showView(v) {
+  document.getElementById('auth-login').style.display  = v==='login'  ? '' : 'none';
+  document.getElementById('auth-forgot').style.display = v==='forgot' ? '' : 'none';
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('reset-err').textContent = '';
+  document.getElementById('reset-msg').textContent = '';
+}
+
+// ── Show/hide password ─────────────────────────────────────────
+function toggleEye(inputId, btn) {
+  const el = document.getElementById(inputId);
+  if(!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? '👁' : '🙈';
+}
+
+// ── Sign in ────────────────────────────────────────────────────
+async function signIn() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  const errEl = document.getElementById('login-err');
+  const btn   = document.getElementById('signin-btn');
+
+  errEl.textContent = '';
+  if(!email || !pw) { errEl.textContent = 'Please enter your email and password.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  const { error } = await db.auth.signInWithPassword({ email, password: pw });
+
+  btn.disabled = false;
+  btn.textContent = 'Sign in';
+
+  if(error) {
+    errEl.textContent = error.message === 'Invalid login credentials'
+      ? 'Incorrect email or password.'
+      : error.message;
+    document.getElementById('login-pw').value = '';
+  }
+  // On success, onAuthStateChange fires and shows the dashboard
+}
+
+// ── Forgot / send reset email ──────────────────────────────────
+async function sendReset() {
+  const email  = document.getElementById('reset-email').value.trim();
+  const errEl  = document.getElementById('reset-err');
+  const msgEl  = document.getElementById('reset-msg');
+  const btn    = document.getElementById('reset-btn');
+
+  errEl.textContent = ''; msgEl.textContent = '';
+  if(!email) { errEl.textContent = 'Please enter your email address.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://daily-meetery-app.vercel.app/reset-password.html'
+  });
+
+  btn.disabled = false; btn.textContent = 'Send reset link';
+
+  if(error) {
+    errEl.textContent = error.message;
+  } else {
+    msgEl.textContent = '✅ Reset link sent! Check your email.';
+  }
+}
+
+// ── Sign out ───────────────────────────────────────────────────
+async function ownerLogout() {
+  await db.auth.signOut();
+  // onAuthStateChange fires → shows gate automatically
+}
+
+// ── Change password (from inside dashboard) ────────────────────
+async function changePassword() {
+  const current  = document.getElementById('cp-current').value;
+  const newPw    = document.getElementById('cp-new').value;
+  const confirm  = document.getElementById('cp-confirm').value;
+  const errEl    = document.getElementById('cp-err');
+  const okEl     = document.getElementById('cp-ok');
+  const btn      = document.querySelector('button[onclick="changePassword()"]');
+
+  errEl.textContent = ''; okEl.textContent = '';
+
+  // Validate
+  if(!current)               { errEl.textContent = 'Enter your current password.'; return; }
+  if(newPw.length < 8)       { errEl.textContent = 'New password must be at least 8 characters.'; return; }
+  if(newPw !== confirm)      { errEl.textContent = 'Passwords do not match.'; return; }
+  if(newPw === current)      { errEl.textContent = 'New password must be different from current.'; return; }
+
+  if(btn) { btn.disabled = true; btn.textContent = 'Verifying…'; }
+
+  // Re-authenticate with current password to verify it's correct
+  // Note: signInWithPassword fires onAuthStateChange(SIGNED_IN) but
+  // _dashboardReady guard prevents loadAll() from re-firing.
+  const { data: { user } } = await db.auth.getUser();
+  if(!user) { errEl.textContent = 'Not signed in. Please reload.'; if(btn){btn.disabled=false;btn.textContent='Update password';}return; }
+
+  const { error: verifyErr } = await db.auth.signInWithPassword({
+    email: user.email, password: current
+  });
+  if(verifyErr) {
+    errEl.textContent = 'Current password is incorrect.';
+    if(btn) { btn.disabled = false; btn.textContent = 'Update password'; }
+    return;
+  }
+
+  if(btn) btn.textContent = 'Updating…';
+
+  // Update password
+  const { error } = await db.auth.updateUser({ password: newPw });
+  if(btn) { btn.disabled = false; btn.textContent = 'Update password'; }
+
+  if(error) {
+    errEl.textContent = error.message;
+  } else {
+    okEl.textContent = '✅ Password updated successfully!';
+    document.getElementById('cp-current').value = '';
+    document.getElementById('cp-new').value = '';
+    document.getElementById('cp-confirm').value = '';
+    document.getElementById('strength-fill').style.width = '0%';
+    document.getElementById('strength-label').textContent = '';
+  }
+}
+
+// ── Password strength indicator ────────────────────────────────
+function checkStrength(pw) {
+  const fill  = document.getElementById('strength-fill');
+  const label = document.getElementById('strength-label');
+  if(!pw) { fill.style.width='0%'; label.textContent=''; return; }
+  const has = { upper:/[A-Z]/.test(pw), lower:/[a-z]/.test(pw), num:/[0-9]/.test(pw), sym:/[^A-Za-z0-9]/.test(pw) };
+  const score = (pw.length >= 8 ? 1:0) + (pw.length >= 12 ? 1:0) + Object.values(has).filter(Boolean).length;
+  if(score <= 2)      { fill.style.cssText='width:33%;background:#ef4444'; label.textContent='Weak — add numbers or symbols'; }
+  else if(score <= 4) { fill.style.cssText='width:66%;background:#D48631'; label.textContent='Fair — try a longer password'; }
+  else                { fill.style.cssText='width:100%;background:#4ade80'; label.textContent='Strong ✓'; }
+}
+
+// ── Clock ──────────────────────────────────────────────────────
 setInterval(()=>{
   const el = document.getElementById('clock');
   if(el) el.textContent = new Date().toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 },1000);
 
-// Password
-async function checkPW(){
-  const pw = document.getElementById('pw-input').value;
-  const pwHash = await hashPW(pw);
-  const validHashes = [
-    'b7f23c46e4a9d8e6f1c2b5a8d3e7f9c1b4a2d6e8f0c3b5a7d9e1f3c5b8a2d4e6', // meetery2024
-  ];
-  if(validHashes.includes(pwHash)){
-    const remember = document.getElementById('remember-me')?.checked !== false;
-    if(remember){
-      localStorage.setItem('tdm_owner_auth','1');
-    } else {
-      sessionStorage.setItem('tdm_owner_auth','1');
-      localStorage.removeItem('tdm_owner_auth');
-  sessionStorage.removeItem('tdm_owner_auth');
-    }
-    document.getElementById('pw-gate').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-    loadAll();
-  } else {
-    document.getElementById('pw-err').textContent = 'Incorrect password';
-    document.getElementById('pw-input').value = '';
+// ── Load all dashboard data ─────────────────────────────────────
+
+// TDM_DND — drag-and-drop reorder library
+// Used for: menu item reorder (saves to DB) + category filter reorder (UI only)
+// Copied here from index.html so owner.html is self-contained.
+const TDM_DND = {
+  make(container, onReorder, opts={}) {
+    const { itemSelector='[data-dnd]', handleSelector=null } = opts;
+    let dragging=null, placeholder=null, offsetY=0;
+    const getItems=()=>[...container.querySelectorAll(itemSelector)];
+    const getPos=(e)=>e.touches?e.touches[0].clientY:e.clientY;
+    const ph=(el)=>{
+      const p=document.createElement('div');
+      p.style.cssText=`height:${el.offsetHeight}px;background:rgba(53,76,58,0.08);border:2px dashed #A9B29E;border-radius:8px;margin-bottom:4px;`;
+      return p;
+    };
+    const start=(e,el)=>{
+      dragging=el;
+      const rect=el.getBoundingClientRect();
+      offsetY=getPos(e)-rect.top;
+      placeholder=ph(el);
+      el.after(placeholder);
+      el.style.cssText+=`position:fixed;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;z-index:999;opacity:0.95;box-shadow:0 4px 20px rgba(0,0,0,0.2);transform:scale(1.02);pointer-events:none;`;
+      document.body.style.userSelect='none';
+    };
+    const move=(e)=>{
+      if(!dragging)return;
+      e.preventDefault();
+      const y=getPos(e)-offsetY;
+      dragging.style.top=y+'px';
+      const items=getItems().filter(i=>i!==dragging);
+      let insertBefore=null;
+      for(const item of items){const r=item.getBoundingClientRect();if(getPos(e)<r.top+r.height/2){insertBefore=item;break;}}
+      insertBefore?container.insertBefore(placeholder,insertBefore):container.appendChild(placeholder);
+    };
+    const end=()=>{
+      if(!dragging)return;
+      dragging.style.cssText=dragging.style.cssText.replace(/position:[^;]+;top:[^;]+;left:[^;]+;width:[^;]+;z-index:[^;]+;opacity:[^;]+;box-shadow:[^;]+;transform:[^;]+;pointer-events:[^;]+;/,'');
+      placeholder.before(dragging);
+      placeholder.remove();
+      document.body.style.userSelect='';
+      if(onReorder)onReorder(getItems().map(el=>({id:el.dataset.id,el})));
+      dragging=null;placeholder=null;
+    };
+    const attach=(el)=>{
+      const h=handleSelector?el.querySelector(handleSelector):el;
+      if(!h)return;
+      h.addEventListener('mousedown',(e)=>{if(e.button!==0)return;start(e,el);const up=()=>{end();window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);});
+      h.addEventListener('touchstart',(e)=>{start(e,el);const te=()=>{end();window.removeEventListener('touchmove',move);window.removeEventListener('touchend',te);};window.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',te);},{passive:true});
+      h.style.cursor='grab';
+    };
+    getItems().forEach(attach);
+    return {attach,refresh:()=>getItems().forEach(attach)};
   }
-}
+};
 
 function loadAll(){
   // Init category DnD after a tick
@@ -398,7 +664,8 @@ async function loadTodayOrders(){
 
 // ---- NOTIFICATIONS ----
 function setType(btn,type){
-  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  // Scope to .notif-type container — prevents clearing menu filter buttons
+  document.querySelectorAll('.notif-type .type-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   notifType=type;
 }
@@ -410,7 +677,7 @@ async function sendNotification(){
   document.getElementById('send-btn').disabled=true;
   document.getElementById('send-btn').textContent='Sending...';
   try{
-    await db.from('notifications').insert({title,body,type:notifType});
+    await db.from('notifications').insert({title, body, type: notifType, sent_at: new Date().toISOString()});
     showToast('✅ Notification saved! Customers will see it within 20 seconds.');
     document.getElementById('notif-title').value='';
     document.getElementById('notif-body').value='';
@@ -740,14 +1007,6 @@ async function exportData(type, format){
       showToast('✅ Menu exported!');
     }
   }catch(e){showToast('Export error: '+e.message);}
-}
-
-function ownerLogout(){
-  localStorage.removeItem('tdm_owner_auth');
-  sessionStorage.removeItem('tdm_owner_auth');
-  document.getElementById('main').style.display='none';
-  document.getElementById('pw-gate').style.display='flex';
-  document.getElementById('pw-input').value='';
 }
 
 function today(){return new Date().toISOString().slice(0,10);}
