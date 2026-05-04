@@ -168,6 +168,24 @@ async function restPatch(path, body) {
   }
 }
 
+// ── NEW: restPost helper for inserting into print_jobs ─────────
+async function restPost(path, body) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
+  try {
+    const r = await fetch(REST + path, {
+      method: 'POST',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    });
+    clearTimeout(tid);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
 // ── Kitchen state ──────────────────────────────────────────────
 const K = {
   known:      new Set(),
@@ -349,43 +367,47 @@ async function markDone(id) {
   } catch(e) { toast('⚠️ Error: ' + e.message); }
 }
 
-// ── Print — isolated, never touches K.connected ───────────────
+// ── Print — sends job to Raspberry Pi via print_jobs table ────
 async function printOrder(gJson) {
   let g; try { g = JSON.parse(gJson); } catch(e) { toast('⚠️ Print data error'); return; }
-  const ip = document.getElementById('printer-ip').value.trim() || '192.168.68.56';
   try {
     const items = await restGet('/orders?order_group_id=eq.' + g.id + '&order=created_at.asc');
-    const time  = new Date(g.created_at).toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'});
-    const date  = new Date(g.created_at).toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'});
-    const isASAP = !g.pickup_time || g.pickup_time === 'ASAP';
-    let ix = '';
-    (items||[]).forEach(i => {
-      const n = i.item_name + (i.size ? ' (' + i.size + ')' : '');
-      const p = i.is_free ? 'FREE' : '$' + parseFloat(i.price).toFixed(2);
-      ix += `<text em="true">${n}${' '.repeat(Math.max(1,32-n.length-p.length))}${p}&#10;</text>`;
-      if(i.addons) ix += `<text>  + ${i.addons}&#10;</text>`;
-      if(i.note)   ix += `<text>  Note: ${i.note}&#10;</text>`;
+    const printItems = (items||[]).map(i => ({
+      name: i.item_name + (i.size ? ' (' + i.size + ')' : ''),
+      qty: 1,
+      modifiers: i.addons ? [i.addons] : [],
+      notes: i.note || null
+    }));
+    await restPost('/print_jobs', {
+      order_number: g.id.slice(0,8),
+      table_number: g.customer_name,
+      items: printItems,
+      notes: g.pickup_time && g.pickup_time !== 'ASAP' ? 'Pickup: ' + g.pickup_time : null,
+      status: 'pending'
     });
-    const xml = `<?xml version="1.0" encoding="utf-8"?><epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print"><text align="center" em="true" dh="true" dw="true">THE DAILY&#10;MEETERY&#10;</text><text align="center">One Daily Stop. Endless Connections.&#10;</text><text>--------------------------------&#10;</text><text align="center" em="true" dh="true">${isASAP?'** ASAP **':'PICKUP: '+g.pickup_time}&#10;</text><text dh="false">--------------------------------&#10;</text><text align="left" em="true">Customer: ${g.customer_name}&#10;</text><text em="false">${g.customer_phone?'Phone: '+g.customer_phone+'&#10;':''}Time: ${date} ${time}&#10;</text><text>--------------------------------&#10;</text>${ix}<text>--------------------------------&#10;</text><text align="right" em="true" dh="true" dw="true">TOTAL: $${parseFloat(g.total).toFixed(2)}&#10;</text><text align="right" em="false" dh="false" dw="false">${g.payment_method==='counter'?'Pay at counter':'Paid online'}&#10;</text><text align="center">&#10;Thank you! See you tomorrow&#10;&#10;&#10;</text><cut type="feed"/></epos-print>`;
-    const r = await fetch('http://'+ip+'/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000',
-      {method:'POST',headers:{'Content-Type':'text/xml; charset=utf-8','SOAPAction':'""'},body:xml});
-    if(r.ok) {
-      toast('🖨 Printed for ' + g.customer_name + '!');
-      await restPatch('/order_groups?id=eq.' + g.id, { printed: true });
-    } else throw new Error('Status ' + r.status);
+    toast('🖨 Printing for ' + g.customer_name + '...');
+    await restPatch('/order_groups?id=eq.' + g.id, { printed: true });
+    const card = document.getElementById('card-' + g.id);
+    if(card){ card.style.cssText='opacity:0;transform:scale(.95);transition:all .3s'; setTimeout(()=>card.remove(),300); }
+    K.known.delete(g.id);
+    const el = document.getElementById('cnt');
+    el.textContent = Math.max(0, parseInt(el.textContent||'0') - 1);
   } catch(e) {
     toast('⚠️ Print failed: ' + e.message);
   }
 }
 
 async function printTest() {
-  const ip = document.getElementById('printer-ip').value.trim() || '192.168.68.56';
-  const xml = `<?xml version="1.0" encoding="utf-8"?><epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print"><text align="center" em="true" dh="true" dw="true">THE DAILY&#10;MEETERY&#10;</text><text align="center">&#10;Printer connected!&#10;Ready to print.&#10;&#10;&#10;</text><cut type="feed"/></epos-print>`;
   try {
-    const r = await fetch('http://'+ip+'/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000',
-      {method:'POST',headers:{'Content-Type':'text/xml; charset=utf-8','SOAPAction':'""'},body:xml});
-    toast(r.ok ? '✅ Test print sent!' : '⚠️ Printer error: ' + r.status);
-  } catch(e) { toast('⚠️ Printer unreachable — must be on same WiFi'); }
+    await restPost('/print_jobs', {
+      order_number: 'TEST',
+      table_number: 'Kitchen Test',
+      items: [{ name: 'Test print from kitchen display', qty: 1, modifiers: [], notes: null }],
+      notes: 'System test',
+      status: 'pending'
+    });
+    toast('✅ Test print sent to Pi! Check printer in 5 seconds.');
+  } catch(e) { toast('⚠️ Failed: ' + e.message); }
 }
 
 // ── Toast ─────────────────────────────────────────────────────
