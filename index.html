@@ -410,6 +410,28 @@
         <button onclick="shareReferral()" style="margin-top:10px;padding:7px 20px;background:#D48631;color:#fff;border:none;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer">Share code 🔗</button>
       </div>
       <button class="redeem-btn" id="redeem-btn" style="display:none" onclick="showTab('order')">Claim my free coffee</button>
+      <!-- Edit Profile -->
+      <div style="margin-top:14px;background:#FDF8EE;border-radius:12px;padding:14px;border:1px solid #e8e0d0">
+        <div style="font-size:12px;font-weight:600;color:#354C3A;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">✏️ Edit Profile</div>
+        <div id="edit-name-display" style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:11px;color:#888;margin-bottom:2px">Your name</div>
+            <div style="font-size:15px;font-weight:600;color:#292927" id="display-name-text">—</div>
+          </div>
+          <button onclick="toggleEditName()" style="background:#354C3A;color:#fff;border:none;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Edit</button>
+        </div>
+        <div id="edit-name-form" style="display:none;margin-top:10px">
+          <input type="text" id="new-name-input" placeholder="Enter your name"
+            style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #A9B29E;font-size:15px;outline:none;margin-bottom:8px;background:#fff"
+            onkeydown="if(event.key==='Enter')saveNewName()">
+          <div style="display:flex;gap:8px">
+            <button onclick="saveNewName()" style="flex:1;padding:10px;background:#D48631;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer" id="save-name-btn">Save name</button>
+            <button onclick="toggleEditName()" style="padding:10px 16px;background:#fff;color:#888;border:1px solid #ddd;border-radius:8px;font-size:14px;cursor:pointer">Cancel</button>
+          </div>
+          <div id="edit-name-err" style="color:#c0392b;font-size:12px;margin-top:6px"></div>
+          <div id="edit-name-ok"  style="color:#354C3A;font-size:12px;margin-top:6px"></div>
+        </div>
+      </div>
       <button class="outline-btn" onclick="logout()">Sign out</button>
       </div>
     </div>
@@ -2489,7 +2511,65 @@ async function completeRegistration() {
   }
 }
 
-// ── Legacy loginOrRegister (kept for safety — now calls sendOTP) ─
+// ── Edit customer name ──────────────────────────────────────────
+function toggleEditName() {
+  const form    = document.getElementById('edit-name-form');
+  const display = document.getElementById('edit-name-display');
+  const input   = document.getElementById('new-name-input');
+  const errEl   = document.getElementById('edit-name-err');
+  const okEl    = document.getElementById('edit-name-ok');
+  const isHidden = form.style.display === 'none';
+  form.style.display    = isHidden ? 'block' : 'none';
+  display.style.display = isHidden ? 'none'  : 'flex';
+  errEl.textContent = '';
+  okEl.textContent  = '';
+  if(isHidden) {
+    // Pre-fill with current name
+    const current = document.getElementById('display-name-text').textContent;
+    input.value = current === '—' ? '' : current;
+    setTimeout(() => input.focus(), 100);
+  }
+}
+
+async function saveNewName() {
+  const input  = document.getElementById('new-name-input');
+  const errEl  = document.getElementById('edit-name-err');
+  const okEl   = document.getElementById('edit-name-ok');
+  const btn    = document.getElementById('save-name-btn');
+  const name   = input.value.trim();
+
+  errEl.textContent = ''; okEl.textContent = '';
+  if(!name) { errEl.textContent = 'Please enter your name.'; return; }
+  if(name.length < 2) { errEl.textContent = 'Name must be at least 2 characters.'; return; }
+  if(!customerId) { errEl.textContent = 'Not logged in. Please refresh.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    const { error } = await db.from('customers')
+      .update({ name })
+      .eq('id', customerId);
+
+    if(error) throw error;
+
+    // Update all name displays
+    document.getElementById('display-name-text').textContent = name;
+    document.getElementById('cname').textContent = name;
+    document.getElementById('greeting-text').textContent = getGreeting(name);
+    document.getElementById('avatar').textContent = name.charAt(0).toUpperCase();
+
+    okEl.textContent = '✅ Name updated!';
+    btn.disabled = false; btn.textContent = 'Save name';
+
+    // Close form after 1.5s
+    setTimeout(() => toggleEditName(), 1500);
+  } catch(e) {
+    errEl.textContent = 'Error: ' + e.message;
+    btn.disabled = false; btn.textContent = 'Save name';
+  }
+}
+
+// ── Legacy loginOrRegister (kept as alias) ──────────────────────
 async function loginOrRegister() { await sendOTP(); }
 
 async function loadCard(name,createdAt,phone,email,birthday){
@@ -2526,6 +2606,7 @@ async function loadCard(name,createdAt,phone,email,birthday){
   document.getElementById('customer-row').style.display='flex';
   document.getElementById('avatar').textContent=name.charAt(0).toUpperCase();
   document.getElementById('cname').textContent=name;
+  document.getElementById('display-name-text').textContent=name;
   // Update greeting with time of day
   document.getElementById('greeting-text').textContent=getGreeting(name);
   // Check if near café
