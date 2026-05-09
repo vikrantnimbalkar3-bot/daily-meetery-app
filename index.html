@@ -2443,19 +2443,47 @@ async function completeRegistration() {
   btn.textContent = 'Creating your card…';
 
   try {
+    // Check one more time if customer already exists (RLS may have blocked it earlier)
+    const { data: existing } = await db.from('customers')
+      .select('id,name,created_at,phone,email,birthday')
+      .eq('email', _otpEmail).limit(1);
+
+    if(existing && existing.length > 0) {
+      // Already exists — just load their card
+      customerId = existing[0].id;
+      window._tdmUserId = existing[0].id;
+      await loadCard(existing[0].name, existing[0].created_at, existing[0].phone, existing[0].email, existing[0].birthday);
+      return;
+    }
+
     const insertData = { name, email: _otpEmail };
     if(phone)    insertData.phone    = phone;
     if(birthday) insertData.birthday = birthday;
 
     const { data: cr, error } = await db.from('customers').insert(insertData).select();
-    if(error) throw error;
+
+    if(error) {
+      // If duplicate key — customer exists, just load them
+      if(error.message.includes('duplicate key') || error.code === '23505') {
+        const { data: ex } = await db.from('customers')
+          .select('id,name,created_at,phone,email,birthday')
+          .eq('email', _otpEmail).limit(1);
+        if(ex && ex.length > 0) {
+          customerId = ex[0].id;
+          window._tdmUserId = ex[0].id;
+          await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
+          return;
+        }
+      }
+      throw error;
+    }
 
     customerId = cr[0].id;
     window._tdmUserId = cr[0].id;
     await loadCard(cr[0].name, cr[0].created_at, phone, _otpEmail, birthday);
   } catch(e) {
     TDM.logError('HIGH', 'completeRegistration', e);
-    errEl.textContent = 'Error creating account: ' + e.message;
+    errEl.textContent = 'Error: ' + e.message;
     btn.disabled = false;
     btn.textContent = 'Create my loyalty card ☕';
   }
