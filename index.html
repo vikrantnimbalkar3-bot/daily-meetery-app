@@ -273,29 +273,72 @@
     <div style="position:relative">
       <img src="DSC04901.jpg" alt="The Daily Meetery coffee" class="hero-img">
       <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(53,76,58,0.95));padding:20px 20px 16px;text-align:center">
-        <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:3px">Welcome back!</div>
+        <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:3px">Welcome!</div>
         <div style="font-size:12px;color:#A9B29E">One Daily Stop. Endless Connections.</div>
       </div>
     </div>
-    <div class="phone-body" style="padding-top:20px">
+
+    <!-- STEP 1: Enter email -->
+    <div id="otp-step-1" class="phone-body" style="padding-top:20px">
       <div style="background:#FDF8EE;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#354C3A;text-align:center;border:1px solid #A9B29E">
         🎟 Earn stamps · Get 10% off at 5 · Free coffee at 10
       </div>
-      <div class="field-label">Your name</div>
-      <input class="field" id="inp-name" placeholder="e.g. Sarah">
       <div class="field-label">Email address</div>
-      <input class="field" id="inp-email" placeholder="you@email.com" type="email">
+      <input class="field" id="inp-email" placeholder="you@email.com" type="email"
+        onkeydown="if(event.key==='Enter')sendOTP()">
+      <button class="main-btn" id="otp-send-btn" onclick="sendOTP()">Send verification code</button>
+      <div class="err" id="login-err"></div>
+      <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">
+        We'll send a 6-digit code to verify it's you
+      </div>
+    </div>
+
+    <!-- STEP 2: Enter OTP code -->
+    <div id="otp-step-2" class="phone-body" style="padding-top:20px;display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:32px;margin-bottom:8px">📬</div>
+        <div style="font-size:16px;font-weight:700;color:#292927;margin-bottom:4px">Check your email</div>
+        <div style="font-size:13px;color:#888">We sent a 6-digit code to</div>
+        <div style="font-size:14px;font-weight:600;color:#354C3A;margin-top:2px" id="otp-email-shown"></div>
+      </div>
+      <div class="field-label" style="text-align:center">Verification code</div>
+      <input class="field" id="inp-otp"
+        placeholder="_ _ _ _ _ _"
+        type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+        autocomplete="one-time-code"
+        style="text-align:center;font-size:28px;font-weight:700;letter-spacing:8px;padding:14px"
+        onkeydown="if(event.key==='Enter')verifyOTP()">
+      <button class="main-btn" id="otp-verify-btn" onclick="verifyOTP()">Verify code</button>
+      <div class="err" id="otp-err"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:14px">
+        <button class="outline-btn" id="otp-resend-btn" onclick="resendOTP()" style="width:auto;padding:7px 20px">
+          Resend code
+        </button>
+        <button onclick="showOTPStep(1)" style="background:none;border:none;color:#A9B29E;font-size:12px;cursor:pointer;padding:4px">
+          Use different email
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: New customer — collect name/phone/birthday -->
+    <div id="otp-step-3" class="phone-body" style="padding-top:20px;display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:32px;margin-bottom:8px">🎉</div>
+        <div style="font-size:16px;font-weight:700;color:#292927;margin-bottom:4px">Welcome to The Daily Meetery!</div>
+        <div style="font-size:13px;color:#888">Just a few details to set up your loyalty card</div>
+      </div>
+      <div class="field-label">Your name</div>
+      <input class="field" id="inp-name" placeholder="e.g. Sarah"
+        onkeydown="if(event.key==='Enter')document.getElementById('inp-phone').focus()">
       <div class="field-label">Phone number <span style="color:#A9B29E">(optional)</span></div>
       <input class="field" id="inp-phone" placeholder="e.g. 021 123 4567" type="tel">
-      <div class="field-label">Birthday <span style="color:#A9B29E">(optional — free coffee on your birthday!)</span></div>
+      <div class="field-label">Birthday month <span style="color:#A9B29E">(optional — free treat!)</span></div>
       <input class="field" id="inp-birthday" type="date" style="margin-bottom:10px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#888;margin-bottom:10px;cursor:pointer">
-        <input type="checkbox" id="remember-me" checked style="width:16px;height:16px;cursor:pointer;accent-color:#354C3A">
-        <span>Remember me on this device</span>
-      </label>
-      <button class="main-btn" onclick="loginOrRegister()">Get my stamp card</button>
-      <div class="err" id="login-err"></div>
-      <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">By signing up you agree to receive offers from The Daily Meetery</div>
+      <button class="main-btn" id="otp-reg-btn" onclick="completeRegistration()">Create my loyalty card ☕</button>
+      <div class="err" id="reg-err"></div>
+      <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">
+        By signing up you agree to receive offers from The Daily Meetery
+      </div>
     </div>
   </div>
 
@@ -2143,27 +2186,58 @@ async function init(){
     await loadMenuFromDB();
     populatePickupTimes();
 
-    // Auto-login if previously logged in — check BEFORE showing login screen
-    const savedEmail=localStorage.getItem('tdm_customer_email')||sessionStorage.getItem('tdm_customer_email');
-    if(savedEmail){
-      try{
-        const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',savedEmail).limit(1);
-        if(ex&&ex.length>0){
-          customerId=ex[0].id;
-        window._tdmUserId=ex[0].id;
-          await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);
+    // Auto-login: check Supabase Auth session first (OTP flow)
+    // then fall back to legacy localStorage email for existing users
+    let autoLoggedIn = false;
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if(session && session.user && session.user.email) {
+        const sessionEmail = session.user.email;
+        const { data: ex } = await db.from('customers')
+          .select('id,name,created_at,phone,email,birthday')
+          .eq('email', sessionEmail).limit(1);
+        if(ex && ex.length > 0) {
+          customerId = ex[0].id;
+          window._tdmUserId = ex[0].id;
+          await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
+          autoLoggedIn = true;
         } else {
-          // Saved email not found in DB — show login
-          localStorage.removeItem('tdm_customer_email');
-          document.getElementById('login-view').style.display='block';
+          // Auth session exists but no customer record — show registration
+          _otpEmail = sessionEmail;
+          document.getElementById('login-view').style.display = 'block';
+          showOTPStep(3);
+          autoLoggedIn = true;
         }
-      }catch(e){
-        console.log('Auto-login failed:',e.message);
-        document.getElementById('login-view').style.display='block';
       }
-    } else {
-      // No saved email — show login screen
-      document.getElementById('login-view').style.display='block';
+    } catch(e) {
+      console.log('Session check failed:', e.message);
+    }
+
+    if(!autoLoggedIn) {
+      // Fall back to legacy localStorage for customers who signed up before OTP
+      const savedEmail = localStorage.getItem('tdm_customer_email') || sessionStorage.getItem('tdm_customer_email');
+      if(savedEmail) {
+        try {
+          const { data: ex } = await db.from('customers')
+            .select('id,name,created_at,phone,email,birthday')
+            .eq('email', savedEmail).limit(1);
+          if(ex && ex.length > 0) {
+            customerId = ex[0].id;
+            window._tdmUserId = ex[0].id;
+            await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
+            autoLoggedIn = true;
+          } else {
+            localStorage.removeItem('tdm_customer_email');
+          }
+        } catch(e) {
+          console.log('Legacy auto-login failed:', e.message);
+        }
+      }
+    }
+
+    if(!autoLoggedIn) {
+      document.getElementById('login-view').style.display = 'block';
+      showOTPStep(1);
     }
 
     // Dismiss splash screen
@@ -2192,35 +2266,203 @@ setTimeout(()=>{
   },600);
 },3000);
 
-async function loginOrRegister(){
-  // Prevent double-submit
-  if(!TDM.lock('login')) return;
-  const name=document.getElementById('inp-name').value.trim();
-  const email=document.getElementById('inp-email').value.trim().toLowerCase();
-  const phone=document.getElementById('inp-phone')?document.getElementById('inp-phone').value.trim():'';
-  const birthday=document.getElementById('inp-birthday')?document.getElementById('inp-birthday').value:'';
-  const err=document.getElementById('login-err');
-  if(!name){err.textContent='Please enter your name.';return;}
-  if(!email.includes('@')){err.textContent='Please enter a valid email.';return;}
-  err.textContent='Finding your card...';
-  try{
-    const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',email).limit(1);
-    if(ex&&ex.length>0){
-        customerId=ex[0].id;
-        // Update any missing info (phone/birthday) if provided now
-        const updates={};
-        if(phone&&!ex[0].phone)updates.phone=phone;
-        if(birthday&&!ex[0].birthday)updates.birthday=birthday;
-        if(Object.keys(updates).length>0){
-          await db.from('customers').update(updates).eq('id',customerId);
-        }
-        try{await loadCard(ex[0].name,ex[0].created_at,ex[0].phone||phone,ex[0].email,ex[0].birthday||birthday);}
-        catch(e){console.error('loadCard error:',e);}
-      }
-    else{const insertData={name,email};if(phone)insertData.phone=phone;if(birthday)insertData.birthday=birthday;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email,birthday);}
-    err.textContent='';
-  }catch(e){TDM.logError('HIGH','loginOrRegister',e);err.textContent='Error: '+e.message;}finally{TDM.unlock('login');}
+// ── OTP Authentication State ────────────────────────────────────
+let _otpEmail    = '';
+let _otpSentAt   = 0;
+const OTP_COOLDOWN = 60000; // 60 seconds between resends
+
+// ── Step navigator ──────────────────────────────────────────────
+function showOTPStep(n) {
+  document.getElementById('otp-step-1').style.display = n===1 ? '' : 'none';
+  document.getElementById('otp-step-2').style.display = n===2 ? '' : 'none';
+  document.getElementById('otp-step-3').style.display = n===3 ? '' : 'none';
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('otp-err').textContent   = '';
+  if(document.getElementById('reg-err'))
+    document.getElementById('reg-err').textContent = '';
 }
+
+// ── STEP 1: Send OTP ────────────────────────────────────────────
+async function sendOTP() {
+  const email  = document.getElementById('inp-email').value.trim().toLowerCase();
+  const errEl  = document.getElementById('login-err');
+  const btn    = document.getElementById('otp-send-btn');
+
+  errEl.textContent = '';
+  if(!email || !email.includes('@') || !email.includes('.')) {
+    errEl.textContent = 'Please enter a valid email address.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const { error } = await db.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true }
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Send verification code';
+
+  if(error) {
+    if(error.message.includes('rate limit') || error.message.includes('too many')) {
+      errEl.textContent = 'Too many attempts. Please wait a minute and try again.';
+    } else if(error.message.includes('Failed to fetch')) {
+      errEl.textContent = 'Network error — check your connection and try again.';
+    } else {
+      errEl.textContent = error.message;
+    }
+    return;
+  }
+
+  _otpEmail  = email;
+  _otpSentAt = Date.now();
+  document.getElementById('otp-email-shown').textContent = email;
+  document.getElementById('inp-otp').value = '';
+  showOTPStep(2);
+  setTimeout(() => document.getElementById('inp-otp').focus(), 300);
+}
+
+// ── STEP 2: Verify OTP ──────────────────────────────────────────
+async function verifyOTP() {
+  const token  = document.getElementById('inp-otp').value.trim().replace(/\s/g,'');
+  const errEl  = document.getElementById('otp-err');
+  const btn    = document.getElementById('otp-verify-btn');
+
+  errEl.textContent = '';
+  if(token.length !== 6 || !/^\d+$/.test(token)) {
+    errEl.textContent = 'Please enter the 6-digit code from your email.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+
+  const { data, error } = await db.auth.verifyOtp({
+    email: _otpEmail,
+    token,
+    type: 'email'
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Verify code';
+
+  if(error) {
+    if(error.message.includes('expired') || error.message.includes('invalid')) {
+      errEl.textContent = 'Code expired or incorrect. Please request a new one.';
+    } else {
+      errEl.textContent = error.message;
+    }
+    return;
+  }
+
+  // OTP verified — check if customer exists in our table
+  try {
+    const { data: ex } = await db.from('customers')
+      .select('id,name,created_at,phone,email,birthday')
+      .eq('email', _otpEmail)
+      .limit(1);
+
+    if(ex && ex.length > 0) {
+      // Existing customer — load their card directly
+      customerId = ex[0].id;
+      window._tdmUserId = ex[0].id;
+      await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
+    } else {
+      // New customer — collect their details
+      showOTPStep(3);
+      setTimeout(() => document.getElementById('inp-name').focus(), 300);
+    }
+  } catch(e) {
+    errEl.textContent = 'Something went wrong. Please try again.';
+    console.error('verifyOTP lookup error:', e);
+  }
+}
+
+// ── STEP 2: Resend OTP ──────────────────────────────────────────
+async function resendOTP() {
+  const btn   = document.getElementById('otp-resend-btn');
+  const errEl = document.getElementById('otp-err');
+  const remaining = Math.ceil((OTP_COOLDOWN - (Date.now() - _otpSentAt)) / 1000);
+
+  if(remaining > 0) {
+    errEl.textContent = `Please wait ${remaining}s before requesting another code.`;
+    return;
+  }
+
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const { error } = await db.auth.signInWithOtp({
+    email: _otpEmail,
+    options: { shouldCreateUser: true }
+  });
+
+  if(error) {
+    errEl.textContent = error.message;
+    btn.disabled = false;
+    btn.textContent = 'Resend code';
+    return;
+  }
+
+  _otpSentAt = Date.now();
+  errEl.style.color = '#354C3A';
+  errEl.textContent = '✅ New code sent!';
+
+  // 60s countdown before re-enabling
+  let secs = 60;
+  btn.textContent = `Resend in ${secs}s`;
+  const tick = setInterval(() => {
+    secs--;
+    if(secs <= 0) {
+      clearInterval(tick);
+      btn.disabled = false;
+      btn.textContent = 'Resend code';
+      errEl.textContent = '';
+      errEl.style.color = '#c0392b';
+    } else {
+      btn.textContent = `Resend in ${secs}s`;
+    }
+  }, 1000);
+}
+
+// ── STEP 3: Complete registration (new customers only) ──────────
+async function completeRegistration() {
+  const name    = document.getElementById('inp-name').value.trim();
+  const phone   = document.getElementById('inp-phone') ? document.getElementById('inp-phone').value.trim() : '';
+  const birthday= document.getElementById('inp-birthday') ? document.getElementById('inp-birthday').value : '';
+  const errEl   = document.getElementById('reg-err');
+  const btn     = document.getElementById('otp-reg-btn');
+
+  errEl.textContent = '';
+  if(!name) { errEl.textContent = 'Please enter your name.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Creating your card…';
+
+  try {
+    const insertData = { name, email: _otpEmail };
+    if(phone)    insertData.phone    = phone;
+    if(birthday) insertData.birthday = birthday;
+
+    const { data: cr, error } = await db.from('customers').insert(insertData).select();
+    if(error) throw error;
+
+    customerId = cr[0].id;
+    window._tdmUserId = cr[0].id;
+    await loadCard(cr[0].name, cr[0].created_at, phone, _otpEmail, birthday);
+  } catch(e) {
+    TDM.logError('HIGH', 'completeRegistration', e);
+    errEl.textContent = 'Error creating account: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Create my loyalty card ☕';
+  }
+}
+
+// ── Legacy loginOrRegister (kept for safety — now calls sendOTP) ─
+async function loginOrRegister() { await sendOTP(); }
 
 async function loadCard(name,createdAt,phone,email,birthday){
   const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
@@ -2234,7 +2476,7 @@ async function loadCard(name,createdAt,phone,email,birthday){
   stamps=stampsAfterRewards<0?0:stampsAfterRewards%TOTAL;
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
   // Save login — respect remember me preference
-  const rememberMe = document.getElementById('remember-me')?.checked !== false;
+  const rememberMe = true; // Always persist session via Supabase Auth
   if(rememberMe){
     localStorage.setItem('tdm_customer_email', email||'');
     localStorage.setItem('tdm_customer_name', name);
@@ -2266,8 +2508,12 @@ async function loadCard(name,createdAt,phone,email,birthday){
   renderCard();
 }
 
-function logout(){
+async function logout(){
+  // Sign out of Supabase Auth session
+  await db.auth.signOut().catch(e => console.log('signOut error:', e.message));
+  // Clear legacy localStorage
   customerId=null;stamps=0;totalStamps=0;rewardsEarned=0;
+  _otpEmail='';
   localStorage.removeItem('tdm_customer_email');
   localStorage.removeItem('tdm_customer_name');
   sessionStorage.removeItem('tdm_customer_email');
@@ -2275,9 +2521,10 @@ function logout(){
   document.getElementById('login-view').style.display='block';
   document.getElementById('main-view').style.display='none';
   document.getElementById('customer-row').style.display='none';
-  document.getElementById('inp-name').value='';
   document.getElementById('inp-email').value='';
-  document.getElementById('inp-phone').value='';
+  if(document.getElementById('inp-name')) document.getElementById('inp-name').value='';
+  if(document.getElementById('inp-phone')) document.getElementById('inp-phone').value='';
+  showOTPStep(1);
 }
 
 function renderCard(){ try {
