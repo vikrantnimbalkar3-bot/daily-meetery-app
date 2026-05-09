@@ -420,9 +420,17 @@ db.auth.onAuthStateChange((event, session) => {
 function showView(v) {
   document.getElementById('auth-login').style.display  = v==='login'  ? '' : 'none';
   document.getElementById('auth-forgot').style.display = v==='forgot' ? '' : 'none';
-  document.getElementById('login-err').textContent = '';
-  document.getElementById('reset-err').textContent = '';
-  document.getElementById('reset-msg').textContent = '';
+  document.getElementById('login-err').textContent  = '';
+  document.getElementById('reset-err').textContent  = '';
+  document.getElementById('reset-msg').textContent  = '';
+  // If switching to forgot view, pre-check cooldown
+  if(v === 'forgot') {
+    const secs = getResetCooldownRemaining();
+    if(secs > 0) {
+      document.getElementById('reset-err').textContent =
+        `Please wait ${secs}s before requesting another reset link.`;
+    }
+  }
 }
 
 // ── Show/hide password ─────────────────────────────────────────
@@ -470,6 +478,16 @@ async function signIn() {
 }
 
 // ── Forgot / send reset email ──────────────────────────────────
+// Cooldown: 60s between sends stored in localStorage.
+// This prevents hammering the Supabase email rate limit.
+const RESET_COOLDOWN_MS = 60000; // 60 seconds
+
+function getResetCooldownRemaining() {
+  const last = parseInt(localStorage.getItem('tdm_reset_sent_at') || '0');
+  const remaining = RESET_COOLDOWN_MS - (Date.now() - last);
+  return remaining > 0 ? Math.ceil(remaining / 1000) : 0;
+}
+
 async function sendReset() {
   const email  = document.getElementById('reset-email').value.trim();
   const errEl  = document.getElementById('reset-err');
@@ -479,18 +497,48 @@ async function sendReset() {
   errEl.textContent = ''; msgEl.textContent = '';
   if(!email) { errEl.textContent = 'Please enter your email address.'; return; }
 
+  // Local cooldown check — prevents clicking Send multiple times
+  const cooldown = getResetCooldownRemaining();
+  if(cooldown > 0) {
+    errEl.textContent = `Please wait ${cooldown}s before requesting another reset link.`;
+    return;
+  }
+
   btn.disabled = true; btn.textContent = 'Sending…';
 
   const { error } = await db.auth.resetPasswordForEmail(email, {
     redirectTo: 'https://daily-meetery-app.vercel.app/reset-password.html'
   });
 
-  btn.disabled = false; btn.textContent = 'Send reset link';
-
   if(error) {
-    errEl.textContent = error.message;
+    const msg = error.message || '';
+    if(msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('too many')) {
+      errEl.textContent = 'Too many reset requests. Please wait at least 1 hour before trying again.';
+    } else if(msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      errEl.textContent = 'Network error — check your connection and try again.';
+      btn.disabled = false; btn.textContent = 'Send reset link';
+    } else {
+      errEl.textContent = msg;
+      btn.disabled = false; btn.textContent = 'Send reset link';
+    }
+    console.error('[Auth] resetPasswordForEmail error:', error);
   } else {
-    msgEl.textContent = '✅ Reset link sent! Check your email.';
+    // Success — record timestamp, keep button disabled, start countdown
+    localStorage.setItem('tdm_reset_sent_at', Date.now().toString());
+    msgEl.textContent = '✅ Reset link sent! Check your inbox (and spam folder).';
+    // Show 60s countdown before re-enabling
+    let secs = 60;
+    btn.textContent = `Resend in ${secs}s`;
+    const tick = setInterval(() => {
+      secs--;
+      if(secs <= 0) {
+        clearInterval(tick);
+        btn.disabled = false;
+        btn.textContent = 'Send reset link';
+      } else {
+        btn.textContent = `Resend in ${secs}s`;
+      }
+    }, 1000);
   }
 }
 
