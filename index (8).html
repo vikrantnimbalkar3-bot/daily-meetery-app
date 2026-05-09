@@ -133,8 +133,6 @@
     /* Streak */
     .streak-banner { background:linear-gradient(135deg,#D48631,#e8a050);border-radius:10px;padding:10px 14px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:10px; }
     .streak-fire { font-size:24px; }
-    /* Daily special */
-    .daily-special { background:linear-gradient(135deg,#354C3A,#4a6b52);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#fff;cursor:pointer; }
     .special-tag { font-size:10px;background:#D48631;color:#fff;padding:2px 8px;border-radius:99px;font-weight:700;display:inline-block;margin-bottom:6px; }
     /* Rating */
     .star-rating { display:flex;gap:6px;justify-content:center;margin:12px 0; }
@@ -161,12 +159,7 @@
     .vip-silver { background:#E8E8E8;color:#666; }
     .vip-gold { background:#FFF3C4;color:#B8860B; }
     .vip-platinum { background:#E8F4FD;color:#1565C0; }
-    /* Daily special banner */
-    .daily-special { background:linear-gradient(135deg,#354C3A,#D48631);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:10px; }
-    .daily-special-icon { font-size:24px;flex-shrink:0; }
-    .daily-special-title { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#A9B29E; }
-    .daily-special-name { font-size:14px;font-weight:700;color:#fff; }
-    .daily-special-price { font-size:12px;color:#FDF8EE;margin-top:1px; }
+    
     /* Streak badge */
     .streak-banner { background:#FFF3DC;border:1px solid #D48631;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px; }
     .streak-fire { font-size:20px; }
@@ -215,6 +208,22 @@
     .popup-rule { background: #FFF3DC; border: 1px solid #D48631; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #D48631; margin-bottom: 16px; text-align: left; line-height: 1.7; }
     .popup-btn { width: 100%; padding: 11px; border-radius: 10px; background: #354C3A; color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer; }
     @keyframes slideUp { from{transform:translateX(-50%) translateY(20px);opacity:0} to{transform:translateX(-50%) translateY(0);opacity:1} }
+    /* Deals banner */
+    .deals-section { margin-bottom:14px; }
+    .deal-card { border-radius:12px; padding:14px 16px; margin-bottom:8px; cursor:pointer; position:relative; overflow:hidden; transition:transform 0.15s; border:2px solid transparent; }
+    .deal-card:active { transform:scale(0.98); }
+    .deal-card-bg { background:linear-gradient(135deg,#354C3A,#D48631); color:#fff; }
+    .deal-badge { display:inline-block;font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:#fff;color:#D48631;margin-bottom:8px;letter-spacing:1px; }
+    .deal-title { font-size:15px;font-weight:700;color:#fff;margin-bottom:4px; }
+    .deal-desc { font-size:12px;color:rgba(255,255,255,0.85);margin-bottom:8px; }
+    .deal-price-row { display:flex;align-items:center;gap:8px; }
+    .deal-original { font-size:13px;color:rgba(255,255,255,0.6);text-decoration:line-through; }
+    .deal-new-price { font-size:20px;font-weight:800;color:#fff; }
+    .deal-saving { font-size:11px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;color:#fff; }
+    .deal-tap { position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:24px;opacity:0.8; }
+    .deal-timer { font-size:11px;color:rgba(255,255,255,0.7);margin-top:6px; }
+    @keyframes dealPulse { 0%,100%{box-shadow:0 0 0 0 rgba(212,134,49,0.4)} 50%{box-shadow:0 0 0 8px rgba(212,134,49,0)} }
+    .deal-card-bg { animation:dealPulse 2s infinite; }
     .leaderboard-item { display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0; }
     .leaderboard-item:last-child { border-bottom:none; }
     .leaderboard-rank { font-size:20px;width:30px;text-align:center; }
@@ -264,25 +273,72 @@
     <div style="position:relative">
       <img src="DSC04901.jpg" alt="The Daily Meetery coffee" class="hero-img">
       <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(53,76,58,0.95));padding:20px 20px 16px;text-align:center">
-        <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:3px">Welcome back!</div>
+        <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:3px">Welcome!</div>
         <div style="font-size:12px;color:#A9B29E">One Daily Stop. Endless Connections.</div>
       </div>
     </div>
-    <div class="phone-body" style="padding-top:20px">
+
+    <!-- STEP 1: Enter email -->
+    <div id="otp-step-1" class="phone-body" style="padding-top:20px">
       <div style="background:#FDF8EE;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#354C3A;text-align:center;border:1px solid #A9B29E">
         🎟 Earn stamps · Get 10% off at 5 · Free coffee at 10
       </div>
-      <div class="field-label">Your name</div>
-      <input class="field" id="inp-name" placeholder="e.g. Sarah">
       <div class="field-label">Email address</div>
-      <input class="field" id="inp-email" placeholder="you@email.com" type="email">
+      <input class="field" id="inp-email" placeholder="you@email.com" type="email"
+        onkeydown="if(event.key==='Enter')sendOTP()">
+      <button class="main-btn" id="otp-send-btn" onclick="sendOTP()">Send verification code</button>
+      <div class="err" id="login-err"></div>
+      <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">
+        We'll send a 6-digit code to verify it's you
+      </div>
+    </div>
+
+    <!-- STEP 2: Enter OTP code -->
+    <div id="otp-step-2" class="phone-body" style="padding-top:20px;display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:32px;margin-bottom:8px">📬</div>
+        <div style="font-size:16px;font-weight:700;color:#292927;margin-bottom:4px">Check your email</div>
+        <div style="font-size:13px;color:#888">We sent a 6-digit code to</div>
+        <div style="font-size:14px;font-weight:600;color:#354C3A;margin-top:2px" id="otp-email-shown"></div>
+      </div>
+      <div class="field-label" style="text-align:center">Verification code</div>
+      <input class="field" id="inp-otp"
+        placeholder="_ _ _ _ _ _"
+        type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+        autocomplete="one-time-code"
+        style="text-align:center;font-size:28px;font-weight:700;letter-spacing:8px;padding:14px"
+        onkeydown="if(event.key==='Enter')verifyOTP()">
+      <button class="main-btn" id="otp-verify-btn" onclick="verifyOTP()">Verify code</button>
+      <div class="err" id="otp-err"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:14px">
+        <button class="outline-btn" id="otp-resend-btn" onclick="resendOTP()" style="width:auto;padding:7px 20px">
+          Resend code
+        </button>
+        <button onclick="showOTPStep(1)" style="background:none;border:none;color:#A9B29E;font-size:12px;cursor:pointer;padding:4px">
+          Use different email
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: New customer — collect name/phone/birthday -->
+    <div id="otp-step-3" class="phone-body" style="padding-top:20px;display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:32px;margin-bottom:8px">🎉</div>
+        <div style="font-size:16px;font-weight:700;color:#292927;margin-bottom:4px">Welcome to The Daily Meetery!</div>
+        <div style="font-size:13px;color:#888">Just a few details to set up your loyalty card</div>
+      </div>
+      <div class="field-label">Your name</div>
+      <input class="field" id="inp-name" placeholder="e.g. Sarah"
+        onkeydown="if(event.key==='Enter')document.getElementById('inp-phone').focus()">
       <div class="field-label">Phone number <span style="color:#A9B29E">(optional)</span></div>
       <input class="field" id="inp-phone" placeholder="e.g. 021 123 4567" type="tel">
-      <div class="field-label">Birthday <span style="color:#A9B29E">(optional — free coffee on your birthday!)</span></div>
+      <div class="field-label">Birthday month <span style="color:#A9B29E">(optional — free treat!)</span></div>
       <input class="field" id="inp-birthday" type="date" style="margin-bottom:10px">
-      <button class="main-btn" onclick="loginOrRegister()">Get my stamp card</button>
-      <div class="err" id="login-err"></div>
-      <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">By signing up you agree to receive offers from The Daily Meetery</div>
+      <button class="main-btn" id="otp-reg-btn" onclick="completeRegistration()">Create my loyalty card ☕</button>
+      <div class="err" id="reg-err"></div>
+      <div style="font-size:11px;color:#A9B29E;text-align:center;margin-top:10px">
+        By signing up you agree to receive offers from The Daily Meetery
+      </div>
     </div>
   </div>
 
@@ -291,7 +347,8 @@
       <button class="nav-tab active" onclick="showTab('card')" id="tab-card">My Card</button>
       <button class="nav-tab" onclick="showTab('order')" id="tab-order">Order<span class="cart-badge" id="cart-badge" style="display:none">0</span></button>
       <button class="nav-tab" onclick="showTab('history')" id="tab-history">History</button>
-      <button class="nav-tab" onclick="showTab('menu')" id="tab-menu">Menu</button>
+      <button class="nav-tab" onclick="showTab('menu')" id="tab-menu">Drinks</button>
+      <button class="nav-tab" onclick="showTab('food')" id="tab-food">Food</button>
     </div>
 
     <!-- CARD TAB -->
@@ -299,20 +356,16 @@
       <img src="DSC04927%20(1).jpg" alt="The Daily Meetery" style="width:100%;height:130px;object-fit:cover;object-position:center 20%;display:block;">
       <div class="phone-body">
       <div class="toast" id="toast"></div>
-      <!-- Daily Special -->
-      <div class="daily-special" id="daily-special" style="display:none">
-        <div class="daily-special-icon">🔥</div>
-        <div>
-          <div class="daily-special-title">Today's Special</div>
-          <div class="daily-special-name" id="special-name">—</div>
-          <div class="daily-special-price" id="special-price">—</div>
-        </div>
+
       </div>
       <!-- Streak -->
       <div class="streak-banner" id="streak-banner" style="display:none">
         <div class="streak-fire">🔥</div>
         <div class="streak-text" id="streak-text">You're on a streak!</div>
       </div>
+      <!-- Deals Banner -->
+      <div class="deals-section" id="deals-banner" style="display:none"></div>
+
       <!-- Favourite drink -->
       <div class="fave-drink" id="fave-drink" style="display:none">
         <div>
@@ -357,6 +410,28 @@
         <button onclick="shareReferral()" style="margin-top:10px;padding:7px 20px;background:#D48631;color:#fff;border:none;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer">Share code 🔗</button>
       </div>
       <button class="redeem-btn" id="redeem-btn" style="display:none" onclick="showTab('order')">Claim my free coffee</button>
+      <!-- Edit Profile -->
+      <div style="margin-top:14px;background:#FDF8EE;border-radius:12px;padding:14px;border:1px solid #e8e0d0">
+        <div style="font-size:12px;font-weight:600;color:#354C3A;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">✏️ Edit Profile</div>
+        <div id="edit-name-display" style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:11px;color:#888;margin-bottom:2px">Your name</div>
+            <div style="font-size:15px;font-weight:600;color:#292927" id="display-name-text">—</div>
+          </div>
+          <button onclick="toggleEditName()" style="background:#354C3A;color:#fff;border:none;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Edit</button>
+        </div>
+        <div id="edit-name-form" style="display:none;margin-top:10px">
+          <input type="text" id="new-name-input" placeholder="Enter your name"
+            style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #A9B29E;font-size:15px;outline:none;margin-bottom:8px;background:#fff"
+            onkeydown="if(event.key==='Enter')saveNewName()">
+          <div style="display:flex;gap:8px">
+            <button onclick="saveNewName()" style="flex:1;padding:10px;background:#D48631;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer" id="save-name-btn">Save name</button>
+            <button onclick="toggleEditName()" style="padding:10px 16px;background:#fff;color:#888;border:1px solid #ddd;border-radius:8px;font-size:14px;cursor:pointer">Cancel</button>
+          </div>
+          <div id="edit-name-err" style="color:#c0392b;font-size:12px;margin-top:6px"></div>
+          <div id="edit-name-ok"  style="color:#354C3A;font-size:12px;margin-top:6px"></div>
+        </div>
+      </div>
       <button class="outline-btn" onclick="logout()">Sign out</button>
       </div>
     </div>
@@ -374,6 +449,8 @@
       </div>
       <div class="phone-body">
       <div id="order-form">
+        <!-- Active deals at top of order tab -->
+        <div id="deals-banner-order" style="margin-bottom:8px"></div>
         <div id="free-banner" class="free-coffee-banner" style="display:none"></div>
         <div class="cart-section">
           <div class="cart-title">
@@ -422,8 +499,8 @@
         <div id="s-ice"></div>
         <div class="section-title">Tea</div>
         <div id="s-tea"></div>
-        <div class="section-title" id="food-section-title" style="display:none">🥐 Food</div>
-        <div id="s-food" style="display:none"></div>
+        <div class="section-title" id="food-section-title">🥐 Food</div>
+        <div id="s-food"><div style="color:#888;font-size:12px;padding:8px 0">Loading food menu...</div></div>
         <div id="payment-section" style="display:none">
           <div id="paid-payment">
             <div class="pay-methods">
@@ -503,21 +580,269 @@
       <div style="font-size:12px;color:#555;line-height:2">Wild Berry Frappe — R $8.00 · L $9.50<br>Spiced Pumpkin / Gingerbread — R $7.00 · L $8.30<br>Bananabread — R $7.00 · L $8.30<br>Matcha — R $7.00 · L $8.30<br>Iced Americano — R $5.90 · L $6.50<br>Chocolate / Mocha / Latte — R $6.70 · L $8.00<br>Chai Sweet or Spicy — R $6.70 · L $8.00</div>
       <div class="section-title">Tea — $5.00</div>
       <div style="font-size:12px;color:#555;line-height:2">English Breakfast · Earl Grey · Green Lime · Peppermint · Lemon Ginger Honey</div>
-      <div class="section-title" id="food-menu-title" style="display:none">🥐 Food</div>
-      <div id="food-menu-list" style="font-size:12px;color:#555;line-height:2;display:none"></div>
+      <div class="section-title" id="food-menu-title">🥐 Food</div>
+      <div id="food-menu-list" style="font-size:12px;color:#555;line-height:2">See Order tab for full food menu</div>
       <div style="font-size:11px;color:#888;margin-top:14px;padding:10px;background:#f7f7f7;border-radius:10px;line-height:1.8"><strong>Add-ons:</strong><br>Soy / Oat / Coconut / Almond / Decaf +$0.80 (iced +$1.00)<br>Caramel / Vanilla / Hazelnut syrup +$0.60<br>Make it a Frappe +$1.50 · Blend with ice cream +$4.00</div>
       <button class="main-btn" style="margin-top:14px" onclick="showTab('order')">Go to order screen</button>
+      </div>
+    </div>
+
+    <!-- FOOD TAB -->
+    <div id="tab-food-view" style="display:none">
+      <img src="DSC04901.jpg" alt="Food Menu" style="width:100%;height:110px;object-fit:cover;object-position:center 60%;display:block;">
+      <div class="phone-body">
+        <div style="font-size:13px;color:#888;margin-bottom:14px">Our full food menu — tap Order tab to place your order.</div>
+        <div id="food-menu-display"><div style="color:#888;font-size:12px">Loading food menu...</div></div>
+        <button class="main-btn" style="margin-top:14px" onclick="showTab('order')">Order food now</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+
+// ============================================================
+// TDM PRODUCTION RELIABILITY SYSTEM v1.0
+// Inspired by Uber/Amazon engineering practices
+// ============================================================
+
+const TDM = {
+
+  // ---- ERROR SEVERITY LEVELS (like PagerDuty) ----
+  SEV: { P0:'CRITICAL', P1:'HIGH', P2:'MEDIUM', P3:'LOW' },
+
+  // ---- FEATURE FLAGS (toggle features without deployment) ----
+  FLAGS: {
+    enableDeals: true,
+    enableGeofence: true,
+    enableNotifications: true,
+    enableNewDrinkBonus: true,
+    enableDoubleStampTuesday: true,
+    enableLeaderboard: true,
+    maintenanceMode: false,
+  },
+
+  // ---- IN-MEMORY ERROR LOG (last 50 errors) ----
+  errorLog: [],
+  metrics: {
+    dbCallCount: 0,
+    dbErrorCount: 0,
+    orderAttempts: 0,
+    orderSuccesses: 0,
+    sessionStart: Date.now(),
+  },
+
+  // ---- LOG ERROR with severity ----
+  logError(sev, context, error, extra={}) {
+    const entry = {
+      id: Date.now(),
+      sev,
+      context,
+      message: error?.message || String(error),
+      stack: error?.stack,
+      timestamp: new Date().toISOString(),
+      user: window._tdmUserId || 'anonymous',
+      url: location.href,
+      ...extra
+    };
+    this.errorLog.push(entry);
+    if(this.errorLog.length > 50) this.errorLog.shift();
+
+    // Console output with severity colour
+    const colours = {CRITICAL:'color:red;font-weight:bold', HIGH:'color:orange;font-weight:bold', MEDIUM:'color:#D48631', LOW:'color:gray'};
+    console.error(`%c[TDM ${sev}] ${context}:`, colours[sev]||'', error);
+
+    // P0/P1 — save to Supabase for owner visibility
+    if(sev === 'CRITICAL' || sev === 'HIGH') {
+      this._persistError(entry).catch(()=>{});
+    }
+  },
+
+  async _persistError(entry) {
+    try {
+      await db.from('error_logs').insert({
+        severity: entry.sev,
+        context: entry.context,
+        message: entry.message,
+        user_id: entry.user,
+        metadata: JSON.stringify(entry)
+      });
+    } catch(e) { /* never crash on logging */ }
+  },
+
+  // ---- RETRY with exponential backoff (Uber-style) ----
+  async retry(fn, opts={}) {
+    const { maxAttempts=3, delayMs=500, context='operation' } = opts;
+    let lastError;
+    for(let attempt=1; attempt<=maxAttempts; attempt++) {
+      try {
+        return await fn();
+      } catch(e) {
+        lastError = e;
+        if(attempt < maxAttempts) {
+          const delay = delayMs * Math.pow(2, attempt-1); // exponential backoff
+          console.warn(`[TDM] ${context} failed (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms...`);
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
+    }
+    this.logError('HIGH', context, lastError, { attempts: maxAttempts });
+    throw lastError;
+  },
+
+  // ---- CIRCUIT BREAKER (stop hammering failing services) ----
+  _circuits: {},
+  circuitBreaker(name, fn, fallback=null) {
+    if(!this._circuits[name]) {
+      this._circuits[name] = { failures: 0, lastFailure: 0, state: 'CLOSED' };
+    }
+    const circuit = this._circuits[name];
+
+    // If circuit is OPEN, use fallback
+    if(circuit.state === 'OPEN') {
+      const elapsed = Date.now() - circuit.lastFailure;
+      if(elapsed > 30000) { // Try again after 30s
+        circuit.state = 'HALF-OPEN';
+      } else {
+        console.warn(`[TDM] Circuit ${name} is OPEN — using fallback`);
+        return Promise.resolve(fallback);
+      }
+    }
+
+    return fn().then(result => {
+      if(circuit.state === 'HALF-OPEN') {
+        circuit.state = 'CLOSED';
+        circuit.failures = 0;
+      }
+      return result;
+    }).catch(err => {
+      circuit.failures++;
+      circuit.lastFailure = Date.now();
+      if(circuit.failures >= 3) {
+        circuit.state = 'OPEN';
+        console.error(`[TDM] Circuit ${name} OPENED after ${circuit.failures} failures`);
+        this.logError('HIGH', 'CircuitBreaker', err, { circuit: name });
+      }
+      throw err;
+    });
+  },
+
+  // ---- DEDUPLICATION (prevent double orders/stamps) ----
+  _locks: new Set(),
+  lock(key) {
+    if(this._locks.has(key)) return false; // already locked
+    this._locks.add(key);
+    setTimeout(() => this._locks.delete(key), 10000); // auto-release after 10s
+    return true;
+  },
+  unlock(key) { this._locks.delete(key); },
+
+  // ---- SAFE DB CALL with metrics ----
+  async db(fn, context='db') {
+    this.metrics.dbCallCount++;
+    try {
+      const result = await this.retry(fn, { context, maxAttempts: 3, delayMs: 300 });
+      return result;
+    } catch(e) {
+      this.metrics.dbErrorCount++;
+      this.logError('HIGH', `DB:${context}`, e);
+      throw e;
+    }
+  },
+
+  // ---- MAINTENANCE MODE CHECK ----
+  checkMaintenance() {
+    if(this.FLAGS.maintenanceMode) {
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#354C3A;color:#fff;font-family:sans-serif;text-align:center;padding:20px"><div><div style="font-size:48px;margin-bottom:16px">☕</div><h2>We\'ll be right back!</h2><p style="color:#A9B29E;margin-top:8px">The Daily Meetery app is undergoing maintenance.<br>Check back in a few minutes.</p></div></div>';
+      return true;
+    }
+    return false;
+  },
+
+  // ---- HEALTH CHECK ----
+  async healthCheck() {
+    try {
+      const start = Date.now();
+      await db.from('customers').select('id').limit(1);
+      const latency = Date.now() - start;
+      if(latency > 3000) this.logError('MEDIUM', 'HealthCheck', new Error('High DB latency: '+latency+'ms'));
+      return { healthy: true, latency };
+    } catch(e) {
+      this.logError('CRITICAL', 'HealthCheck', e);
+      return { healthy: false, error: e.message };
+    }
+  },
+
+  // ---- SESSION METRICS ----
+  getMetrics() {
+    return {
+      ...this.metrics,
+      sessionDuration: Math.round((Date.now() - this.metrics.sessionStart)/1000)+'s',
+      errorRate: this.metrics.dbCallCount > 0
+        ? ((this.metrics.dbErrorCount/this.metrics.dbCallCount)*100).toFixed(1)+'%'
+        : '0%',
+      orderSuccessRate: this.metrics.orderAttempts > 0
+        ? ((this.metrics.orderSuccesses/this.metrics.orderAttempts)*100).toFixed(1)+'%'
+        : 'N/A',
+      recentErrors: this.errorLog.slice(-5),
+    };
+  }
+};
+
+// ---- GLOBAL ERROR HANDLERS ----
+window.onerror = function(msg, src, line, col, err) {
+  TDM.logError('HIGH', 'GlobalJS', err || new Error(msg), { line, col, src });
+  // Always recover splash
+  const splash = document.getElementById('splash-screen');
+  if(splash) { splash.style.opacity='0'; setTimeout(()=>{ try{splash.remove();}catch(e){} },500); }
+  return false;
+};
+
+window.addEventListener('unhandledrejection', e => {
+  TDM.logError('HIGH', 'UnhandledPromise', e.reason instanceof Error ? e.reason : new Error(String(e.reason)));
+});
+
+// ---- FEATURE FLAG HELPER ----
+function isEnabled(flag) {
+  return TDM.FLAGS[flag] !== false;
+}
+
+// ---- SPLASH SAFETY NET (always dismiss) ----
+setTimeout(() => {
+  const splash = document.getElementById('splash-screen');
+  if(splash) { splash.style.opacity='0'; setTimeout(()=>{ try{splash.remove();}catch(e){} },500); }
+  const loading = document.getElementById('loading-view');
+  const login = document.getElementById('login-view');
+  const main = document.getElementById('main-view');
+  if(loading && loading.style.display!=='none') loading.style.display='none';
+  if(main && main.style.display==='none' && login && login.style.display==='none') {
+    if(login) login.style.display='block';
+  }
+}, 5000);
+
+// ---- TYPE-SAFE ELEMENT HELPER ----
+function $el(id) {
+  const el = document.getElementById(id);
+  if(!el) { TDM.logError('LOW', '$el', new Error('Element not found: '+id)); }
+  return el || { style:{}, textContent:'', innerHTML:'', value:'', classList:{add:()=>{},remove:()=>{},toggle:()=>{},contains:()=>false}, dataset:{}, after:()=>{} };
+}
+
+// safeTry and safeRun kept for backwards compat
+async function safeTry(fn, ...args) {
+  try { return await fn(...args); } catch(e) { TDM.logError('MEDIUM', fn.name||'safeTry', e); return null; }
+}
+function safeRun(fn, ...args) {
+  try { if(typeof fn==='function') return fn(...args); } catch(e) { TDM.logError('MEDIUM', fn.name||'safeRun', e); }
+}
+
 const SURL='https://jxlalnsemmghxukapvxv.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4bGFsbnNlbW1naHh1a2Fwdnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI5MzgsImV4cCI6MjA5MjMzODkzOH0.Wg7Ye-9ks-MpGUnq4X9OS_7RS_oaQkb1MvU0LNzzU0I';
 const STRIPE_PK='pk_test_51TGz94Pik0Ketj6i4Vtm2XFC3p6woiSfTfzrPhTwwDEgEYGpbXhznj3LRwH3OalhjBUfZVv3XeV8GRJ9XCIHbV7400MkQ0jJOL';
 const TOTAL=10;
-const db=supabase.createClient(SURL,SKEY);
+const db=supabase.createClient(SURL,SKEY,{
+  realtime:{enabled:false},       // Prevents DataCloneError from BroadcastChannel/postMessage
+  auth:{persistSession:true},     // Customer stays logged in across sessions
+});
 const stripeObj=Stripe(STRIPE_PK);
 const elements=stripeObj.elements();
 let cardElement=null;
@@ -577,21 +902,30 @@ const SYRUP_OPTS=['Caramel +$0.60','Vanilla +$0.60','Hazelnut +$0.60'];
 
 function buildSection(id,items){
   const c=document.getElementById(id);
+  if(!c)return;
+  const isFood=id==='s-food';
   items.forEach((item,idx)=>{
     const d=document.createElement('div');
     d.className='menu-item';
     const crowd=item.desc==='Crowd Favourite'?'<span class="crowd-badge">Crowd Fave</span>':'';
-    const sig=id==='s-signature'?'<span class="sig-badge">Signature</span>':'';
+    const sig=(id==='s-signature'||item.isSignature)?'<span class="sig-badge">Signature</span>':'';
     const desc=item.desc&&item.desc!=='Crowd Favourite'?`<div class="item-desc">${item.desc}</div>`:'';
     const itemId=id+'-'+idx;
 
-    // Size buttons — each calls addToCartWithOptions passing the itemId
     const sizeBtns=item.sizes.map(s=>`<button class="size-btn" onclick="selectSize(this,'${item.name}',${s.p},'${s.l}','${itemId}')" data-price="${s.p}" data-size="${s.l}" data-name="${item.name}"><span class="add-icon">+</span>${s.l}</button>`).join('');
 
-    // Inline milk addons
-    const milkBtns=MILK_OPTS.map(m=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','milk')">${m}</button>`).join('');
-    // Inline syrup addons
-    const syrupBtns=SYRUP_OPTS.map(s=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','syrup')">${s}</button>`).join('');
+    // Only show milk/syrup for drinks, not food
+    const milkBtns=isFood?'':MILK_OPTS.map(m=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','milk')">${m}</button>`).join('');
+    const syrupBtns=isFood?'':SYRUP_OPTS.map(s=>`<button class="inline-addon-btn" onclick="toggleInlineAddon(this,'${itemId}','syrup')">${s}</button>`).join('');
+
+    const milkSection=isFood?'':
+      `<div class="inline-addon-title">Milk alternative <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
+       <div class="inline-addon-grid" id="milk-${itemId}">${milkBtns}</div>
+       <div class="inline-addon-title">Syrups <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
+       <div class="inline-addon-grid" id="syrup-${itemId}">${syrupBtns}</div>`;
+
+    const addBtnEmoji = isFood ? '🍽️' : '☕';
+    const notePlaceholder = isFood ? 'e.g. no onions, extra sauce, allergies...' : 'e.g. extra hot, no sugar, half strength...';
 
     d.innerHTML=`
       <div class="item-name">${item.name}${sig}${crowd}</div>
@@ -599,13 +933,10 @@ function buildSection(id,items){
       <div class="size-row">${sizeBtns}</div>
       <div class="item-addons" id="addons-${itemId}">
         <div style="font-size:11px;color:#354C3A;font-weight:600;margin-bottom:8px" id="selected-size-label-${itemId}"></div>
-        <div class="inline-addon-title">Milk alternative <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
-        <div class="inline-addon-grid" id="milk-${itemId}">${milkBtns}</div>
-        <div class="inline-addon-title">Syrups <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
-        <div class="inline-addon-grid" id="syrup-${itemId}">${syrupBtns}</div>
+        ${milkSection}
         <div class="inline-addon-title">Special instructions <span style="color:#A9B29E;font-weight:400">(optional)</span></div>
-        <textarea class="item-note" id="note-${itemId}" rows="2" placeholder="e.g. extra hot, no sugar, half strength..."></textarea>
-        <button class="add-to-cart-btn" id="add-btn-${itemId}" onclick="addToCartFromPanel('${itemId}')">Add to cart ☕</button>
+        <textarea class="item-note" id="note-${itemId}" rows="2" placeholder="${notePlaceholder}"></textarea>
+        <button class="add-to-cart-btn" id="add-btn-${itemId}" onclick="addToCartFromPanel('${itemId}')">${addBtnEmoji} Add to cart</button>
         <button class="cancel-btn" onclick="closeItemPanel('${itemId}')">Cancel</button>
       </div>`;
     c.appendChild(d);
@@ -694,7 +1025,9 @@ function recalcCart(){
       item.price=item.basePrice;
       item.discountAmt=0;
     }
-    if(hitsReward&&eligible)simStamps=0;
+    // Food items never count toward stamp simulation
+    if(item.isFood){simStamps=prevSim;} // revert stamp increment for food
+    else if(hitsReward&&eligible)simStamps=0;
     else if(hitsReward&&!eligible)simStamps=0;
   });
   renderCart();
@@ -728,10 +1061,30 @@ function renderCart(){
     countEl.textContent='0 items';return;
   }
 
-  container.innerHTML=cart.map(i=>`<div class="cart-item"><span class="cart-item-name">${i.name} (${i.size})${i.free?'<span class="free-badge">FREE</span>':i.discount?'<span class="free-badge" style="background:#FFF3DC;color:#D48631">10% OFF</span>':''}${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}${i.note?'<br><span style="font-size:10px;color:#D48631">📝 '+i.note+'</span>':''}</span><span class="cart-item-price ${i.free?'free':i.discount?'free':''}">${i.free?'FREE':i.discount?'$'+i.price.toFixed(2)+' <small style="text-decoration:line-through;color:#aaa;font-size:10px">$'+i.basePrice.toFixed(2)+'</small>':'$'+i.price.toFixed(2)}</span><span class="cart-item-remove" onclick="removeFromCart(${i.id})">×</span></div>`).join('');
+  container.innerHTML=cart.map(i=>`
+    <div class="cart-item" data-dnd data-id="${i.id}" style="position:relative">
+      <span data-dnd-handle style="cursor:grab;color:#A9B29E;padding:0 6px 0 0;font-size:16px;flex-shrink:0;touch-action:none" title="Drag to reorder">⠿</span>
+      <span class="cart-item-name">${i.name} (${i.size})
+        ${i.free?'<span class="free-badge">FREE</span>':i.discount?'<span class="free-badge" style="background:#FFF3DC;color:#D48631">10% OFF</span>':''}
+        ${i.addons?'<br><span style="font-size:10px;color:#888">'+i.addons+'</span>':''}
+        ${i.note?'<br><span style="font-size:10px;color:#D48631">📝 '+i.note+'</span>':''}
+      </span>
+      <span class="cart-item-price ${i.free?'free':i.discount?'free':''}">${i.free?'FREE':i.discount?'$'+i.price.toFixed(2)+' <small style="text-decoration:line-through;color:#aaa;font-size:10px">$'+i.basePrice.toFixed(2)+'</small>':'$'+i.price.toFixed(2)}</span>
+      <span class="cart-item-remove" onclick="removeFromCart(${i.id})">×</span>
+    </div>`).join('');
+
+  // Attach cart DnD after render
+  const cartContainer = document.getElementById('cart-items');
+  if(cartContainer && cart.length > 1) {
+    TDM_DND.make(cartContainer, (newOrder) => {
+      // Reorder the cart array to match new visual order
+      const idOrder = newOrder.map(o => parseInt(o.id));
+      cart = idOrder.map(id => cart.find(i => i.id === id)).filter(Boolean);
+    }, { itemSelector:'[data-dnd]', handleSelector:'[data-dnd-handle]' });
+  }
 
   const total=cart.reduce((s,i)=>s+i.price,0);
-  const paidCount=cart.filter(i=>!i.free).length;
+  const paidCount=cart.filter(i=>!i.free&&!i.isFood).length;
   document.getElementById('cart-total').textContent='$'+total.toFixed(2);
   const discountCount=cart.filter(i=>i.discount).length;
   let stampsText='+'+paidCount+' stamp'+(paidCount!==1?'s':'');
@@ -765,6 +1118,12 @@ function setPayMethod(method){
 
 async function handleOrder(){
   if(cart.length===0)return;
+  // DEDUPLICATION: prevent double orders on double-tap
+  if(!TDM.lock('order-'+customerId)){
+    showToast('Order already processing... please wait!');
+    return;
+  }
+  TDM.metrics.orderAttempts++;
   const total=cart.reduce((s,i)=>s+i.price,0);
   const freeItems=cart.filter(i=>i.free);
   const paidItems=cart.filter(i=>!i.free);
@@ -783,6 +1142,7 @@ async function handleOrder(){
 }
 
 async function processOrder(freeItems,paidItems,msg){
+  try {
   const now=new Date().toISOString();
   const allItems=[...paidItems,...freeItems];
   const total=allItems.reduce((s,i)=>s+i.price,0);
@@ -802,11 +1162,16 @@ async function processOrder(freeItems,paidItems,msg){
 
   // Save paid items to orders table
   if(paidItems.length>0){
+    // Only stamp drink items — not food
+    const drinkItems=paidItems.filter(i=>!i.isFood);
     const stampsPerItem=getStampsToEarn();
-  const stampInserts=paidItems.flatMap(()=>Array(stampsPerItem).fill({customer_id:customerId}));
-    await db.from('stamps').insert(stampInserts);
-    totalStamps+=paidItems.length;
-    const orderInserts=paidItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.price,is_free:false,stamps_earned:1,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:orderPickupLabel}));
+    if(drinkItems.length>0){
+      const stampInserts=drinkItems.flatMap(()=>Array(stampsPerItem).fill({customer_id:customerId}));
+      const{error:stampErr}=await db.from('stamps').insert(stampInserts);
+      if(stampErr){TDM.logError('HIGH','stamps.insert',stampErr);}
+      else{totalStamps+=drinkItems.length*stampsPerItem;}
+    }
+    const orderInserts=paidItems.map(i=>({customer_id:customerId,item_name:i.name,size:i.size,price:i.price,is_free:false,stamps_earned:i.isFood?0:1,order_group_id:groupId,addons:i.addons,note:i.note,pickup_time:orderPickupLabel}));
     await db.from('orders').insert(orderInserts);
   }
   // Save free items to orders table
@@ -822,11 +1187,11 @@ async function processOrder(freeItems,paidItems,msg){
   stamps=totalStamps%TOTAL;
   playStampSound();
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
-  checkMilestones(totalStamps,document.getElementById('cname').textContent);
+  safeRun(checkMilestones, totalStamps, document.getElementById('cname')?.textContent||'');
   // Check new drink bonus for each unique item
-  const orderItems=allItems.map(i=>i.name);
-  const uniqueItems=[...new Set(orderItems)];
-  for(const item of uniqueItems){await checkNewDrink(item);}
+  const drinkOrderItems=allItems.filter(i=>!i.isFood).map(i=>i.name);
+  const uniqueDrinks=[...new Set(drinkOrderItems)];
+  for(const item of uniqueDrinks){await checkNewDrink(item);}
   if(stamps>=TOTAL&&prevStamps<TOTAL){
     launchConfetti();setTimeout(()=>showPopup('🎉 Free coffee unlocked!','Your 10th coffee is on us! Valid on standard coffees only. Not valid on signature drinks, frappes or teas.',true),800);
   } else if(stamps>=5&&stamps<TOTAL&&prevStamps<5){
@@ -836,16 +1201,28 @@ async function processOrder(freeItems,paidItems,msg){
   document.getElementById('success-emoji').textContent=freeItems.length>0?'🎉':'✅';
   const successPickup=orderPickupLabel==='ASAP'?'ASAP — being made now!':'Ready at '+orderPickupLabel;document.getElementById('success-pickup').textContent='Pickup: '+successPickup;
   document.getElementById('success-wait').textContent='⏱ Estimated wait: '+getWaitTime();document.getElementById('success-msg').textContent=msg;
+  const drinkCount=paidItems.filter(i=>!i.isFood).length;
+  const foodCount=paidItems.filter(i=>i.isFood).length;
   let stampsText='';
-  if(paidItems.length>0)stampsText='+'+paidItems.length+' stamp'+(paidItems.length!==1?'s':'')+' added!';
+  if(drinkCount>0)stampsText='+'+drinkCount+' stamp'+(drinkCount!==1?'s':'')+' added!';
+  if(foodCount>0)stampsText+=(stampsText?' · ':'')+foodCount+' food item'+(foodCount!==1?'s':'')+' ordered';
   if(freeItems.length>0)stampsText+=(stampsText?' · ':'')+'🎉 '+freeItems.length+' free coffee'+(freeItems.length>1?'s':'')+' redeemed!';
   document.getElementById('success-stamps').textContent=stampsText;
   document.getElementById('success-items').innerHTML=cart.map(i=>`<div class="success-item-row"><span>${i.name} (${i.size})${i.free?' 🎉':''}${i.addons?'<br><small style="color:#A9B29E">'+i.addons+'</small>':''}${i.note?'<br><small style="color:#D48631">📝 '+i.note+'</small>':''}</span><span>${i.free?'FREE':'$'+i.price.toFixed(2)}</span></div>`).join('');
+  TDM.metrics.orderSuccesses++;
+  TDM.unlock('order-'+customerId);
   document.getElementById('order-form').style.display='none';
   document.getElementById('order-success').style.display='block';
+  }catch(e){
+    TDM.logError('CRITICAL', 'processOrder', e);
+    TDM.unlock('order-'+customerId);
+    document.getElementById('order-btn').disabled=false;
+    document.getElementById('order-btn').textContent='Try again';
+    showToast('Something went wrong. Please try again.');
+  }
 }
 
-async function loadHistory(){
+async function loadHistory(){ try {
   document.getElementById('history-list').innerHTML='<div class="history-empty">Loading...</div>';
   const{data,error}=await db.from('orders').select('*').eq('customer_id',customerId).order('created_at',{ascending:false});
   if(error||!data||data.length===0){document.getElementById('history-list').innerHTML='<div class="history-empty">No orders yet — place your first order!</div>';document.getElementById('history-summary').style.display='none';return;}
@@ -889,6 +1266,7 @@ async function loadHistory(){
     html+='</div>';
   });
   document.getElementById('history-list').innerHTML=html;
+  }catch(e){TDM.logError('MEDIUM','loadHistory',e);}
 }
 
 function resetOrder(){
@@ -915,12 +1293,13 @@ function resetOrder(){
 }
 
 function showTab(tab){
-  ['card','order','history','menu'].forEach(t=>{
+  ['card','order','history','menu','food'].forEach(t=>{
     document.getElementById('tab-'+t+'-view').style.display=t===tab?'block':'none';
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
-  if(tab==='order')renderCart();
-  if(tab==='history')loadHistory();
+  if(tab==='order'){renderCart();loadDeals();}
+  if(tab==='history')safeTry(loadHistory);
+  if(tab==='food')safeTry(renderFoodMenuTab);
   
 }
 
@@ -965,19 +1344,6 @@ function launchConfetti(){
   }
 }
 
-const DAILY_SPECIALS=[
-  {day:0,title:'Sunday Funday!',desc:'Free size upgrade on any latte today only',emoji:'🌟'},
-  {day:1,title:'Monday Magic!',desc:'Double stamps on all orders today',emoji:'⚡'},
-  {day:2,title:'Tasty Tuesday!',desc:'10% off all Signature drinks today',emoji:'✨'},
-  {day:3,title:'Hump Day Treat!',desc:'Free syrup with any coffee today',emoji:'🎉'},
-  {day:4,title:'Thirsty Thursday!',desc:'Buy 2 coffees get 1 free today',emoji:'☕'},
-  {day:5,title:'Friday Feels!',desc:'Try our new Pistachio Coco Loco — half price!',emoji:'🔥'},
-  {day:6,title:'Weekend Vibes!',desc:'Free muffin with any large coffee today',emoji:'🧁'},
-];
-
-function getDailySpecial(){
-  return DAILY_SPECIALS[new Date().getDay()];
-}
 
 function getStreak(){
   const streak=parseInt(localStorage.getItem('tdm_streak')||'0');
@@ -1035,8 +1401,9 @@ function selectSize(btn,name,price,size,itemId){
   btn.style.color='#fff';
   btn.style.borderColor='#354C3A';
 
-  // Store selection
-  selectedItemData[itemId]={name,price,size};
+  // Store selection — check if this is a food item (s-food section)
+  const isFood=itemId.startsWith('s-food');
+  selectedItemData[itemId]={name,price,size,isFood};
 
   // Update label inside panel
   const label=document.getElementById('selected-size-label-'+itemId);
@@ -1066,6 +1433,7 @@ function addToCartFromPanel(itemId){
     size:data.size,
     addons:addonNames,
     note,
+    isFood:data.isFood||false,
     id:Date.now()
   });
 
@@ -1104,10 +1472,64 @@ function closeItemPanel(itemId){
   }
 }
 
+
+// ---- FOOD MENU TAB ----
+const FOOD_CAT_LABELS={
+  'Acai Bowl':'🥗 All Day Mains',
+  'TDM Full Breakkie':'🥗 All Day Mains',
+  'Crack & Stack':'🥗 All Day Mains',
+  'Egg Benne':'🥗 All Day Mains',
+  'Chilli & Mushroom Omelette on Pita':'🥗 All Day Mains',
+  'Classic Kiwi Burger w/ Fries':'🥗 All Day Mains',
+  'Asian Crumbed Chicken Burger w/ Fries':'🥗 All Day Mains',
+  'Fries':'🍟 Sides',
+};
+
+async function renderFoodMenuTab(){
+  const el=document.getElementById('food-menu-display');
+  if(!el)return;
+  
+  const{data:items}=await db.from('menu_items')
+    .select('*')
+    .eq('is_available',true)
+    .eq('is_food',true)
+    .order('sort_order');
+  
+  if(!items||items.length===0){
+    el.innerHTML='<div style="color:#888;font-size:13px">No food items available</div>';
+    return;
+  }
+
+  // Group by sort order ranges
+  const sections=[
+    {title:'🍳 All Day Mains', min:1, max:9},
+    {title:'🍟 Sides', min:10, max:19},
+    {title:'🥟 Signature Bao Buns', min:20, max:29},
+    {title:'🥗 Healthy Salads', min:30, max:39},
+    {title:'🍚 Rice Bowls', min:40, max:49},
+  ];
+
+  let html='';
+  sections.forEach(sec=>{
+    const secItems=items.filter(i=>i.sort_order>=sec.min&&i.sort_order<=sec.max);
+    if(!secItems.length)return;
+    html+=`<div class="section-title">${sec.title}</div>`;
+    secItems.forEach(item=>{
+      const sizes=item.sizes.map(s=>s.l).join(' · ');
+      html+=`<div class="menu-item">
+        <div class="item-name">${item.name}</div>
+        ${item.description?`<div class="item-desc">${item.description}</div>`:''}
+        <div style="font-size:12px;font-weight:600;color:#354C3A;margin-top:4px">${sizes}</div>
+      </div>`;
+    });
+  });
+  el.innerHTML=html;
+}
+
 // ---- DOUBLE STAMP TUESDAY ----
 function getStampsToEarn(){
   const day=new Date().getDay();
-  if(day===2){showToast('⚡ Double stamp Tuesday! You earn 2 stamps today!');return 2;}
+  if(day===2&&isEnabled('enableDoubleStampTuesday')){showToast('⚡ Double stamp Tuesday! You earn 2 stamps today!');return 2;}
   return 1;
 }
 
@@ -1170,7 +1592,6 @@ try{
       showToast('🔔 '+title+': '+body);
     }catch(e){}
   });
-  console.log('Firebase ready');
 }catch(e){
   console.log('Firebase not available:',e.message);
 }
@@ -1186,7 +1607,6 @@ async function requestNotificationPermission(custId){
     const token=await messaging.getToken({vapidKey:VAPID_KEY,serviceWorkerRegistration:reg});
     if(token&&custId){
       await db.from('customers').update({fcm_token:token,notifications_enabled:true}).eq('id',custId);
-      console.log('FCM token saved!');
     }
   }catch(e){
     console.log('Notification setup error:',e.message);
@@ -1208,17 +1628,6 @@ async function checkMilestones(totalCoffees,custName){
     showToast('☕ One more stamp for your FREE coffee!');
   } else if(currentStamps===4){
     showToast('⭐ One more stamp for your 10% discount!');
-  }
-}
-
-// ============ SHOW DAILY SPECIAL ============
-function showDailySpecial(){
-  const special=getDailySpecial();
-  const el=document.getElementById('daily-special');
-  if(el&&special){
-    el.style.display='flex';
-    document.getElementById('special-name').textContent=special.emoji+' '+special.title;
-    document.getElementById('special-price').textContent=special.desc;
   }
 }
 
@@ -1341,8 +1750,8 @@ async function loadLeaderboard(){
 }
 
 // ============ LOAD ALL CARD FEATURES ============
-async function loadCardFeatures(custId,name,email){
-  showDailySpecial();
+async function loadCardFeatures(custId,name,email){ try {
+  
   checkStreak(custId);
   loadFavouriteDrink(custId);
   loadSavingsComparison(custId);
@@ -1356,7 +1765,7 @@ async function loadCardFeatures(custId,name,email){
   const tier=getVIPTier(totalStamps);
   if(tier){
     const nameEl=document.getElementById('cname');
-    if(!document.getElementById('vip-badge')){
+    if(nameEl&&!document.getElementById('vip-badge')){
       const badge=document.createElement('span');
       badge.id='vip-badge';
       badge.className='vip-badge '+tier.class;
@@ -1364,6 +1773,7 @@ async function loadCardFeatures(custId,name,email){
       nameEl.parentElement.appendChild(badge);
     }
   }
+  }catch(e){console.error('loadCardFeatures error:',e);}
 }
 
 // ============ ANIMATED STAMPS ============
@@ -1514,6 +1924,99 @@ function showNotificationBanner(title, body, type){
   },8000);
 }
 
+
+// ---- DEALS BANNER ----
+let dealTimers = {};
+
+async function loadDeals(){
+  try{
+    const now=new Date().toISOString();
+    const{data:deals}=await db.from('deals')
+      .select('*')
+      .eq('is_active',true)
+      .lte('start_time',now)
+      .gte('end_time',now)
+      .order('created_at',{ascending:false});
+
+    const el=document.getElementById('deals-banner');
+    if(!el)return;
+
+    if(!deals||deals.length===0){
+      el.innerHTML='';
+      el.style.display='none';
+      return;
+    }
+
+    el.style.display='block';
+    el.innerHTML=deals.map(deal=>{
+      const saving=(parseFloat(deal.original_price)-parseFloat(deal.deal_price)).toFixed(2);
+      const endTime=new Date(deal.end_time);
+      const items=deal.items.map(i=>i.name+(i.size?' ('+i.size+')':'')).join(' + ');
+      return `<div class="deal-card deal-card-bg" onclick="addDealToCart(${JSON.stringify(deal).replace(/"/g,'&quot;')})">
+        <div class="deal-badge">${deal.badge||'DEAL'}</div>
+        <div class="deal-title">${deal.title}</div>
+        <div class="deal-desc">${deal.description||items}</div>
+        <div class="deal-price-row">
+          <span class="deal-original">$${parseFloat(deal.original_price).toFixed(2)}</span>
+          <span class="deal-new-price">$${parseFloat(deal.deal_price).toFixed(2)}</span>
+          <span class="deal-saving">Save $${saving}</span>
+        </div>
+        <div class="deal-timer" id="deal-timer-${deal.id}">⏰ Ends ${endTime.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="deal-tap">🛒</div>
+      </div>`;
+    }).join('');
+
+    // Countdown timers
+    deals.forEach(deal=>{
+      if(dealTimers[deal.id])clearInterval(dealTimers[deal.id]);
+      dealTimers[deal.id]=setInterval(()=>{
+        const el=document.getElementById('deal-timer-'+deal.id);
+        if(!el){clearInterval(dealTimers[deal.id]);return;}
+        const remaining=new Date(deal.end_time)-new Date();
+        if(remaining<=0){clearInterval(dealTimers[deal.id]);loadDeals();return;}
+        const h=Math.floor(remaining/3600000);
+        const m=Math.floor((remaining%3600000)/60000);
+        const s=Math.floor((remaining%60000)/1000);
+        el.textContent='⏰ Ends in '+(h>0?h+'h ':'')+m+'m '+s+'s';
+      },1000);
+    });
+
+  }catch(e){
+    console.log('Deals load error:',e.message);
+  }
+}
+
+function addDealToCart(deal){
+  // Add all deal items to cart at deal price split evenly
+  const items=deal.items;
+  const priceEach=parseFloat(deal.deal_price)/items.length;
+  
+  items.forEach(item=>{
+    cart.push({
+      name:item.name,
+      basePrice:item.customPrice||priceEach,
+      size:item.size||'Deal',
+      addons:'',
+      note:'Part of: '+deal.title,
+      isFood:false,
+      isDeal:true,
+      id:Date.now()+Math.random()
+    });
+  });
+
+  recalcCart();
+  
+  // Flash cart green
+  const cartSection=document.querySelector('.cart-section');
+  if(cartSection){
+    cartSection.style.background='#ECFDF5';
+    setTimeout(()=>{cartSection.style.background='#f7f7f7';},600);
+  }
+  
+  showToast('🔥 '+deal.title+' added to cart!');
+  showTab('order');
+}
+
 // ---- STAMP SOUND ----
 function playStampSound(){
   try{
@@ -1563,7 +2066,7 @@ async function loadWeeklySummary(){
 }
 
 // ---- NEW DRINK BONUS ----
-async function checkNewDrink(drinkName){
+async function checkNewDrink(drinkName){ try {
   if(!customerId)return;
   const{data:prev}=await db.from('orders').select('item_name').eq('customer_id',customerId).eq('item_name',drinkName);
   if(prev&&prev.length===1){
@@ -1571,19 +2074,22 @@ async function checkNewDrink(drinkName){
     await db.from('stamps').insert({customer_id:customerId});
     totalStamps++;
   }
+  }catch(e){console.warn('checkNewDrink error:',e.message);}
 }
 
 
 // ---- LOAD MENU FROM SUPABASE ----
 async function loadMenuFromDB(){
   try{
-    const{data:items}=await db.from('menu_items')
+    const{data:items,error}=await db.from('menu_items')
       .select('*')
       .eq('is_available',true)
+      .order('category')
       .order('sort_order');
-    
+
+    if(error)throw error;
+
     if(!items||items.length===0){
-      // Fallback to hardcoded menu if DB empty
       buildSection('s-coffee',MENU.coffee);
       buildSection('s-superfood',MENU.superfood);
       buildSection('s-signature',MENU.signature);
@@ -1592,48 +2098,40 @@ async function loadMenuFromDB(){
       return;
     }
 
-    // Group by category
+    // Group items by category
     const grouped={};
     items.forEach(item=>{
       if(!grouped[item.category])grouped[item.category]=[];
       grouped[item.category].push({
         name:item.name,
-        desc:item.description,
+        desc:item.description||'',
         sizes:item.sizes,
-        isSignature:item.is_signature,
-        isFood:item.is_food
+        isSignature:item.is_signature
       });
     });
 
-    // Build each section
-    const catMap={
-      coffee:'s-coffee',
-      superfood:'s-superfood',
-      signature:'s-signature',
-      ice:'s-ice',
-      tea:'s-tea',
-      food:'s-food'
-    };
-
-    Object.keys(catMap).forEach(cat=>{
-      const el=document.getElementById(catMap[cat]);
-      if(el)el.innerHTML=''; // clear existing
-      if(grouped[cat]){
-        buildSection(catMap[cat], grouped[cat]);
+    // Clear and build each drink section
+    ['coffee','superfood','signature','ice','tea'].forEach(cat=>{
+      const sectionId='s-'+cat;
+      const el=document.getElementById(sectionId);
+      if(el)el.innerHTML='';
+      if(grouped[cat]&&grouped[cat].length>0){
+        buildSection(sectionId,grouped[cat]);
       }
     });
 
-    // Show food section if there are food items
+    // Build food section
+    const foodEl=document.getElementById('s-food');
+    if(foodEl)foodEl.innerHTML='';
     if(grouped['food']&&grouped['food'].length>0){
-      const foodTitle=document.getElementById('food-section-title');
-      const foodSection=document.getElementById('s-food');
-      if(foodTitle)foodTitle.style.display='block';
-      if(foodSection)foodSection.style.display='block';
+      buildSection('s-food',grouped['food']);
+    } else {
+      if(foodEl)foodEl.innerHTML='<div style="color:#888;font-size:12px;padding:8px 0">No food items available</div>';
     }
 
   }catch(e){
     console.log('Menu load error:',e.message);
-    // Fallback to hardcoded
+    // Fallback to hardcoded menu
     buildSection('s-coffee',MENU.coffee);
     buildSection('s-superfood',MENU.superfood);
     buildSection('s-signature',MENU.signature);
@@ -1642,7 +2140,67 @@ async function loadMenuFromDB(){
   }
 }
 
+
+
+// ---- TDM DRAG & DROP (Cart) ----
+const TDM_DND = {
+  make(container, onReorder, opts={}) {
+    const { itemSelector='[data-dnd]', handleSelector=null } = opts;
+    let dragging=null, placeholder=null, offsetY=0;
+    const getItems=()=>[...container.querySelectorAll(itemSelector)];
+    const getPos=(e)=>e.touches?e.touches[0].clientY:e.clientY;
+    const ph=(el)=>{
+      const p=document.createElement('div');
+      p.style.cssText=`height:${el.offsetHeight}px;background:rgba(53,76,58,0.08);border:2px dashed #A9B29E;border-radius:8px;margin-bottom:4px;`;
+      return p;
+    };
+    const start=(e,el)=>{
+      dragging=el;
+      const rect=el.getBoundingClientRect();
+      offsetY=getPos(e)-rect.top;
+      placeholder=ph(el);
+      el.after(placeholder);
+      el.style.cssText+=`position:fixed;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;z-index:999;opacity:0.95;box-shadow:0 4px 20px rgba(0,0,0,0.2);transform:scale(1.02);pointer-events:none;`;
+      document.body.style.userSelect='none';
+    };
+    const move=(e)=>{
+      if(!dragging)return;
+      e.preventDefault();
+      const y=getPos(e)-offsetY;
+      dragging.style.top=y+'px';
+      const items=getItems().filter(i=>i!==dragging);
+      let insertBefore=null;
+      for(const item of items){const r=item.getBoundingClientRect();if(getPos(e)<r.top+r.height/2){insertBefore=item;break;}}
+      insertBefore?container.insertBefore(placeholder,insertBefore):container.appendChild(placeholder);
+    };
+    const end=()=>{
+      if(!dragging)return;
+      dragging.style.cssText=dragging.style.cssText.replace(/position:[^;]+;top:[^;]+;left:[^;]+;width:[^;]+;z-index:[^;]+;opacity:[^;]+;box-shadow:[^;]+;transform:[^;]+;pointer-events:[^;]+;/,'');
+      placeholder.before(dragging);
+      placeholder.remove();
+      document.body.style.userSelect='';
+      if(onReorder)onReorder(getItems().map(el=>({id:el.dataset.id,el})));
+      dragging=null;placeholder=null;
+    };
+    const attach=(el)=>{
+      const h=handleSelector?el.querySelector(handleSelector):el;
+      if(!h)return;
+      h.addEventListener('mousedown',(e)=>{if(e.button!==0)return;start(e,el);const up=()=>{end();window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);});
+      h.addEventListener('touchstart',(e)=>{start(e,el);const te=()=>{end();window.removeEventListener('touchmove',move);window.removeEventListener('touchend',te);};window.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',te);},{passive:true});
+      h.style.cursor='grab';
+    };
+    getItems().forEach(attach);
+    return {attach,refresh:()=>getItems().forEach(attach)};
+  }
+};
+
 async function init(){
+  // Maintenance mode check (toggle TDM.FLAGS.maintenanceMode to true to enable)
+  if(TDM.checkMaintenance()) return;
+  // Run health check silently
+  TDM.healthCheck().then(h => {
+    if(!h.healthy) console.warn('[TDM] DB health check failed:', h.error);
+  });
   try{
     const{error}=await db.from('customers').select('id').limit(1);
     if(error)throw error;
@@ -1650,26 +2208,58 @@ async function init(){
     await loadMenuFromDB();
     populatePickupTimes();
 
-    // Auto-login if previously logged in — check BEFORE showing login screen
-    const savedEmail=localStorage.getItem('tdm_customer_email');
-    if(savedEmail){
-      try{
-        const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',savedEmail).limit(1);
-        if(ex&&ex.length>0){
-          customerId=ex[0].id;
-          await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);
+    // Auto-login: check Supabase Auth session first (OTP flow)
+    // then fall back to legacy localStorage email for existing users
+    let autoLoggedIn = false;
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if(session && session.user && session.user.email) {
+        const sessionEmail = session.user.email;
+        const { data: ex } = await db.from('customers')
+          .select('id,name,created_at,phone,email,birthday')
+          .eq('email', sessionEmail).limit(1);
+        if(ex && ex.length > 0) {
+          customerId = ex[0].id;
+          window._tdmUserId = ex[0].id;
+          await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
+          autoLoggedIn = true;
         } else {
-          // Saved email not found in DB — show login
-          localStorage.removeItem('tdm_customer_email');
-          document.getElementById('login-view').style.display='block';
+          // Auth session exists but no customer record — show registration
+          _otpEmail = sessionEmail;
+          document.getElementById('login-view').style.display = 'block';
+          showOTPStep(3);
+          autoLoggedIn = true;
         }
-      }catch(e){
-        console.log('Auto-login failed:',e.message);
-        document.getElementById('login-view').style.display='block';
       }
-    } else {
-      // No saved email — show login screen
-      document.getElementById('login-view').style.display='block';
+    } catch(e) {
+      console.log('Session check failed:', e.message);
+    }
+
+    if(!autoLoggedIn) {
+      // Fall back to legacy localStorage for customers who signed up before OTP
+      const savedEmail = localStorage.getItem('tdm_customer_email') || sessionStorage.getItem('tdm_customer_email');
+      if(savedEmail) {
+        try {
+          const { data: ex } = await db.from('customers')
+            .select('id,name,created_at,phone,email,birthday')
+            .eq('email', savedEmail).limit(1);
+          if(ex && ex.length > 0) {
+            customerId = ex[0].id;
+            window._tdmUserId = ex[0].id;
+            await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
+            autoLoggedIn = true;
+          } else {
+            localStorage.removeItem('tdm_customer_email');
+          }
+        } catch(e) {
+          console.log('Legacy auto-login failed:', e.message);
+        }
+      }
+    }
+
+    if(!autoLoggedIn) {
+      document.getElementById('login-view').style.display = 'block';
+      showOTPStep(1);
     }
 
     // Dismiss splash screen
@@ -1684,28 +2274,305 @@ async function init(){
   }
 }
 
-// Safety net: always remove splash after 4 seconds no matter what
+// Safety net: always remove splash after 3 seconds no matter what
 setTimeout(()=>{
   const splash=document.getElementById('splash-screen');
   if(splash){splash.style.opacity='0';setTimeout(()=>splash.remove(),500);}
-},4000);
+  // Also show login if nothing else showing
+  setTimeout(()=>{
+    const main=document.getElementById('main-view');
+    const login=document.getElementById('login-view');
+    const loading=document.getElementById('loading-view');
+    if(loading&&loading.style.display!=='none'){loading.style.display='none';}
+    if(main&&main.style.display==='none'&&login&&login.style.display==='none'){login.style.display='block';}
+  },600);
+},3000);
 
-async function loginOrRegister(){
-  const name=document.getElementById('inp-name').value.trim();
-  const email=document.getElementById('inp-email').value.trim().toLowerCase();
-  const phone=document.getElementById('inp-phone')?document.getElementById('inp-phone').value.trim():'';
-  const birthday=document.getElementById('inp-birthday')?document.getElementById('inp-birthday').value:'';
-  const err=document.getElementById('login-err');
-  if(!name){err.textContent='Please enter your name.';return;}
-  if(!email.includes('@')){err.textContent='Please enter a valid email.';return;}
-  err.textContent='Finding your card...';
-  try{
-    const{data:ex}=await db.from('customers').select('id,name,created_at,phone,email,birthday').eq('email',email).limit(1);
-    if(ex&&ex.length>0){customerId=ex[0].id;await loadCard(ex[0].name,ex[0].created_at,ex[0].phone,ex[0].email,ex[0].birthday);}
-    else{const insertData={name,email};if(phone)insertData.phone=phone;if(birthday)insertData.birthday=birthday;const{data:cr,error}=await db.from('customers').insert(insertData).select();if(error)throw error;customerId=cr[0].id;await loadCard(cr[0].name,cr[0].created_at,phone,email,birthday);}
-    err.textContent='';
-  }catch(e){err.textContent='Error: '+e.message;}
+// ── OTP Authentication State ────────────────────────────────────
+let _otpEmail    = '';
+let _otpSentAt   = 0;
+const OTP_COOLDOWN = 60000; // 60 seconds between resends
+
+// ── Step navigator ──────────────────────────────────────────────
+function showOTPStep(n) {
+  document.getElementById('otp-step-1').style.display = n===1 ? '' : 'none';
+  document.getElementById('otp-step-2').style.display = n===2 ? '' : 'none';
+  document.getElementById('otp-step-3').style.display = n===3 ? '' : 'none';
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('otp-err').textContent   = '';
+  if(document.getElementById('reg-err'))
+    document.getElementById('reg-err').textContent = '';
 }
+
+// ── STEP 1: Send OTP ────────────────────────────────────────────
+async function sendOTP() {
+  const email  = document.getElementById('inp-email').value.trim().toLowerCase();
+  const errEl  = document.getElementById('login-err');
+  const btn    = document.getElementById('otp-send-btn');
+
+  errEl.textContent = '';
+  if(!email || !email.includes('@') || !email.includes('.')) {
+    errEl.textContent = 'Please enter a valid email address.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const { error } = await db.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true }
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Send verification code';
+
+  if(error) {
+    if(error.message.includes('rate limit') || error.message.includes('too many')) {
+      errEl.textContent = 'Too many attempts. Please wait a minute and try again.';
+    } else if(error.message.includes('Failed to fetch')) {
+      errEl.textContent = 'Network error — check your connection and try again.';
+    } else {
+      errEl.textContent = error.message;
+    }
+    return;
+  }
+
+  _otpEmail  = email;
+  _otpSentAt = Date.now();
+  document.getElementById('otp-email-shown').textContent = email;
+  document.getElementById('inp-otp').value = '';
+  showOTPStep(2);
+  setTimeout(() => document.getElementById('inp-otp').focus(), 300);
+}
+
+// ── STEP 2: Verify OTP ──────────────────────────────────────────
+async function verifyOTP() {
+  const token  = document.getElementById('inp-otp').value.trim().replace(/\s/g,'');
+  const errEl  = document.getElementById('otp-err');
+  const btn    = document.getElementById('otp-verify-btn');
+
+  errEl.textContent = '';
+  if(token.length !== 6 || !/^\d+$/.test(token)) {
+    errEl.textContent = 'Please enter the 6-digit code from your email.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+
+  const { data, error } = await db.auth.verifyOtp({
+    email: _otpEmail,
+    token,
+    type: 'email'
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Verify code';
+
+  if(error) {
+    if(error.message.includes('expired') || error.message.includes('invalid')) {
+      errEl.textContent = 'Code expired or incorrect. Please request a new one.';
+    } else {
+      errEl.textContent = error.message;
+    }
+    return;
+  }
+
+  // OTP verified — check if customer exists in our table
+  try {
+    const { data: ex } = await db.from('customers')
+      .select('id,name,created_at,phone,email,birthday')
+      .eq('email', _otpEmail)
+      .limit(1);
+
+    if(ex && ex.length > 0) {
+      // Existing customer — load their card directly
+      customerId = ex[0].id;
+      window._tdmUserId = ex[0].id;
+      await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
+    } else {
+      // New customer — collect their details
+      showOTPStep(3);
+      setTimeout(() => document.getElementById('inp-name').focus(), 300);
+    }
+  } catch(e) {
+    errEl.textContent = 'Something went wrong. Please try again.';
+    console.error('verifyOTP lookup error:', e);
+  }
+}
+
+// ── STEP 2: Resend OTP ──────────────────────────────────────────
+async function resendOTP() {
+  const btn   = document.getElementById('otp-resend-btn');
+  const errEl = document.getElementById('otp-err');
+  const remaining = Math.ceil((OTP_COOLDOWN - (Date.now() - _otpSentAt)) / 1000);
+
+  if(remaining > 0) {
+    errEl.textContent = `Please wait ${remaining}s before requesting another code.`;
+    return;
+  }
+
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const { error } = await db.auth.signInWithOtp({
+    email: _otpEmail,
+    options: { shouldCreateUser: true }
+  });
+
+  if(error) {
+    errEl.textContent = error.message;
+    btn.disabled = false;
+    btn.textContent = 'Resend code';
+    return;
+  }
+
+  _otpSentAt = Date.now();
+  errEl.style.color = '#354C3A';
+  errEl.textContent = '✅ New code sent!';
+
+  // 60s countdown before re-enabling
+  let secs = 60;
+  btn.textContent = `Resend in ${secs}s`;
+  const tick = setInterval(() => {
+    secs--;
+    if(secs <= 0) {
+      clearInterval(tick);
+      btn.disabled = false;
+      btn.textContent = 'Resend code';
+      errEl.textContent = '';
+      errEl.style.color = '#c0392b';
+    } else {
+      btn.textContent = `Resend in ${secs}s`;
+    }
+  }, 1000);
+}
+
+// ── STEP 3: Complete registration (new customers only) ──────────
+async function completeRegistration() {
+  const name    = document.getElementById('inp-name').value.trim();
+  const phone   = document.getElementById('inp-phone') ? document.getElementById('inp-phone').value.trim() : '';
+  const birthday= document.getElementById('inp-birthday') ? document.getElementById('inp-birthday').value : '';
+  const errEl   = document.getElementById('reg-err');
+  const btn     = document.getElementById('otp-reg-btn');
+
+  errEl.textContent = '';
+  if(!name) { errEl.textContent = 'Please enter your name.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Creating your card…';
+
+  try {
+    // Check one more time if customer already exists (RLS may have blocked it earlier)
+    const { data: existing } = await db.from('customers')
+      .select('id,name,created_at,phone,email,birthday')
+      .eq('email', _otpEmail).limit(1);
+
+    if(existing && existing.length > 0) {
+      // Already exists — just load their card
+      customerId = existing[0].id;
+      window._tdmUserId = existing[0].id;
+      await loadCard(existing[0].name, existing[0].created_at, existing[0].phone, existing[0].email, existing[0].birthday);
+      return;
+    }
+
+    const insertData = { name, email: _otpEmail };
+    if(phone)    insertData.phone    = phone;
+    if(birthday) insertData.birthday = birthday;
+
+    const { data: cr, error } = await db.from('customers').insert(insertData).select();
+
+    if(error) {
+      // If duplicate key — customer exists, just load them
+      if(error.message.includes('duplicate key') || error.code === '23505') {
+        const { data: ex } = await db.from('customers')
+          .select('id,name,created_at,phone,email,birthday')
+          .eq('email', _otpEmail).limit(1);
+        if(ex && ex.length > 0) {
+          customerId = ex[0].id;
+          window._tdmUserId = ex[0].id;
+          await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
+          return;
+        }
+      }
+      throw error;
+    }
+
+    customerId = cr[0].id;
+    window._tdmUserId = cr[0].id;
+    await loadCard(cr[0].name, cr[0].created_at, phone, _otpEmail, birthday);
+    // Show welcome stamp popup for brand new customers only
+    setTimeout(() => showWelcomeStampPopup(), 800);
+  } catch(e) {
+    TDM.logError('HIGH', 'completeRegistration', e);
+    errEl.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Create my loyalty card ☕';
+  }
+}
+
+// ── Edit customer name ──────────────────────────────────────────
+function toggleEditName() {
+  const form    = document.getElementById('edit-name-form');
+  const display = document.getElementById('edit-name-display');
+  const input   = document.getElementById('new-name-input');
+  const errEl   = document.getElementById('edit-name-err');
+  const okEl    = document.getElementById('edit-name-ok');
+  const isHidden = form.style.display === 'none';
+  form.style.display    = isHidden ? 'block' : 'none';
+  display.style.display = isHidden ? 'none'  : 'flex';
+  errEl.textContent = '';
+  okEl.textContent  = '';
+  if(isHidden) {
+    // Pre-fill with current name
+    const current = document.getElementById('display-name-text').textContent;
+    input.value = current === '—' ? '' : current;
+    setTimeout(() => input.focus(), 100);
+  }
+}
+
+async function saveNewName() {
+  const input  = document.getElementById('new-name-input');
+  const errEl  = document.getElementById('edit-name-err');
+  const okEl   = document.getElementById('edit-name-ok');
+  const btn    = document.getElementById('save-name-btn');
+  const name   = input.value.trim();
+
+  errEl.textContent = ''; okEl.textContent = '';
+  if(!name) { errEl.textContent = 'Please enter your name.'; return; }
+  if(name.length < 2) { errEl.textContent = 'Name must be at least 2 characters.'; return; }
+  if(!customerId) { errEl.textContent = 'Not logged in. Please refresh.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    const { error } = await db.from('customers')
+      .update({ name })
+      .eq('id', customerId);
+
+    if(error) throw error;
+
+    // Update all name displays
+    document.getElementById('display-name-text').textContent = name;
+    document.getElementById('cname').textContent = name;
+    document.getElementById('greeting-text').textContent = getGreeting(name);
+    document.getElementById('avatar').textContent = name.charAt(0).toUpperCase();
+
+    okEl.textContent = '✅ Name updated!';
+    btn.disabled = false; btn.textContent = 'Save name';
+
+    // Close form after 1.5s
+    setTimeout(() => toggleEditName(), 1500);
+  } catch(e) {
+    errEl.textContent = 'Error: ' + e.message;
+    btn.disabled = false; btn.textContent = 'Save name';
+  }
+}
+
+// ── Legacy loginOrRegister (kept as alias) ──────────────────────
+async function loginOrRegister() { await sendOTP(); }
 
 async function loadCard(name,createdAt,phone,email,birthday){
   const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
@@ -1718,43 +2585,60 @@ async function loadCard(name,createdAt,phone,email,birthday){
   const stampsAfterRewards=totalStamps-(rewardsEarned*TOTAL);
   stamps=stampsAfterRewards<0?0:stampsAfterRewards%TOTAL;
   if(stamps===0&&totalStamps>rewardsEarned*TOTAL)stamps=TOTAL;
-  // Save login to localStorage so user stays logged in on refresh
-  localStorage.setItem('tdm_customer_email', email||'');
-  localStorage.setItem('tdm_customer_name', name);
+  // Save login — respect remember me preference
+  const rememberMe = true; // Always persist session via Supabase Auth
+  if(rememberMe){
+    localStorage.setItem('tdm_customer_email', email||'');
+    localStorage.setItem('tdm_customer_name', name);
+    sessionStorage.removeItem('tdm_customer_email');
+  } else {
+    sessionStorage.setItem('tdm_customer_email', email||'');
+    localStorage.removeItem('tdm_customer_email');
+    localStorage.removeItem('tdm_customer_name');
+  }
   document.getElementById('login-view').style.display='none';
   document.getElementById('main-view').style.display='block';
   setTimeout(()=>requestNotificationPermission(customerId),2000);
-  startNotificationPoller();
-  if(birthday)checkBirthday(birthday,name);
-  loadWeeklySummary();
-  loadCardFeatures(customerId,name,email||'');
+  if(isEnabled('enableNotifications')) safeRun(startNotificationPoller);
+  if(isEnabled('enableDeals')) safeTry(loadDeals);
+  setInterval(()=>safeTry(loadDeals),60000); // refresh deals every minute
+  if(birthday)safeRun(checkBirthday, birthday, name);
+  safeTry(loadWeeklySummary);
+  safeTry(loadCardFeatures, customerId, name, email||'');
   document.getElementById('customer-row').style.display='flex';
   document.getElementById('avatar').textContent=name.charAt(0).toUpperCase();
   document.getElementById('cname').textContent=name;
+  document.getElementById('display-name-text').textContent=name;
   // Update greeting with time of day
   document.getElementById('greeting-text').textContent=getGreeting(name);
   // Check if near café
-  setTimeout(()=>checkGeofence(name),1000);
+  if(isEnabled('enableGeofence')) setTimeout(()=>safeRun(checkGeofence, name),1000);
   document.getElementById('csince').dataset.phone=phone||'';
   const joined=new Date(createdAt);
   document.getElementById('csince').textContent='Member since '+joined.toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
   renderCard();
 }
 
-function logout(){
+async function logout(){
+  // Sign out of Supabase Auth session
+  await db.auth.signOut().catch(e => console.log('signOut error:', e.message));
+  // Clear legacy localStorage
   customerId=null;stamps=0;totalStamps=0;rewardsEarned=0;
+  _otpEmail='';
   localStorage.removeItem('tdm_customer_email');
   localStorage.removeItem('tdm_customer_name');
+  sessionStorage.removeItem('tdm_customer_email');
   if(notifPollInterval){clearInterval(notifPollInterval);notifPollInterval=null;}
   document.getElementById('login-view').style.display='block';
   document.getElementById('main-view').style.display='none';
   document.getElementById('customer-row').style.display='none';
-  document.getElementById('inp-name').value='';
   document.getElementById('inp-email').value='';
-  document.getElementById('inp-phone').value='';
+  if(document.getElementById('inp-name')) document.getElementById('inp-name').value='';
+  if(document.getElementById('inp-phone')) document.getElementById('inp-phone').value='';
+  showOTPStep(1);
 }
 
-function renderCard(){
+function renderCard(){ try {
   const grid=document.getElementById('stamp-grid');
   grid.innerHTML='';
   const displayStamps=stamps>TOTAL?TOTAL:stamps;
@@ -1803,9 +2687,20 @@ function renderCard(){
     document.getElementById('redeem-btn').style.display='none';
   }
 
+  // Fav drink quick order
+  const fav=getFavDrink();
+  let favEl=document.getElementById('fav-drink-btn');
+  if(!favEl&&fav){
+    favEl=document.createElement('button');
+    favEl.id='fav-drink-btn';
+    favEl.className='fav-btn';
+    favEl.onclick=()=>{showTab('order');setTimeout(()=>showToast('Add your fave: '+fav.name+' ('+fav.size+')'),300);};
+    const statsRow=document.getElementById('stats-row-el');
+    if(statsRow)statsRow.after(favEl);
+  }
+  if(favEl&&fav)favEl.innerHTML='⭐ Quick order: '+fav.name+' ('+fav.size+') — $'+fav.price.toFixed(2);
 
-
-
+  }catch(e){console.error('renderCard error:',e);}
 }
 
 function showToast(msg){
@@ -1872,6 +2767,48 @@ window.addEventListener('load',()=>{
   }
 });
 
+// ── Welcome stamp popup — new customers only ────────────────────
+function showWelcomeStampPopup() {
+  const overlay = document.getElementById('welcome-stamp-overlay');
+  if(overlay) overlay.style.display = 'flex';
+}
+
+async function claimWelcomeStamp() {
+  const btn  = document.getElementById('claim-stamp-btn');
+  const okEl = document.getElementById('claim-stamp-ok');
+  if(!customerId) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Claiming…';
+
+  try {
+    // Insert welcome stamp
+    const { error } = await db.from('stamps').insert({ customer_id: customerId });
+    if(error) throw error;
+
+    totalStamps++;
+    okEl.textContent = '✅ Stamp added! Welcome aboard!';
+    btn.textContent = '🎉 Claimed!';
+
+    // Update stamp display
+    const stampEl = document.getElementById('stamp-count');
+    if(stampEl) stampEl.textContent = totalStamps;
+    renderStamps(totalStamps);
+
+    // Close popup after 2 seconds
+    setTimeout(() => {
+      const overlay = document.getElementById('welcome-stamp-overlay');
+      if(overlay) overlay.style.display = 'none';
+      showToast('☕ Welcome stamp added! See you soon!');
+    }, 2000);
+
+  } catch(e) {
+    okEl.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Claim my welcome stamp ☕';
+  }
+}
+
 function showPopup(title,msg,showRule){
   if(title)document.getElementById('popup-title').textContent=title;
   if(msg)document.getElementById('popup-msg').textContent=msg;
@@ -1899,6 +2836,22 @@ init();
       <button class="popup-btn" onclick="closePopup()">Got it, thanks!</button>
     </div>
   </div>
-<button class="dark-toggle" onclick="toggleDarkMode()" id="dark-btn" title="Toggle dark mode">🌙</button>
+  <!-- Welcome Stamp Popup — shown to new customers only -->
+  <div id="welcome-stamp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:300px;width:90%;text-align:center;animation:slideIn 0.3s ease">
+      <div style="font-size:52px;margin-bottom:10px">☕</div>
+      <div style="font-size:20px;font-weight:700;color:#292927;margin-bottom:8px">Welcome to The Daily Meetery!</div>
+      <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+        We're so glad you're here.<br>As a welcome gift, we've got a <strong>free stamp</strong> waiting for you!
+      </div>
+      <div style="background:#FDF8EE;border:1px solid #D48631;border-radius:10px;padding:12px;margin-bottom:20px">
+        <div style="font-size:13px;color:#D48631;font-weight:600">🎁 Your welcome stamp</div>
+        <div style="font-size:12px;color:#888;margin-top:4px">Collect 10 stamps → get a free coffee</div>
+      </div>
+      <button id="claim-stamp-btn" onclick="claimWelcomeStamp()"
+        style="width:100%;padding:14px;background:#354C3A;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">
+        Claim my welcome stamp ☕
+      </button>
+    <button class="dark-toggle" onclick="toggleDarkMode()" id="dark-btn" title="Toggle dark mode">🌙</button>
 </body>
 </html>
