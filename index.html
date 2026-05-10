@@ -436,6 +436,8 @@
         </div>
       </div>
       <button class="outline-btn" onclick="logout()">Sign out</button>
+      <!-- Floating cart safe area — height matches floating cart, toggled by renderCart() -->
+      <div id="cart-safe-area" style="height:0;transition:height 0.2s"></div>
       </div>
     </div>
 
@@ -1099,13 +1101,16 @@ function renderCart(){
   const fc=document.getElementById('floating-cart');
   const fcCount=document.getElementById('fc-count');
   const fcTotal=document.getElementById('fc-total');
+  const safeArea=document.getElementById('cart-safe-area');
   if(fc){
     if(cart.length>0){
       fc.style.display='flex';
       if(fcCount)fcCount.textContent=cart.length+' item'+(cart.length!==1?'s':'');
       if(fcTotal)fcTotal.textContent='$'+total.toFixed(2);
+      if(safeArea)safeArea.style.height='80px'; // push Sign Out above floating cart
     } else {
       fc.style.display='none';
+      if(safeArea)safeArea.style.height='0';
     }
   }
   document.getElementById('payment-section').style.display='block';
@@ -2400,31 +2405,46 @@ async function verifyOTP() {
     return;
   }
 
-  // OTP verified — check if customer exists in our table
+  // OTP verified — look up customer record
+  // Source of truth: Supabase DB, not localStorage
+  // Use auth session email as most reliable lookup key
   try {
-    const { data: ex } = await db.from('customers')
+    // Get verified email directly from the new auth session
+    // This is more reliable than _otpEmail in edge cases
+    const { data: { user: authUser } } = await db.auth.getUser();
+    const lookupEmail = (authUser?.email || _otpEmail).toLowerCase().trim();
+
+    const { data: ex, error: lookupErr } = await db.from('customers')
       .select('id,name,created_at,phone,email,birthday')
-      .eq('email', _otpEmail)
+      .ilike('email', lookupEmail)   // case-insensitive — guards against stored case differences
       .limit(1);
+
+    if(lookupErr) {
+      // Real DB error — do NOT fall through to registration
+      // Sending a returning customer to registration would create duplicates
+      console.error('[verifyOTP] Customer lookup failed:', lookupErr);
+      errEl.textContent = 'Could not load your account. Please try again.';
+      return;
+    }
 
     if(ex && ex.length > 0) {
       // Existing customer — load their card directly
       customerId = ex[0].id;
       window._tdmUserId = ex[0].id;
       await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
-      // Show welcome popup if they have 0 stamps and haven't claimed yet
+      // Show welcome popup only if 0 stamps and never claimed
       const welcomeKey = 'tdm_welcome_claimed_' + ex[0].id;
       if(totalStamps === 0 && !localStorage.getItem(welcomeKey)) {
         setTimeout(() => showWelcomeStampPopup(), 1500);
       }
     } else {
-      // New customer — collect their details
+      // Genuinely new — no record in DB, no error — show registration
       showOTPStep(3);
       setTimeout(() => document.getElementById('inp-name').focus(), 300);
     }
   } catch(e) {
     errEl.textContent = 'Something went wrong. Please try again.';
-    console.error('verifyOTP lookup error:', e);
+    console.error('[verifyOTP] Exception:', e);
   }
 }
 
