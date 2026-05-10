@@ -8,8 +8,10 @@
     { "src": "/reset-password.html", "dest": "/reset-password.html" },
     { "src": "/auth/callback", "dest": "/reset-password.html" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/DSC04901.jpg", "dest": "/DSC04901.jpg" },
-    { "src": "/DSC04927 (1).jpg", "dest": "/DSC04927 (1).jpg" },
+    { "src": "/cafe-photo-1\\.jpg", "dest": "/DSC04901.jpg" },
+    { "src": "/cafe-photo-2\\.jpg", "dest": "/DSC04927 (1).jpg" },
+    { "src": "/DSC04901\\.jpg", "dest": "/DSC04901.jpg" },
+    { "src": "/DSC04927%20\\(1\\)\\.jpg", "dest": "/DSC04927 (1).jpg" },
     { "src": "/firebase-messaging-sw.js", "dest": "/firebase-messaging-sw.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
