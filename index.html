@@ -307,6 +307,10 @@
         type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6"
         autocomplete="one-time-code"
         style="text-align:center;font-size:28px;font-weight:700;letter-spacing:8px;padding:14px"
+        oninput="
+          this.value = this.value.replace(/[^0-9]/g, '').slice(0,6);
+          if(this.value.length === 6) verifyOTP();
+        "
         onkeydown="if(event.key==='Enter')verifyOTP()">
       <button class="main-btn" id="otp-verify-btn" onclick="verifyOTP()">Verify code</button>
       <div class="err" id="otp-err"></div>
@@ -2441,7 +2445,7 @@ async function resendOTP() {
 
   _otpSentAt = Date.now();
   errEl.style.color = '#354C3A';
-  errEl.textContent = '✅ New code sent!';
+  errEl.textContent = '✅ New code sent! Check your email.';
 
   // 60s countdown before re-enabling
   let secs = 60;
