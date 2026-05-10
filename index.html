@@ -2801,16 +2801,15 @@ async function claimWelcomeStamp() {
     if(error) throw error;
 
     totalStamps++;
+    stamps++;  // stamps is the display variable used by renderCard()
     okEl.textContent = '✅ Stamp added! Welcome aboard!';
     btn.textContent = '🎉 Claimed!';
 
     // Save flag so popup never shows again for this customer
     if(customerId) localStorage.setItem('tdm_welcome_claimed_' + customerId, '1');
 
-    // Update stamp display
-    const stampEl = document.getElementById('stamp-count');
-    if(stampEl) stampEl.textContent = totalStamps;
-    renderStamps(totalStamps);
+    // Update stamp display using the correct existing function
+    renderCard();
 
     // Close popup after 2 seconds
     setTimeout(() => {
