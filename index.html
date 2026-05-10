@@ -2391,6 +2391,11 @@ async function verifyOTP() {
       customerId = ex[0].id;
       window._tdmUserId = ex[0].id;
       await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
+      // Show welcome popup if they have 0 stamps and haven't claimed yet
+      const welcomeKey = 'tdm_welcome_claimed_' + ex[0].id;
+      if(totalStamps === 0 && !localStorage.getItem(welcomeKey)) {
+        setTimeout(() => showWelcomeStampPopup(), 1500);
+      }
     } else {
       // New customer — collect their details
       showOTPStep(3);
@@ -2503,6 +2508,11 @@ async function completeRegistration() {
     customerId = cr[0].id;
     window._tdmUserId = cr[0].id;
     await loadCard(cr[0].name, cr[0].created_at, phone, _otpEmail, birthday);
+    // Show welcome stamp popup for brand new customers
+    const welcomeKey = 'tdm_welcome_claimed_' + cr[0].id;
+    if(!localStorage.getItem(welcomeKey)) {
+      setTimeout(() => showWelcomeStampPopup(), 1500);
+    }
   } catch(e) {
     TDM.logError('HIGH', 'completeRegistration', e);
     errEl.textContent = 'Error: ' + e.message;
@@ -2765,6 +2775,57 @@ window.addEventListener('load',()=>{
   }
 });
 
+// ── Welcome stamp popup — new customers only ────────────────────
+function showWelcomeStampPopup() {
+  const overlay = document.getElementById('welcome-stamp-overlay');
+  if(!overlay) return;
+  // Reset button state in case of re-show
+  const btn  = document.getElementById('claim-stamp-btn');
+  const okEl = document.getElementById('claim-stamp-ok');
+  if(btn)  { btn.disabled = false; btn.textContent = 'Claim my welcome stamp ☕'; }
+  if(okEl) { okEl.textContent = ''; }
+  overlay.style.display = 'flex';
+}
+
+async function claimWelcomeStamp() {
+  const btn  = document.getElementById('claim-stamp-btn');
+  const okEl = document.getElementById('claim-stamp-ok');
+  if(!customerId) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Claiming…';
+
+  try {
+    // Insert welcome stamp
+    const { error } = await db.from('stamps').insert({ customer_id: customerId });
+    if(error) throw error;
+
+    totalStamps++;
+    okEl.textContent = '✅ Stamp added! Welcome aboard!';
+    btn.textContent = '🎉 Claimed!';
+
+    // Save flag so popup never shows again for this customer
+    if(customerId) localStorage.setItem('tdm_welcome_claimed_' + customerId, '1');
+
+    // Update stamp display
+    const stampEl = document.getElementById('stamp-count');
+    if(stampEl) stampEl.textContent = totalStamps;
+    renderStamps(totalStamps);
+
+    // Close popup after 2 seconds
+    setTimeout(() => {
+      const overlay = document.getElementById('welcome-stamp-overlay');
+      if(overlay) overlay.style.display = 'none';
+      showToast('☕ Welcome stamp added! See you soon!');
+    }, 2000);
+
+  } catch(e) {
+    okEl.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Claim my welcome stamp ☕';
+  }
+}
+
 function showPopup(title,msg,showRule){
   if(title)document.getElementById('popup-title').textContent=title;
   if(msg)document.getElementById('popup-msg').textContent=msg;
@@ -2792,6 +2853,26 @@ init();
       <button class="popup-btn" onclick="closePopup()">Got it, thanks!</button>
     </div>
   </div>
+  <!-- Welcome Stamp Popup — shown to new customers only -->
+  <div id="welcome-stamp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:300px;width:90%;text-align:center;animation:slideIn 0.3s ease">
+      <div style="font-size:52px;margin-bottom:10px">☕</div>
+      <div style="font-size:20px;font-weight:700;color:#292927;margin-bottom:8px">Welcome to The Daily Meetery!</div>
+      <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+        We're so glad you're here.<br>As a welcome gift, we've got a <strong>free stamp</strong> waiting for you!
+      </div>
+      <div style="background:#FDF8EE;border:1px solid #D48631;border-radius:10px;padding:12px;margin-bottom:20px">
+        <div style="font-size:13px;color:#D48631;font-weight:600">🎁 Your welcome stamp</div>
+        <div style="font-size:12px;color:#888;margin-top:4px">Collect 10 stamps → get a free coffee</div>
+      </div>
+      <button id="claim-stamp-btn" onclick="claimWelcomeStamp()"
+        style="width:100%;padding:14px;background:#354C3A;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">
+        Claim my welcome stamp ☕
+      </button>
+      <div id="claim-stamp-ok" style="color:#354C3A;font-size:13px;font-weight:600;min-height:18px"></div>
+    </div>
+  </div>
+
 <button class="dark-toggle" onclick="toggleDarkMode()" id="dark-btn" title="Toggle dark mode">🌙</button>
 </body>
 </html>
