@@ -2209,12 +2209,19 @@ async function init(){
     populatePickupTimes();
 
     // Auto-login: check Supabase Auth session first (OTP flow)
-    // then fall back to legacy localStorage email for existing users
+    // IMPORTANT: Only use session if it matches our saved customer email.
+    // owner.html and index.html share the same Supabase project and therefore
+    // the same localStorage auth token. Without this guard, the owner's session
+    // would auto-login as a customer and show the owner's stamps to other people.
     let autoLoggedIn = false;
     try {
+      const savedCustomerEmail = localStorage.getItem('tdm_customer_email') || sessionStorage.getItem('tdm_customer_email');
       const { data: { session } } = await db.auth.getSession();
-      if(session && session.user && session.user.email) {
-        const sessionEmail = session.user.email;
+
+      if(session && session.user && session.user.email && savedCustomerEmail &&
+         session.user.email.toLowerCase() === savedCustomerEmail.toLowerCase()) {
+        // Session email matches our saved customer email — safe to auto-login
+        const sessionEmail = session.user.email.toLowerCase();
         const { data: ex } = await db.from('customers')
           .select('id,name,created_at,phone,email,birthday')
           .eq('email', sessionEmail).limit(1);
@@ -2224,13 +2231,11 @@ async function init(){
           await loadCard(ex[0].name, ex[0].created_at, ex[0].phone, ex[0].email, ex[0].birthday);
           autoLoggedIn = true;
         } else {
-          // Auth session exists but no customer record — show registration
-          _otpEmail = sessionEmail;
-          document.getElementById('login-view').style.display = 'block';
-          showOTPStep(3);
-          autoLoggedIn = true;
+          localStorage.removeItem('tdm_customer_email');
         }
       }
+      // If session exists but doesn't match saved email → fall through to OTP form
+      // This handles the case where the owner is logged in on owner.html
     } catch(e) {
       console.log('Session check failed:', e.message);
     }
@@ -2507,6 +2512,8 @@ async function completeRegistration() {
 
     customerId = cr[0].id;
     window._tdmUserId = cr[0].id;
+    // Reset all stamp state before loading — prevents stale data from previous session
+    stamps = 0; totalStamps = 0; rewardsEarned = 0; actualSaved = 0;
     await loadCard(cr[0].name, cr[0].created_at, phone, _otpEmail, birthday);
     // Show welcome stamp popup for brand new customers
     const welcomeKey = 'tdm_welcome_claimed_' + cr[0].id;
