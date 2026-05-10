@@ -253,7 +253,7 @@
       <div>
         <div class="cafe-name">The Daily Meetery</div>
         <div class="card-label">Loyalty Card</div>
-        <div class="card-sub">5 stamps = 10% off · 10 stamps = free coffee</div>
+        <div class="card-sub">Earn points · $1 = 1 point · 200 pts = $10 reward</div>
       </div>
     </div>
     <div class="live-badge"><span class="live-dot"></span>Live</div>
@@ -271,7 +271,8 @@
 
   <div id="login-view" style="display:none">
     <div style="position:relative">
-      <img src="DSC04901.jpg" alt="The Daily Meetery coffee" class="hero-img">
+      <img src="/cafe-photo-1.jpg" alt="The Daily Meetery coffee" class="hero-img" loading="lazy"
+  onerror="this.onerror=null;this.style.background='linear-gradient(135deg,#354C3A,#292927)';this.style.opacity='1';this.removeAttribute('src')">
       <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(53,76,58,0.95));padding:20px 20px 16px;text-align:center">
         <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:3px">Welcome!</div>
         <div style="font-size:12px;color:#A9B29E">One Daily Stop. Endless Connections.</div>
@@ -351,13 +352,11 @@
       <button class="nav-tab active" onclick="showTab('card')" id="tab-card">My Card</button>
       <button class="nav-tab" onclick="showTab('order')" id="tab-order">Order<span class="cart-badge" id="cart-badge" style="display:none">0</span></button>
       <button class="nav-tab" onclick="showTab('history')" id="tab-history">History</button>
-      <button class="nav-tab" onclick="showTab('menu')" id="tab-menu">Drinks</button>
-      <button class="nav-tab" onclick="showTab('food')" id="tab-food">Food</button>
     </div>
 
     <!-- CARD TAB -->
     <div id="tab-card-view">
-      <img src="DSC04927%20(1).jpg" alt="The Daily Meetery" style="width:100%;height:130px;object-fit:cover;object-position:center 20%;display:block;">
+      <img src="/cafe-photo-2.jpg" alt="The Daily Meetery" loading="lazy" style="width:100%;height:130px;object-fit:cover;object-position:center 20%;display:block;background:#354C3A" onerror="this.onerror=null;this.style.background='linear-gradient(135deg,#354C3A,#292927)';this.style.opacity='1';this.removeAttribute('src')">
       <div class="phone-body">
       <div class="toast" id="toast"></div>
 
@@ -389,10 +388,10 @@
       </div>
       <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
       <div class="reward-pill" id="reward-pill"><div class="reward-text" id="reward-text">Loading...</div></div>
-      <div id="weekly-summary" style="font-size:12px;color:#888;text-align:center;padding:6px 0;margin-bottom:4px"></div>
+      <div id="weekly-summary" style="display:none"></div>
       <div class="stats-row" id="stats-row-el">
-        <div class="stat"><div style="font-size:16px;margin-bottom:2px">☕</div><div class="stat-val" id="total-val">0</div><div class="stat-lbl">coffees</div></div>
-        <div class="stat"><div style="font-size:16px;margin-bottom:2px">🎁</div><div class="stat-val" id="rewards-val">0</div><div class="stat-lbl">free earned</div></div>
+        <div class="stat"><div style="font-size:16px;margin-bottom:2px">💎</div><div class="stat-val" id="total-val">0</div><div class="stat-lbl">points</div></div>
+        <div class="stat"><div style="font-size:16px;margin-bottom:2px">🎁</div><div class="stat-val" id="rewards-val">0</div><div class="stat-lbl">$10 rewards</div></div>
         <div class="stat"><div style="font-size:16px;margin-bottom:2px">💰</div><div class="stat-val" id="saved-val">$0</div><div class="stat-lbl">saved</div></div>
       </div>
       <!-- Savings comparison -->
@@ -443,7 +442,7 @@
     <!-- ORDER TAB -->
     <div id="tab-order-view" style="display:none">
       <div style="position:relative;overflow:hidden">
-        <img src="DSC04901.jpg" alt="Order" style="width:100%;height:100px;object-fit:cover;object-position:center 60%;display:block;">
+        <img src="/cafe-photo-1.jpg" alt="Order" loading="lazy" style="width:100%;height:100px;object-fit:cover;object-position:center 60%;display:block;background:#354C3A" onerror="this.onerror=null;this.style.background='linear-gradient(135deg,#354C3A,#292927)';this.style.opacity='1';this.removeAttribute('src')">
         <div style="position:absolute;inset:0;background:rgba(53,76,58,0.6);display:flex;align-items:center;justify-content:center">
           <div style="text-align:center">
             <div style="font-size:15px;font-weight:700;color:#fff">What can we make for you?</div>
@@ -563,7 +562,6 @@
     <div id="tab-history-view" class="phone-body" style="display:none">
       <div id="history-summary" class="history-summary" style="display:none">
         <div><div class="history-summary-val" id="h-total">0</div><div class="history-summary-lbl">total orders</div></div>
-        <div><div class="history-summary-val" id="h-spent">$0</div><div class="history-summary-lbl">total spent</div></div>
         <div><div class="history-summary-val" id="h-saved">$0</div><div class="history-summary-lbl">saved free</div></div>
       </div>
       <div id="history-list"><div class="history-empty">Loading your history...</div></div>
@@ -571,9 +569,9 @@
 
     <!-- MENU TAB -->
     <div id="tab-menu-view" style="display:none">
-      <img src="DSC04927%20(1).jpg" alt="Menu" style="width:100%;height:110px;object-fit:cover;object-position:center 20%;display:block;">
+      <img src="/cafe-photo-2.jpg" alt="Menu" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:center 20%;display:block;background:#354C3A" onerror="this.onerror=null;this.style.background='linear-gradient(135deg,#354C3A,#292927)';this.style.opacity='1';this.removeAttribute('src')">
       <div class="phone-body">
-      <div style="font-size:13px;color:#888;margin-bottom:14px">Full menu — go to Order tab to place an order.</div>
+      <div style="font-size:13px;color:#888;margin-bottom:14px">Full menu — tap a drink to add it to your cart below.</div>
       <div class="section-title">Coffee — S / M / L</div>
       <div style="font-size:12px;color:#555;line-height:2">Espresso — $4.50<br>Flat White / Latte / Cappuccino — S $5.20 · M $5.50 · L $6.50<br>Long Black / Americano — S $5.20 · M $5.50<br>Hot Chocolate / Mocha — M $5.50 · L $6.50<br>Macchiato / Piccolo / Fluffy — $5.00<br><strong>Extra large available on request</strong></div>
       <div class="section-title">Superfood Latte — M / L</div>
@@ -593,9 +591,9 @@
 
     <!-- FOOD TAB -->
     <div id="tab-food-view" style="display:none">
-      <img src="DSC04901.jpg" alt="Food Menu" style="width:100%;height:110px;object-fit:cover;object-position:center 60%;display:block;">
+      <img src="/cafe-photo-1.jpg" alt="Food Menu" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:center 60%;display:block;background:#354C3A" onerror="this.onerror=null;this.style.background='linear-gradient(135deg,#354C3A,#292927)';this.style.opacity='1';this.removeAttribute('src')">
       <div class="phone-body">
-        <div style="font-size:13px;color:#888;margin-bottom:14px">Our full food menu — tap Order tab to place your order.</div>
+        <div style="font-size:13px;color:#888;margin-bottom:14px">Our full food menu — tap Order tab to add items to your cart.</div>
         <div id="food-menu-display"><div style="color:#888;font-size:12px">Loading food menu...</div></div>
         <button class="main-btn" style="margin-top:14px" onclick="showTab('order')">Order food now</button>
       </div>
@@ -850,7 +848,7 @@ const db=supabase.createClient(SURL,SKEY,{
 const stripeObj=Stripe(STRIPE_PK);
 const elements=stripeObj.elements();
 let cardElement=null;
-let customerId=null,stamps=0,totalStamps=0,rewardsEarned=0;
+let customerId=null,stamps=0,totalStamps=0,rewardsEarned=0,loyaltyPoints=0,totalSpend=0;
 let cart=[],payMethod='card',actualSaved=0;
 
 const MENU={
@@ -1097,6 +1095,19 @@ function renderCart(){
   document.getElementById('cart-stamps').textContent=stampsText;
   footer.style.display='block';badge.style.display='flex';badge.textContent=cart.length;
   countEl.textContent=cart.length+' item'+(cart.length!==1?'s':'');
+  // Update floating cart button
+  const fc=document.getElementById('floating-cart');
+  const fcCount=document.getElementById('fc-count');
+  const fcTotal=document.getElementById('fc-total');
+  if(fc){
+    if(cart.length>0){
+      fc.style.display='flex';
+      if(fcCount)fcCount.textContent=cart.length+' item'+(cart.length!==1?'s':'');
+      if(fcTotal)fcTotal.textContent='$'+total.toFixed(2);
+    } else {
+      fc.style.display='none';
+    }
+  }
   document.getElementById('payment-section').style.display='block';
   const btn=document.getElementById('order-btn');
   btn.disabled=false;
@@ -1297,14 +1308,15 @@ function resetOrder(){
 }
 
 function showTab(tab){
-  ['card','order','history','menu','food'].forEach(t=>{
-    document.getElementById('tab-'+t+'-view').style.display=t===tab?'block':'none';
-    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  if(tab==='menu'||tab==='food') tab='order';
+  ['card','order','history'].forEach(t=>{
+    const view=document.getElementById('tab-'+t+'-view');
+    const btn=document.getElementById('tab-'+t);
+    if(view) view.style.display=t===tab?'block':'none';
+    if(btn)  btn.classList.toggle('active',t===tab);
   });
   if(tab==='order'){renderCart();loadDeals();}
   if(tab==='history')safeTry(loadHistory);
-  if(tab==='food')safeTry(renderFoodMenuTab);
-  
 }
 
 async function renderLeaderboard(){
@@ -2597,7 +2609,11 @@ async function loadCard(name,createdAt,phone,email,birthday){
   const{data:s}=await db.from('stamps').select('id').eq('customer_id',customerId);
   const{data:r}=await db.from('rewards').select('id').eq('customer_id',customerId);
   const{data:freeOrders}=await db.from('orders').select('price').eq('customer_id',customerId).eq('is_free',true);
+  // Points system: $1 = 1 point, 200 points = $10 reward
+  const{data:paidOrders}=await db.from('orders').select('price').eq('customer_id',customerId).eq('is_free',false);
   totalStamps=s?s.length:0;rewardsEarned=r?r.length:0;
+  totalSpend=paidOrders?paidOrders.reduce((sum,o)=>sum+parseFloat(o.price||0),0):0;
+  loyaltyPoints=Math.floor(totalSpend); // $1 = 1 point
   const ordersValue=freeOrders&&freeOrders.length>0?freeOrders.reduce((sum,o)=>sum+parseFloat(o.price||5.5),0):0;
   const unrecordedRewards=Math.max(0,rewardsEarned-(freeOrders?freeOrders.length:0));
   actualSaved=ordersValue+(unrecordedRewards*5.5);
@@ -2622,7 +2638,7 @@ async function loadCard(name,createdAt,phone,email,birthday){
   if(isEnabled('enableDeals')) safeTry(loadDeals);
   setInterval(()=>safeTry(loadDeals),60000); // refresh deals every minute
   if(birthday)safeRun(checkBirthday, birthday, name);
-  safeTry(loadWeeklySummary);
+  // Weekly spend deliberately NOT shown to customers
   safeTry(loadCardFeatures, customerId, name, email||'');
   document.getElementById('customer-row').style.display='flex';
   document.getElementById('avatar').textContent=name.charAt(0).toUpperCase();
@@ -2680,30 +2696,39 @@ function renderCard(){ try {
   }
   const pct=Math.round((displayStamps/TOTAL)*100);
   document.getElementById('bar-fill').style.width=pct+'%';
-  document.getElementById('stamp-count').textContent=displayStamps+' / '+TOTAL;
-  document.getElementById('total-val').textContent=totalStamps;
-  document.getElementById('rewards-val').textContent=rewardsEarned;
-  document.getElementById('saved-val').textContent='$'+actualSaved.toFixed(2);
-  const pill=document.getElementById('reward-pill');
-  const rtext=document.getElementById('reward-text');
-  if(displayStamps>=TOTAL){
-    pill.classList.add('earned');rtext.classList.add('earned');
-    rtext.textContent='🎉 Free coffee ready! Valid on standard coffees only (S/M/L).';
-    document.getElementById('redeem-btn').style.display='block';
-  } else if(displayStamps===5){
-    pill.classList.add('earned');rtext.classList.add('earned');
-    rtext.textContent='🎉 10% discount unlocked! Applied automatically on your next order.';
-    document.getElementById('redeem-btn').style.display='none';
-  } else if(displayStamps>5){
-    pill.classList.remove('earned');rtext.classList.remove('earned');
-    rtext.textContent=(TOTAL-displayStamps)+' more stamp'+(TOTAL-displayStamps!==1?'s':'')+' for a free coffee';
-    document.getElementById('redeem-btn').style.display='none';
+  // Points system display: $1 = 1 point, 200 points = $10 reward
+  const POINTS_PER_REWARD = 200;
+  const pointsInCycle = loyaltyPoints % POINTS_PER_REWARD;
+  const pointsRewardsEarned = Math.floor(loyaltyPoints / POINTS_PER_REWARD);
+  const pointsPct = Math.round((pointsInCycle / POINTS_PER_REWARD) * 100);
+
+  // Progress bar shows points progress toward $10 reward
+  document.getElementById('bar-fill').style.width = pointsPct + '%';
+  document.getElementById('stamp-count').textContent = loyaltyPoints + ' pts';
+
+  // Stats row
+  document.getElementById('total-val').textContent = loyaltyPoints;
+  document.getElementById('rewards-val').textContent = pointsRewardsEarned;
+  document.getElementById('saved-val').textContent = '$' + (pointsRewardsEarned * 10).toFixed(2);
+
+  // Reward pill
+  const pill = document.getElementById('reward-pill');
+  const rtext = document.getElementById('reward-text');
+  const toNext = POINTS_PER_REWARD - pointsInCycle;
+  if(pointsInCycle === 0 && loyaltyPoints > 0) {
+    pill.classList.add('earned'); rtext.classList.add('earned');
+    rtext.textContent = '🎉 $10 reward ready! Tell your barista to redeem it.';
+    document.getElementById('redeem-btn').style.display = 'block';
   } else {
-    pill.classList.remove('earned');rtext.classList.remove('earned');
-    const toDiscount=5-displayStamps;
-    const toFree=TOTAL-displayStamps;
-    rtext.textContent=toDiscount+' stamp'+(toDiscount!==1?'s':'')+' to 10% off · '+toFree+' stamps to free coffee';
-    document.getElementById('redeem-btn').style.display='none';
+    pill.classList.remove('earned'); rtext.classList.remove('earned');
+    rtext.textContent = loyaltyPoints + ' points · ' + toNext + ' to your next $10 reward';
+    document.getElementById('redeem-btn').style.display = 'none';
+  }
+
+  // Also keep stamp-based free coffee logic as bonus (uses existing stamps variable)
+  if(displayStamps >= TOTAL && cart.length === 0) {
+    const freeBanner = document.getElementById('free-banner');
+    if(freeBanner) { freeBanner.style.display = 'block'; freeBanner.textContent = '🎉 10 visits — your next coffee is FREE! Add it in the Order tab.'; }
   }
 
   // Fav drink quick order
@@ -2863,7 +2888,17 @@ init();
       <button class="popup-btn" onclick="closePopup()">Got it, thanks!</button>
     </div>
   </div>
-  <!-- Welcome Stamp Popup — shown to new customers only -->
+  
+<!-- Floating cart button — shows when cart has items -->
+<div id="floating-cart" onclick="showTab('order')" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#354C3A;color:#fff;padding:12px 24px;border-radius:99px;font-size:14px;font-weight:700;cursor:pointer;z-index:1500;box-shadow:0 4px 20px rgba(0,0,0,0.3);white-space:nowrap;align-items:center;gap:10px">
+  <span>🛒</span>
+  <span id="fc-count">0 items</span>
+  <span style="opacity:0.6">•</span>
+  <span id="fc-total">$0.00</span>
+  <span style="background:#D48631;padding:4px 12px;border-radius:99px;font-size:13px;margin-left:4px">View cart</span>
+</div>
+
+<!-- Welcome Stamp Popup — shown to new customers only -->
   <div id="welcome-stamp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;align-items:center;justify-content:center">
     <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:300px;width:90%;text-align:center;animation:slideIn 0.3s ease">
       <div style="font-size:52px;margin-bottom:10px">☕</div>
@@ -2881,6 +2916,17 @@ init();
       </button>
       <div id="claim-stamp-ok" style="color:#354C3A;font-size:13px;font-weight:600;min-height:18px"></div>
     </div>
+  </div>
+
+  <!-- Floating cart bar — shown when cart has items; JS already wired in renderCart() -->
+  <div id="floating-cart" style="display:none;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#292927;color:#fff;z-index:500;padding:10px 16px;box-shadow:0 -2px 16px rgba(0,0,0,0.25);align-items:center;gap:10px">
+    <div style="background:#D48631;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap" id="fc-count">0 items</div>
+    <div style="flex:1"></div>
+    <div style="font-size:16px;font-weight:700" id="fc-total">$0.00</div>
+    <button onclick="document.getElementById('payment-section').scrollIntoView({behavior:'smooth'});showTab('order');"
+      style="background:#D48631;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap">
+      Checkout →
+    </button>
   </div>
 
 <button class="dark-toggle" onclick="toggleDarkMode()" id="dark-btn" title="Toggle dark mode">🌙</button>
