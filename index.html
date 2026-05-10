@@ -2889,13 +2889,14 @@ init();
     </div>
   </div>
   
-<!-- Floating cart button — shows when cart has items -->
-<div id="floating-cart" onclick="showTab('order')" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#354C3A;color:#fff;padding:12px 24px;border-radius:99px;font-size:14px;font-weight:700;cursor:pointer;z-index:1500;box-shadow:0 4px 20px rgba(0,0,0,0.3);white-space:nowrap;align-items:center;gap:10px">
+<!-- Floating cart button — shown when cart has items, controlled by renderCart() -->
+<div id="floating-cart" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#354C3A;color:#fff;padding:12px 24px;border-radius:99px;font-size:14px;font-weight:700;cursor:pointer;z-index:1500;box-shadow:0 4px 20px rgba(0,0,0,0.3);white-space:nowrap;align-items:center;gap:10px"
+  onclick="showTab('order');setTimeout(function(){var cs=document.querySelector('.cart-section');if(cs)cs.scrollIntoView({behavior:'smooth',block:'start'});},80)">
   <span>🛒</span>
   <span id="fc-count">0 items</span>
   <span style="opacity:0.6">•</span>
   <span id="fc-total">$0.00</span>
-  <span style="background:#D48631;padding:4px 12px;border-radius:99px;font-size:13px;margin-left:4px">View cart</span>
+  <span style="background:#D48631;padding:4px 12px;border-radius:99px;font-size:13px;margin-left:4px">View cart →</span>
 </div>
 
 <!-- Welcome Stamp Popup — shown to new customers only -->
@@ -2916,17 +2917,6 @@ init();
       </button>
       <div id="claim-stamp-ok" style="color:#354C3A;font-size:13px;font-weight:600;min-height:18px"></div>
     </div>
-  </div>
-
-  <!-- Floating cart bar — shown when cart has items; JS already wired in renderCart() -->
-  <div id="floating-cart" style="display:none;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#292927;color:#fff;z-index:500;padding:10px 16px;box-shadow:0 -2px 16px rgba(0,0,0,0.25);align-items:center;gap:10px">
-    <div style="background:#D48631;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap" id="fc-count">0 items</div>
-    <div style="flex:1"></div>
-    <div style="font-size:16px;font-weight:700" id="fc-total">$0.00</div>
-    <button onclick="document.getElementById('payment-section').scrollIntoView({behavior:'smooth'});showTab('order');"
-      style="background:#D48631;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap">
-      Checkout →
-    </button>
   </div>
 
 <button class="dark-toggle" onclick="toggleDarkMode()" id="dark-btn" title="Toggle dark mode">🌙</button>
