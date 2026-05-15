@@ -533,7 +533,7 @@
         <div class="section-title">Tea</div>
         <div id="s-tea"></div>
         <div class="section-title" id="food-section-title">🥐 Food</div>
-        <div id="s-food"><div style="color:#888;font-size:12px;padding:8px 0">Loading food menu...</div></div>
+        <div id="s-food"><div style="color:#888;font-size:12px;padding:8px 0">Food menu loading…</div></div>
       </div>
       </div><!-- end phone-body -->
       <div id="order-success" style="display:none;padding:0 18px 18px;">
@@ -2163,13 +2163,24 @@ async function loadMenuFromDB(){
     }
 
   }catch(e){
-    console.log('Menu load error:',e.message);
-    // Fallback to hardcoded menu
-    buildSection('s-coffee',MENU.coffee);
-    buildSection('s-superfood',MENU.superfood);
-    buildSection('s-signature',MENU.signature);
-    buildSection('s-ice',MENU.ice);
-    buildSection('s-tea',MENU.tea);
+    console.error('[Menu] Load failed:', e.message, e);
+    // Show visible error so it's easy to diagnose — not a silent console-only failure
+    const errMsg = `<div style="color:#c0392b;font-size:12px;padding:10px;background:#fff5f5;border-radius:8px;margin:6px 0">
+      ⚠️ Menu failed to load: ${e.message}<br>
+      <span style="color:#888;font-size:11px">Check console for details. Pull to refresh or tap Retry.</span>
+      <br><button onclick="loadMenuFromDB()" style="margin-top:6px;padding:4px 12px;background:#354C3A;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">Retry</button>
+    </div>`;
+    const firstSection = document.getElementById('s-coffee');
+    if(firstSection) firstSection.innerHTML = errMsg;
+    // Clear the "Loading food menu..." placeholder
+    const foodEl = document.getElementById('s-food');
+    if(foodEl) foodEl.innerHTML = '<div style="color:#888;font-size:12px;padding:8px 0">Menu unavailable</div>';
+    // Still try hardcoded fallback
+    buildSection('s-coffee', MENU.coffee);
+    buildSection('s-superfood', MENU.superfood);
+    buildSection('s-signature', MENU.signature);
+    buildSection('s-ice', MENU.ice);
+    buildSection('s-tea', MENU.tea);
   }
 }
 
