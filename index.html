@@ -493,19 +493,7 @@
           <div class="pickup-note" id="pickup-note">Your order will be prepared as soon as it is received.</div>
         </div>
 
-
-        <div class="section-title">Coffee</div>
-        <div id="s-coffee"></div>
-        <div class="section-title">Superfood Latte</div>
-        <div id="s-superfood"></div>
-        <div class="section-title">TDM Signature <span class="sig-badge">Meetery Fave</span></div>
-        <div id="s-signature"></div>
-        <div class="section-title">Over Ice / Frappe</div>
-        <div id="s-ice"></div>
-        <div class="section-title">Tea</div>
-        <div id="s-tea"></div>
-        <div class="section-title" id="food-section-title">🥐 Food</div>
-        <div id="s-food"><div style="color:#888;font-size:12px;padding:8px 0">Loading food menu...</div></div>
+        <!-- PAYMENT + ORDER BUTTON — above menu so checkout is immediate -->
         <div id="payment-section" style="display:none">
           <div id="paid-payment">
             <div class="pay-methods">
@@ -530,6 +518,22 @@
           </div>
         </div>
         <button class="main-btn" id="order-btn" onclick="handleOrder()" disabled>Add drinks to your cart first</button>
+
+        <!-- MENU — browse and add items to cart -->
+        <div style="height:1px;background:#f0ece4;margin:18px 0 14px"></div>
+        <div style="font-size:11px;font-weight:600;color:#A9B29E;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">☕ Add items to your cart</div>
+        <div class="section-title">Coffee</div>
+        <div id="s-coffee"></div>
+        <div class="section-title">Superfood Latte</div>
+        <div id="s-superfood"></div>
+        <div class="section-title">TDM Signature <span class="sig-badge">Meetery Fave</span></div>
+        <div id="s-signature"></div>
+        <div class="section-title">Over Ice / Frappe</div>
+        <div id="s-ice"></div>
+        <div class="section-title">Tea</div>
+        <div id="s-tea"></div>
+        <div class="section-title" id="food-section-title">🥐 Food</div>
+        <div id="s-food"><div style="color:#888;font-size:12px;padding:8px 0">Loading food menu...</div></div>
       </div>
       </div><!-- end phone-body -->
       <div id="order-success" style="display:none;padding:0 18px 18px;">
