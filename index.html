@@ -1324,7 +1324,15 @@ function showTab(tab){
     if(view) view.style.display=t===tab?'block':'none';
     if(btn)  btn.classList.toggle('active',t===tab);
   });
-  if(tab==='order'){renderCart();loadDeals();}
+  if(tab==='order'){
+    renderCart();
+    loadDeals();
+    // Reload menu if sections are still empty (e.g. if init ran before DB was ready)
+    const coffeeEl = document.getElementById('s-coffee');
+    if(coffeeEl && coffeeEl.children.length === 0) {
+      loadMenuFromDB().catch(e => console.warn('[TDM] Menu reload error:', e.message));
+    }
+  }
   if(tab==='history')safeTry(loadHistory);
 }
 
@@ -2220,18 +2228,22 @@ const TDM_DND = {
 };
 
 async function init(){
-  // Maintenance mode check (toggle TDM.FLAGS.maintenanceMode to true to enable)
+  // Maintenance mode check
   if(TDM.checkMaintenance()) return;
   // Run health check silently
   TDM.healthCheck().then(h => {
     if(!h.healthy) console.warn('[TDM] DB health check failed:', h.error);
   });
+
+  // Load menu and pickup times independently — do NOT block on customer auth
+  // This ensures menu always appears even if the customers table check fails
+  loadMenuFromDB().catch(e => console.warn('[TDM] Menu load error:', e.message));
+  populatePickupTimes();
+
   try{
     const{error}=await db.from('customers').select('id').limit(1);
     if(error)throw error;
     document.getElementById('loading-view').style.display='none';
-    await loadMenuFromDB();
-    populatePickupTimes();
 
     // Auto-login: check Supabase Auth session first (OTP flow)
     // IMPORTANT: Only use session if it matches our saved customer email.
