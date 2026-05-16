@@ -2169,28 +2169,7 @@ async function loadMenuFromDB(){
     // Display each food category with its own heading, in preferred order
     const drinkCats = new Set(['coffee','superfood','signature','ice','tea']);
 
-    // ── VISIBLE DEBUG BOX (shows in app on iPhone, remove after fix) ──
-    const allCategories = [...new Set((items||[]).map(i => i.category))];
-    const nonDrinkItems = (items||[]).filter(i => !drinkCats.has(i.category));
-    const foodCatItems  = (items||[]).filter(i => i.category === 'food');
-    const availTrue  = (items||[]).filter(i => i.is_available === true).length;
-    const availNull  = (items||[]).filter(i => i.is_available === null || i.is_available === undefined).length;
-    const availFalse = (items||[]).filter(i => i.is_available === false).length;
-    const debugHtml = `
-      <div id="tdm-food-debug" style="background:#fff3cd;border:1px solid #856404;border-radius:8px;padding:10px;font-size:11px;font-family:monospace;margin:8px 0;color:#333">
-        <strong style="color:#856404">🔍 FOOD DEBUG (remove after fix)</strong><br>
-        Total DB items: <strong>${(items||[]).length}</strong><br>
-        Unique categories: <strong>${allCategories.join(', ') || 'none'}</strong><br>
-        Non-drink items: <strong>${nonDrinkItems.length}</strong><br>
-        Items with category=food: <strong>${foodCatItems.length}</strong><br>
-        is_available=true: <strong>${availTrue}</strong> &nbsp;
-        is_available=null: <strong>${availNull}</strong> &nbsp;
-        is_available=false: <strong>${availFalse}</strong><br>
-        Query used: <strong>.not(is_available, eq, false)</strong>
-      </div>`;
-    const foodDebugEl = document.getElementById('s-food');
-    if(foodDebugEl) foodDebugEl.insertAdjacentHTML('afterbegin', debugHtml);
-    // ── END VISIBLE DEBUG BOX ────────────────────────────────
+    // ── VISIBLE DEBUG BOX — REMOVED FROM HERE, now in finally block ──
     // Preferred display order and customer-friendly labels
     const foodCatOrder = [
       { key: 'mains',   label: '🍽 Mains' },
@@ -2274,7 +2253,42 @@ async function loadMenuFromDB(){
     buildSection('s-ice', MENU.ice);
     buildSection('s-tea', MENU.tea);
   } finally {
+    // BUG 3 SAFETY NET: never leave s-food on loading text
     clearFoodLoading();
+
+    // ── VISIBLE DEBUG PANEL — always runs last, cannot be overwritten ──
+    // Runs a SEPARATE unfiltered query so we see everything in the DB
+    (async () => {
+      try {
+        const { data: allItems } = await db.from('menu_items').select('name,category,is_available');
+        const total      = (allItems||[]).length;
+        const cats       = [...new Set((allItems||[]).map(i => i.category))];
+        const foodItems  = (allItems||[]).filter(i => i.category === 'food');
+        const avTrue     = (allItems||[]).filter(i => i.is_available === true).length;
+        const avFalse    = (allItems||[]).filter(i => i.is_available === false).length;
+        const avNull     = (allItems||[]).filter(i => i.is_available == null).length;
+        const foodNames  = foodItems.map(i => `${i.name} (avail:${i.is_available})`).join('<br>') || 'none';
+        const box = document.createElement('div');
+        box.id = 'tdm-food-debug';
+        box.style.cssText = 'background:#fff3cd;border:2px solid #856404;border-radius:8px;padding:12px;font-size:11px;font-family:monospace;margin:8px 0;color:#333;word-break:break-word';
+        box.innerHTML = `
+          <strong style="color:#856404;font-size:12px">🔍 FOOD DEBUG — screenshot this and share</strong><br><br>
+          Total rows in menu_items: <strong>${total}</strong><br>
+          All categories: <strong>${cats.join(', ')||'(none)'}</strong><br>
+          Rows with category=food: <strong>${foodItems.length}</strong><br>
+          is_available=true: <strong>${avTrue}</strong> &nbsp;
+          false: <strong>${avFalse}</strong> &nbsp;
+          null: <strong>${avNull}</strong><br><br>
+          Food item names:<br>${foodNames}`;
+        const foodEl = document.getElementById('s-food');
+        if(foodEl) foodEl.appendChild(box);
+      } catch(dbg) {
+        const foodEl = document.getElementById('s-food');
+        if(foodEl) foodEl.insertAdjacentHTML('beforeend',
+          `<div style="color:red;font-size:11px;padding:6px">Debug query failed: ${dbg.message}</div>`);
+      }
+    })();
+    // ── END DEBUG PANEL ───────────────────────────────────────
   }
 }
 
