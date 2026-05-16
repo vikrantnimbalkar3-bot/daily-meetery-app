@@ -2123,7 +2123,7 @@ async function loadMenuFromDB(){
   try{
     const{data:items,error}=await db.from('menu_items')
       .select('*')
-      .eq('is_available',true)
+      .not('is_available','eq',false)   // includes true AND null — excludes only explicit false
       .order('category')
       .order('sort_order');
 
@@ -2168,6 +2168,17 @@ async function loadMenuFromDB(){
     // BUG 2 FIX: food items seeded as 'mains','sides','bao','salads','rice' not 'food'
     // Display each food category with its own heading, in preferred order
     const drinkCats = new Set(['coffee','superfood','signature','ice','tea']);
+
+    // ── TEMPORARY DEBUG LOG ──────────────────────────────────
+    const allCategories = [...new Set((items||[]).map(i => i.category))];
+    const nonDrinkItems = (items||[]).filter(i => !drinkCats.has(i.category));
+    console.group('[TDM Menu Debug]');
+    console.log('Total items from DB:', (items||[]).length);
+    console.log('Unique categories:', allCategories);
+    console.log('Non-drink items:', nonDrinkItems.length);
+    console.table((items||[]).map(i=>({name:i.name, category:i.category, is_available:i.is_available})));
+    console.groupEnd();
+    // ── END DEBUG LOG ─────────────────────────────────────────
     // Preferred display order and customer-friendly labels
     const foodCatOrder = [
       { key: 'mains',   label: '🍽 Mains' },
