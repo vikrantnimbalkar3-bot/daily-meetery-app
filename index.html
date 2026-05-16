@@ -2169,16 +2169,28 @@ async function loadMenuFromDB(){
     // Display each food category with its own heading, in preferred order
     const drinkCats = new Set(['coffee','superfood','signature','ice','tea']);
 
-    // ── TEMPORARY DEBUG LOG ──────────────────────────────────
+    // ── VISIBLE DEBUG BOX (shows in app on iPhone, remove after fix) ──
     const allCategories = [...new Set((items||[]).map(i => i.category))];
     const nonDrinkItems = (items||[]).filter(i => !drinkCats.has(i.category));
-    console.group('[TDM Menu Debug]');
-    console.log('Total items from DB:', (items||[]).length);
-    console.log('Unique categories:', allCategories);
-    console.log('Non-drink items:', nonDrinkItems.length);
-    console.table((items||[]).map(i=>({name:i.name, category:i.category, is_available:i.is_available})));
-    console.groupEnd();
-    // ── END DEBUG LOG ─────────────────────────────────────────
+    const foodCatItems  = (items||[]).filter(i => i.category === 'food');
+    const availTrue  = (items||[]).filter(i => i.is_available === true).length;
+    const availNull  = (items||[]).filter(i => i.is_available === null || i.is_available === undefined).length;
+    const availFalse = (items||[]).filter(i => i.is_available === false).length;
+    const debugHtml = `
+      <div id="tdm-food-debug" style="background:#fff3cd;border:1px solid #856404;border-radius:8px;padding:10px;font-size:11px;font-family:monospace;margin:8px 0;color:#333">
+        <strong style="color:#856404">🔍 FOOD DEBUG (remove after fix)</strong><br>
+        Total DB items: <strong>${(items||[]).length}</strong><br>
+        Unique categories: <strong>${allCategories.join(', ') || 'none'}</strong><br>
+        Non-drink items: <strong>${nonDrinkItems.length}</strong><br>
+        Items with category=food: <strong>${foodCatItems.length}</strong><br>
+        is_available=true: <strong>${availTrue}</strong> &nbsp;
+        is_available=null: <strong>${availNull}</strong> &nbsp;
+        is_available=false: <strong>${availFalse}</strong><br>
+        Query used: <strong>.not(is_available, eq, false)</strong>
+      </div>`;
+    const foodDebugEl = document.getElementById('s-food');
+    if(foodDebugEl) foodDebugEl.insertAdjacentHTML('afterbegin', debugHtml);
+    // ── END VISIBLE DEBUG BOX ────────────────────────────────
     // Preferred display order and customer-friendly labels
     const foodCatOrder = [
       { key: 'mains',   label: '🍽 Mains' },
